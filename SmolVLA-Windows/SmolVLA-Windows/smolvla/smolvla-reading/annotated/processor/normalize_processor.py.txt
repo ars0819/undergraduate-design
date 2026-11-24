@@ -1,0 +1,637 @@
+# 原文件 lerobot/src/lerobot/processor/normalize_processor.py
+# 原行范围 194–244, 269–559
+# L 后是官方源码或本机文件的原行号。每条中文注释对应紧随其后的原文。
+# 这是静态阅读副本。请在编辑器中阅读。空行保留，节选之间标出跳过的范围。
+
+# …… 跳过原文第 1–193 行 ……
+    # L0194 定义方法 load_state_dict。
+    def load_state_dict(self, state: dict[str, Tensor]) -> None:
+        # L0195 文档字符串的边界。
+        """
+        # L0196 原文档中的说明或续行。
+        Loads normalization statistics from a state dictionary.
+
+        # L0198 原文档中的说明或续行。
+        The loaded tensors are moved to the processor's configured device.
+
+        # L0200 原文档中的说明或续行。
+        **Stats Override Preservation:**
+        # L0201 原文档中的说明或续行。
+        If stats were explicitly provided during construction (e.g., via overrides in
+        # L0202 原文档中的说明或续行。
+        `DataProcessorPipeline.from_pretrained()`), they are preserved and the state
+        # L0203 原文档中的说明或续行。
+        dictionary is ignored. This allows users to override normalization statistics
+        # L0204 原文档中的说明或续行。
+        while still loading the rest of the model state.
+
+        # L0206 原文档中的说明或续行。
+        This behavior is crucial for scenarios where users want to adapt a pretrained
+        # L0207 原文档中的说明或续行。
+        model to a new dataset with different statistics without retraining the entire
+        # L0208 原文档中的说明或续行。
+        model.
+
+        # L0210 以下列出调用参数及其含义。
+        Args:
+            # L0211 原文档对“state”（机器人状态或当前步骤的状态）的说明。
+            state: A flat state dictionary with keys in the format
+                   # L0212 原文档中的说明或续行。
+                   `'feature_name.stat_name'`.
+
+        # L0214 以下说明附注。
+        Note:
+            # L0215 原文档中的说明或续行。
+            When stats are preserved due to explicit provision, only the tensor
+            # L0216 原文档中的说明或续行。
+            representation is updated to ensure consistency with the current device
+            # L0217 原文档中的说明或续行。
+            and dtype settings.
+        # L0218 文档字符串的边界。
+        """
+        # L0219 原作者对相邻代码的说明。
+        # If stats were explicitly provided during construction, preserve them
+        # L0220 条件 self._stats_explicitly_provided and self.stats is not None 成立时进入下方分支。
+        if self._stats_explicitly_provided and self.stats is not None:
+            # L0221 原作者对相邻代码的说明。
+            # Don't load from state_dict, keep the explicitly provided stats
+            # L0222 原作者对相邻代码的说明。
+            # But ensure _tensor_stats is properly initialized
+            # L0223 调用 to_tensor，用它的结果给 “self._tensor_stats” 赋值。
+            self._tensor_stats = to_tensor(self.stats, device=self.device, dtype=self.dtype)
+            # L0224 调用 self._reshape_visual_stats 执行操作。
+            self._reshape_visual_stats()
+            # L0225 退出当前调用并返回 None。
+            return
+
+        # L0227 原作者对相邻代码的说明。
+        # Normal behavior: load stats from state_dict
+        # L0228 调用 self._tensor_stats.clear 执行操作。
+        self._tensor_stats.clear()
+        # L0229 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+        for flat_key, tensor in state.items():
+            # L0230 调用 flat_key.rsplit，用它的结果给 “(key, stat_name)” 赋值。
+            key, stat_name = flat_key.rsplit(".", 1)
+            # L0231 运算设备或数据传输的说明。
+            # Load to the processor's configured device.
+            # L0232 调用 tensor.to，用它的结果给 “self._tensor_stats.setdefault(key, {})[stat_name]” 赋值。
+            self._tensor_stats.setdefault(key, {})[stat_name] = tensor.to(
+                # L0233 为“dtype”（元素类型）提供这一项的值，注意它所在的参数表或外层表达式。
+                dtype=torch.float32, device=self.device
+            # L0234 闭合上方尚未结束的括号。
+            )
+        # L0235 调用 self._reshape_visual_stats 执行操作。
+        self._reshape_visual_stats()
+
+        # L0237 原作者对相邻代码的说明。
+        # Reconstruct the original stats dict from tensor stats for compatibility with to() method
+        # L0238 原作者对相邻代码的说明。
+        # and other functions that rely on self.stats
+        # L0239 创建字典，用键查找对应的值给 “self.stats” 赋值。
+        self.stats = {}
+        # L0240 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+        for key, tensor_dict in self._tensor_stats.items():
+            # L0241 创建字典，用键查找对应的值给 “self.stats[key]” 赋值。
+            self.stats[key] = {}
+            # L0242 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+            for stat_name, tensor in tensor_dict.items():
+                # L0243 原作者对相邻代码的说明。
+                # Convert tensor back to python/numpy format
+                # L0244 调用 from_tensor_to_numpy，用它的结果给 “self.stats[key][stat_name]” 赋值。
+                self.stats[key][stat_name] = from_tensor_to_numpy(tensor)
+
+# …… 跳过原文第 245–268 行 ……
+    # L0269 根据特征类型和配置对观测特征逐个做尺度变换。
+    def _normalize_observation(self, observation: RobotObservation, inverse: bool) -> dict[str, Tensor]:
+        # L0270 文档字符串的边界。
+        """
+        # L0271 原文档中的说明或续行。
+        Applies (un)normalization to all relevant features in an observation dictionary.
+
+        # L0273 以下列出调用参数及其含义。
+        Args:
+            # L0274 原文档对“observation”（观测）的说明。
+            observation: The observation dictionary to process.
+            # L0275 原文档对“inverse”的说明。
+            inverse: If `True`, applies unnormalization; otherwise, applies normalization.
+
+        # L0277 以下说明调用者接收到的结果。
+        Returns:
+            # L0278 原文档中的说明或续行。
+            A new observation dictionary with the transformed tensor values.
+        # L0279 文档字符串的边界。
+        """
+        # L0280 调用 dict，用它的结果给 “new_observation” 赋值。
+        new_observation = dict(observation)
+        # L0281 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+        for key, feature in self.features.items():
+            # L0282 条件 self.normalize_observation_keys is not None and key not in self.normalize_observation_keys 成立时进入下方分支。
+            if self.normalize_observation_keys is not None and key not in self.normalize_observation_keys:
+                # L0283 跳过这一轮剩余操作，进入下一轮循环。
+                continue
+            # L0284 条件 feature.type != FeatureType.ACTION and key in new_observation 成立时进入下方分支。
+            if feature.type != FeatureType.ACTION and key in new_observation:
+                # L0285 原作者对相邻代码的说明。
+                # Convert to tensor but preserve original dtype for adaptation logic
+                # L0286 调用 torch.as_tensor，用它的结果给 “tensor” 赋值。
+                tensor = torch.as_tensor(new_observation[key])
+                # L0287 调用 self._apply_transform，用它的结果给 “new_observation[key]” 赋值。
+                new_observation[key] = self._apply_transform(tensor, key, feature.type, inverse=inverse)
+        # L0288 引用已有的值 new_observation作为当前调用的返回值。
+        return new_observation
+
+    # L0290 使用动作特征的专属统计量和配置处理动作。
+    def _normalize_action(self, action: Tensor, inverse: bool) -> Tensor:
+        # L0291 原作者对相邻代码的说明。
+        # Convert to tensor but preserve original dtype for adaptation logic
+        # L0292 文档字符串的边界。
+        """
+        # L0293 原文档中的说明或续行。
+        Applies (un)normalization to an action tensor.
+
+        # L0295 以下列出调用参数及其含义。
+        Args:
+            # L0296 原文档对“action”（单步动作）的说明。
+            action: The action tensor to process.
+            # L0297 原文档对“inverse”的说明。
+            inverse: If `True`, applies unnormalization; otherwise, applies normalization.
+
+        # L0299 以下说明调用者接收到的结果。
+        Returns:
+            # L0300 原文档中的说明或续行。
+            The transformed action tensor.
+        # L0301 文档字符串的边界。
+        """
+        # L0302 调用 self._apply_transform，用它的结果给 “processed_action” 赋值。
+        processed_action = self._apply_transform(action, ACTION, FeatureType.ACTION, inverse=inverse)
+        # L0303 引用已有的值 processed_action作为当前调用的返回值。
+        return processed_action
+
+    # L0305 在各种归一化规则中选择当前特征对应的转换，支持正向与反向。
+    def _apply_transform(
+        # L0306 延续上面的语句，self, tensor: Tensor, key: str, feature_type: FeatureType, *, inverse: bool = False。本段处理施加由配置指定的正向或逆向尺度变换。
+        self, tensor: Tensor, key: str, feature_type: FeatureType, *, inverse: bool = False
+    # L0307 结束参数表。若箭头后有类型，它标注预期返回值，缩进块是函数体。
+    ) -> Tensor:
+        # L0308 文档字符串的边界。
+        """
+        # L0309 原文档中的说明或续行。此段讲施加由配置指定的正向或逆向尺度变换。
+        Core logic to apply a normalization or unnormalization transformation to a tensor.
+
+        # L0311 原文档中的说明或续行。此段讲施加由配置指定的正向或逆向尺度变换。
+        This method selects the appropriate normalization mode based on the feature type
+        # L0312 原文档中的说明或续行。此段讲施加由配置指定的正向或逆向尺度变换。
+        and applies the corresponding mathematical operation.
+
+        # L0314 原文档中的说明或续行。此段讲施加由配置指定的正向或逆向尺度变换。
+        Normalization Modes:
+          # L0315 原文档中的说明或续行。此段讲施加由配置指定的正向或逆向尺度变换。
+          - MEAN_STD: Centers data around zero with unit variance.
+          # L0316 原文档中的说明或续行。此段讲施加由配置指定的正向或逆向尺度变换。
+          - MIN_MAX: Scales data to [-1, 1] range using actual min/max values.
+          # L0317 原文档中的说明或续行。此段讲施加由配置指定的正向或逆向尺度变换。
+          - QUANTILES: Scales data to [-1, 1] range using 1st and 99th percentiles (q01/q99).
+          # L0318 原文档中的说明或续行。此段讲施加由配置指定的正向或逆向尺度变换。
+          - QUANTILE10: Scales data to [-1, 1] range using 10th and 90th percentiles (q10/q90).
+
+        # L0320 以下列出调用参数及其含义。
+        Args:
+            # L0321 原文档对“tensor”的说明。此段讲施加由配置指定的正向或逆向尺度变换。
+            tensor: The input tensor to transform.
+            # L0322 原文档对“key”的说明。此段讲施加由配置指定的正向或逆向尺度变换。
+            key: The feature key corresponding to the tensor.
+            # L0323 原文档对“feature_type”的说明。此段讲施加由配置指定的正向或逆向尺度变换。
+            feature_type: The `FeatureType` of the tensor.
+            # L0324 原文档对“inverse”的说明。此段讲施加由配置指定的正向或逆向尺度变换。
+            inverse: If `True`, applies the inverse transformation (unnormalization).
+
+        # L0326 以下说明调用者接收到的结果。
+        Returns:
+            # L0327 原文档中的说明或续行。此段讲施加由配置指定的正向或逆向尺度变换。
+            The transformed tensor.
+
+        # L0329 以下说明异常条件。
+        Raises:
+            # L0330 原文档对“ValueError”的说明。此段讲施加由配置指定的正向或逆向尺度变换。
+            ValueError: If an unsupported normalization mode is encountered.
+        # L0331 文档字符串的边界。
+        """
+        # L0332 调用 self.norm_map.get，用它的结果给 “norm_mode” 赋值。
+        norm_mode = self.norm_map.get(feature_type, NormalizationMode.IDENTITY)
+        # L0333 条件 norm_mode == NormalizationMode.IDENTITY or key not in self._tensor_stats 成立时进入下方分支。
+        if norm_mode == NormalizationMode.IDENTITY or key not in self._tensor_stats:
+            # L0334 引用已有的值 tensor作为当前调用的返回值。
+            return tensor
+
+        # L0336 条件 norm_mode not in ( 成立时进入下方分支。
+        if norm_mode not in (
+            # L0337 延续上面的语句，NormalizationMode.MEAN_STD,。本段处理施加由配置指定的正向或逆向尺度变换。
+            NormalizationMode.MEAN_STD,
+            # L0338 延续上面的语句，NormalizationMode.MIN_MAX,。本段处理施加由配置指定的正向或逆向尺度变换。
+            NormalizationMode.MIN_MAX,
+            # L0339 延续上面的语句，NormalizationMode.QUANTILES,。本段处理施加由配置指定的正向或逆向尺度变换。
+            NormalizationMode.QUANTILES,
+            # L0340 延续上面的语句，NormalizationMode.QUANTILE10,。本段处理施加由配置指定的正向或逆向尺度变换。
+            NormalizationMode.QUANTILE10,
+        # L0341 闭合上方尚未结束的括号。
+        ):
+            # L0342 抛出 ValueError，中断当前路径并交给上层的异常处理。
+            raise ValueError(f"Unsupported normalization mode: {norm_mode}")
+
+        # L0344 运算设备或数据传输的说明。
+        # For Accelerate compatibility: Ensure stats are on the same device and dtype as the input tensor
+        # L0345 条件 self._tensor_stats and key in self._tensor_stats 成立时进入下方分支。
+        if self._tensor_stats and key in self._tensor_stats:
+            # L0346 调用 next，用它的结果给 “first_stat” 赋值。
+            first_stat = next(iter(self._tensor_stats[key].values()))
+            # L0347 条件 first_stat.device != tensor.device or first_stat.dtype != tensor.dtype 成立时进入下方分支。
+            if first_stat.device != tensor.device or first_stat.dtype != tensor.dtype:
+                # L0348 使统计 Tensor 的 device 和 dtype 跟待处理 Tensor 对齐。
+                self.to(device=tensor.device, dtype=tensor.dtype)
+
+        # L0350 用方括号按键或索引读取 self._tensor_stats给 “stats”（归一化统计量） 赋值。
+        stats = self._tensor_stats[key]
+
+        # L0352 条件 norm_mode == NormalizationMode.MEAN_STD 成立时进入下方分支。
+        if norm_mode == NormalizationMode.MEAN_STD:
+            # L0353 读取逐分量均值。每个状态或动作维度可有独立统计量。
+            mean = stats.get("mean", None)
+            # L0354 读取逐分量标准差。
+            std = stats.get("std", None)
+            # L0355 条件 mean is None or std is None 成立时进入下方分支。
+            if mean is None or std is None:
+                # L0356 抛出 ValueError，中断当前路径并交给上层的异常处理。
+                raise ValueError(
+                    # L0357 字符串字面量，供上方的调用、容器或错误消息使用。
+                    "MEAN_STD normalization mode requires mean and std stats, please update the dataset with the correct stats"
+                # L0358 闭合上方尚未结束的括号。
+                )
+
+            # L0360 打包成元组，元素顺序由逗号分隔的位置决定给 “(mean, std)” 赋值。
+            mean, std = stats["mean"], stats["std"]
+            # L0361 原作者的注释。此处在讲施加由配置指定的正向或逆向尺度变换。
+            # Avoid division by zero by adding a small epsilon.
+            # L0362 正向归一化的除数是标准差加 eps，避免近零标准差导致除零。
+            denom = std + self.eps
+            # L0363 条件 inverse 成立时进入下方分支。
+            if inverse:
+                # L0364 反归一化按分量执行预测值乘标准差再加均值。
+                return tensor * std + mean
+            # L0365 正向归一化先减均值再除以稳定化的标准差。
+            return (tensor - mean) / denom
+
+        # L0367 条件 norm_mode == NormalizationMode.MIN_MAX 成立时进入下方分支。
+        if norm_mode == NormalizationMode.MIN_MAX:
+            # L0368 调用 stats.get，用它的结果给 “min_val” 赋值。
+            min_val = stats.get("min", None)
+            # L0369 调用 stats.get，用它的结果给 “max_val” 赋值。
+            max_val = stats.get("max", None)
+            # L0370 条件 min_val is None or max_val is None 成立时进入下方分支。
+            if min_val is None or max_val is None:
+                # L0371 抛出 ValueError，中断当前路径并交给上层的异常处理。
+                raise ValueError(
+                    # L0372 字符串字面量，供上方的调用、容器或错误消息使用。
+                    "MIN_MAX normalization mode requires min and max stats, please update the dataset with the correct stats"
+                # L0373 闭合上方尚未结束的括号。
+                )
+
+            # L0375 打包成元组，元素顺序由逗号分隔的位置决定给 “(min_val, max_val)” 赋值。
+            min_val, max_val = stats["min"], stats["max"]
+            # L0376 计算右侧表达式 max_val - min_val给 “denom” 赋值。
+            denom = max_val - min_val
+            # L0377 原作者的注释。此处在讲施加由配置指定的正向或逆向尺度变换。
+            # When min_val == max_val, substitute the denominator with a small epsilon
+            # L0378 原作者的注释。此处在讲施加由配置指定的正向或逆向尺度变换。
+            # to prevent division by zero. This consistently maps an input equal to
+            # L0379 原作者的注释。此处在讲施加由配置指定的正向或逆向尺度变换。
+            # min_val to -1, ensuring a stable transformation.
+            # L0380 调用 torch.where，用它的结果给 “denom” 赋值。
+            denom = torch.where(
+                # L0381 为“denom”提供这一项的值，注意它所在的参数表或外层表达式。
+                denom == 0, torch.tensor(self.eps, device=tensor.device, dtype=tensor.dtype), denom
+            # L0382 闭合上方尚未结束的括号。
+            )
+            # L0383 条件 inverse 成立时进入下方分支。
+            if inverse:
+                # L0384 原作者的注释。此处在讲施加由配置指定的正向或逆向尺度变换。
+                # Map from [-1, 1] back to [min, max]
+                # L0385 计算右侧表达式 return (tensor + 1) / 2 * denom + min_val作为当前调用的返回值。
+                return (tensor + 1) / 2 * denom + min_val
+            # L0386 原作者的注释。此处在讲施加由配置指定的正向或逆向尺度变换。
+            # Map from [min, max] to [-1, 1]
+            # L0387 计算右侧表达式 return 2 * (tensor - min_val) / denom - 1作为当前调用的返回值。
+            return 2 * (tensor - min_val) / denom - 1
+
+        # L0389 条件 norm_mode == NormalizationMode.QUANTILES 成立时进入下方分支。
+        if norm_mode == NormalizationMode.QUANTILES:
+            # L0390 调用 stats.get，用它的结果给 “q01” 赋值。
+            q01 = stats.get("q01", None)
+            # L0391 调用 stats.get，用它的结果给 “q99” 赋值。
+            q99 = stats.get("q99", None)
+            # L0392 条件 q01 is None or q99 is None 成立时进入下方分支。
+            if q01 is None or q99 is None:
+                # L0393 抛出 ValueError，中断当前路径并交给上层的异常处理。
+                raise ValueError(
+                    # L0394 字符串字面量，供上方的调用、容器或错误消息使用。
+                    "QUANTILES normalization mode requires q01 and q99 stats, please update the dataset with the correct stats using the `augment_dataset_quantile_stats.py` script"
+                # L0395 闭合上方尚未结束的括号。
+                )
+
+            # L0397 计算右侧表达式 q99 - q01给 “denom” 赋值。
+            denom = q99 - q01
+            # L0398 原作者的注释。此处在讲施加由配置指定的正向或逆向尺度变换。
+            # Avoid division by zero by adding epsilon when quantiles are identical
+            # L0399 调用 torch.where，用它的结果给 “denom” 赋值。
+            denom = torch.where(
+                # L0400 为“denom”提供这一项的值，注意它所在的参数表或外层表达式。
+                denom == 0, torch.tensor(self.eps, device=tensor.device, dtype=tensor.dtype), denom
+            # L0401 闭合上方尚未结束的括号。
+            )
+            # L0402 条件 inverse 成立时进入下方分支。
+            if inverse:
+                # L0403 计算右侧表达式 return (tensor + 1.0) * denom / 2.0 + q01作为当前调用的返回值。
+                return (tensor + 1.0) * denom / 2.0 + q01
+            # L0404 计算右侧表达式 return 2.0 * (tensor - q01) / denom - 1.0作为当前调用的返回值。
+            return 2.0 * (tensor - q01) / denom - 1.0
+
+        # L0406 条件 norm_mode == NormalizationMode.QUANTILE10 成立时进入下方分支。
+        if norm_mode == NormalizationMode.QUANTILE10:
+            # L0407 调用 stats.get，用它的结果给 “q10” 赋值。
+            q10 = stats.get("q10", None)
+            # L0408 调用 stats.get，用它的结果给 “q90” 赋值。
+            q90 = stats.get("q90", None)
+            # L0409 条件 q10 is None or q90 is None 成立时进入下方分支。
+            if q10 is None or q90 is None:
+                # L0410 抛出 ValueError，中断当前路径并交给上层的异常处理。
+                raise ValueError(
+                    # L0411 字符串字面量，供上方的调用、容器或错误消息使用。
+                    "QUANTILE10 normalization mode requires q10 and q90 stats, please update the dataset with the correct stats using the `augment_dataset_quantile_stats.py` script"
+                # L0412 闭合上方尚未结束的括号。
+                )
+
+            # L0414 计算右侧表达式 q90 - q10给 “denom” 赋值。
+            denom = q90 - q10
+            # L0415 原作者的注释。此处在讲施加由配置指定的正向或逆向尺度变换。
+            # Avoid division by zero by adding epsilon when quantiles are identical
+            # L0416 调用 torch.where，用它的结果给 “denom” 赋值。
+            denom = torch.where(
+                # L0417 为“denom”提供这一项的值，注意它所在的参数表或外层表达式。
+                denom == 0, torch.tensor(self.eps, device=tensor.device, dtype=tensor.dtype), denom
+            # L0418 闭合上方尚未结束的括号。
+            )
+            # L0419 条件 inverse 成立时进入下方分支。
+            if inverse:
+                # L0420 计算右侧表达式 return (tensor + 1.0) * denom / 2.0 + q10作为当前调用的返回值。
+                return (tensor + 1.0) * denom / 2.0 + q10
+            # L0421 计算右侧表达式 return 2.0 * (tensor - q10) / denom - 1.0作为当前调用的返回值。
+            return 2.0 * (tensor - q10) / denom - 1.0
+
+        # L0423 原作者的注释。此处在讲施加由配置指定的正向或逆向尺度变换。
+        # If necessary stats are missing, return input unchanged.
+        # L0424 引用已有的值 tensor作为当前调用的返回值。
+        return tensor
+
+
+# L0427 数据类装饰器。Python 根据字段生成初始化等方法。
+@dataclass
+# L0428 注册装饰器。模块导入时，把随后的类或方法登记到框架的查找表。
+@ProcessorStepRegistry.register(name="normalizer_processor")
+# L0429 定义类 NormalizerProcessorStep，括号列出基类 _NormalizationMixin、ProcessorStep。
+class NormalizerProcessorStep(_NormalizationMixin, ProcessorStep):
+    # L0430 文档字符串的边界。
+    """
+    # L0431 原文档中的说明或续行。
+    A processor step that applies normalization to observations and actions in a transition.
+
+    # L0433 原文档中的说明或续行。
+    This class uses the logic from `_NormalizationMixin` to perform forward normalization
+    # L0434 原文档中的说明或续行。
+    (e.g., scaling data to have zero mean and unit variance, or to the range [-1, 1]).
+    # L0435 原文档中的说明或续行。
+    It is typically used in the pre-processing pipeline before feeding data to a policy.
+    # L0436 文档字符串的边界。
+    """
+
+    # L0438 类方法装饰器。调用时首个参数 cls 是类本身。
+    @classmethod
+    # L0439 定义方法 from_lerobot_dataset。
+    def from_lerobot_dataset(
+        # L0440 cls 接收当前类，类方法被调用时由 Python 自动传入。
+        cls,
+        # L0441 “dataset”是当前括号中的一项，逗号将它与下一项分开。
+        dataset: LeRobotDataset,
+        # L0442 延续上面的语句，features: dict[str, PolicyFeature],。
+        features: dict[str, PolicyFeature],
+        # L0443 延续上面的语句，norm_map: dict[FeatureType, NormalizationMode],。
+        norm_map: dict[FeatureType, NormalizationMode],
+        # L0444 后续参数必须按名字传入。
+        *,
+        # L0445 为“normalize_observation_keys”提供这一项的值，注意它所在的参数表或外层表达式。
+        normalize_observation_keys: set[str] | None = None,
+        # L0446 为“eps”提供这一项的值，注意它所在的参数表或外层表达式。
+        eps: float = 1e-8,
+        # L0447 为“device”（运算设备）提供这一项的值，注意它所在的参数表或外层表达式。
+        device: torch.device | str | None = None,
+    # L0448 结束参数表。若箭头后有类型，它标注预期返回值，缩进块是函数体。
+    ) -> NormalizerProcessorStep:
+        # L0449 文档字符串的边界。
+        """
+        # L0450 原文档中的说明或续行。
+        Creates a `NormalizerProcessorStep` instance using statistics from a `LeRobotDataset`.
+
+        # L0452 以下列出调用参数及其含义。
+        Args:
+            # L0453 原文档对“dataset”的说明。
+            dataset: The dataset from which to extract normalization statistics.
+            # L0454 原文档对“features”的说明。
+            features: The feature definition for the processor.
+            # L0455 原文档对“norm_map”的说明。
+            norm_map: The mapping from feature types to normalization modes.
+            # L0456 原文档对“normalize_observation_keys”的说明。
+            normalize_observation_keys: An optional set of observation keys to normalize.
+            # L0457 原文档对“eps”的说明。
+            eps: A small epsilon value for numerical stability.
+            # L0458 原文档对“device”（运算设备）的说明。
+            device: The target device for the processor.
+
+        # L0460 以下说明调用者接收到的结果。
+        Returns:
+            # L0461 原文档中的说明或续行。
+            A new instance of `NormalizerProcessorStep`.
+        # L0462 文档字符串的边界。
+        """
+        # L0463 调用 cls，用它的结果作为当前调用的返回值。
+        return cls(
+            # L0464 为“features”提供这一项的值，注意它所在的参数表或外层表达式。
+            features=features,
+            # L0465 为“norm_map”提供这一项的值，注意它所在的参数表或外层表达式。
+            norm_map=norm_map,
+            # L0466 为“stats”（归一化统计量）提供这一项的值，注意它所在的参数表或外层表达式。
+            stats=dataset.meta.stats,
+            # L0467 为“normalize_observation_keys”提供这一项的值，注意它所在的参数表或外层表达式。
+            normalize_observation_keys=normalize_observation_keys,
+            # L0468 为“eps”提供这一项的值，注意它所在的参数表或外层表达式。
+            eps=eps,
+            # L0469 为“device”（运算设备）提供这一项的值，注意它所在的参数表或外层表达式。
+            device=device,
+        # L0470 闭合上方尚未结束的括号。
+        )
+
+    # L0472 对观测执行正向归一化。输入中存在动作时也处理它。
+    def __call__(self, transition: EnvTransition) -> EnvTransition:
+        # L0473 调用 transition.copy，用它的结果给 “new_transition” 赋值。
+        new_transition = transition.copy()
+
+        # L0475 归一化或反归一化的说明，注意数据尺度的转换。
+        # Handle observation normalization.
+        # L0476 调用 new_transition.get，用它的结果给 “observation”（观测） 赋值。
+        observation = new_transition.get(TransitionKey.OBSERVATION)
+        # L0477 条件 observation is not None 成立时进入下方分支。
+        if observation is not None:
+            # L0478 调用 self._normalize_observation，用它的结果给 “new_transition[TransitionKey.OBSERVATION]” 赋值。
+            new_transition[TransitionKey.OBSERVATION] = self._normalize_observation(
+                # L0479 延续上面的语句，observation, inverse=False。
+                observation, inverse=False
+            # L0480 闭合上方尚未结束的括号。
+            )
+
+        # L0482 归一化或反归一化的说明，注意数据尺度的转换。
+        # Handle action normalization.
+        # L0483 调用 new_transition.get，用它的结果给 “action”（单步动作） 赋值。
+        action = new_transition.get(TransitionKey.ACTION)
+
+        # L0485 条件 action is None 成立时进入下方分支。
+        if action is None:
+            # L0486 引用已有的值 new_transition作为当前调用的返回值。
+            return new_transition
+
+        # L0488 条件 not isinstance(action, torch.Tensor) 成立时进入下方分支。
+        if not isinstance(action, torch.Tensor):
+            # L0489 抛出 ValueError，中断当前路径并交给上层的异常处理。
+            raise ValueError(f"Action should be a PolicyAction type got {type(action)}")
+
+        # L0491 调用 self._normalize_action，用它的结果给 “new_transition[TransitionKey.ACTION]” 赋值。
+        new_transition[TransitionKey.ACTION] = self._normalize_action(action, inverse=False)
+
+        # L0493 引用已有的值 new_transition作为当前调用的返回值。
+        return new_transition
+
+    # L0495 定义方法 transform_features。
+    def transform_features(
+        # L0496 延续上面的语句，self, features: dict[PipelineFeatureType, dict[str, PolicyFeature]]。
+        self, features: dict[PipelineFeatureType, dict[str, PolicyFeature]]
+    # L0497 结束参数表。若箭头后有类型，它标注预期返回值，缩进块是函数体。
+    ) -> dict[PipelineFeatureType, dict[str, PolicyFeature]]:
+        # L0498 引用已有的值 features作为当前调用的返回值。
+        return features
+
+
+# L0501 数据类装饰器。Python 根据字段生成初始化等方法。
+@dataclass
+# L0502 注册装饰器。模块导入时，把随后的类或方法登记到框架的查找表。
+@ProcessorStepRegistry.register(name="unnormalizer_processor")
+# L0503 定义类 UnnormalizerProcessorStep，括号列出基类 _NormalizationMixin、ProcessorStep。
+class UnnormalizerProcessorStep(_NormalizationMixin, ProcessorStep):
+    # L0504 文档字符串的边界。
+    """
+    # L0505 原文档中的说明或续行。
+    A processor step that applies unnormalization to observations and actions.
+
+    # L0507 原文档中的说明或续行。
+    This class inverts the normalization process, scaling data back to its original
+    # L0508 原文档中的说明或续行。
+    range. It is typically used in the post-processing pipeline to convert a policy's
+    # L0509 原文档中的说明或续行。
+    normalized action output into a format that can be executed by a robot or
+    # L0510 原文档中的说明或续行。
+    environment.
+    # L0511 文档字符串的边界。
+    """
+
+    # L0513 类方法装饰器。调用时首个参数 cls 是类本身。
+    @classmethod
+    # L0514 定义方法 from_lerobot_dataset。
+    def from_lerobot_dataset(
+        # L0515 cls 接收当前类，类方法被调用时由 Python 自动传入。
+        cls,
+        # L0516 “dataset”是当前括号中的一项，逗号将它与下一项分开。
+        dataset: LeRobotDataset,
+        # L0517 延续上面的语句，features: dict[str, PolicyFeature],。
+        features: dict[str, PolicyFeature],
+        # L0518 延续上面的语句，norm_map: dict[FeatureType, NormalizationMode],。
+        norm_map: dict[FeatureType, NormalizationMode],
+        # L0519 后续参数必须按名字传入。
+        *,
+        # L0520 为“device”（运算设备）提供这一项的值，注意它所在的参数表或外层表达式。
+        device: torch.device | str | None = None,
+    # L0521 结束参数表。若箭头后有类型，它标注预期返回值，缩进块是函数体。
+    ) -> UnnormalizerProcessorStep:
+        # L0522 文档字符串的边界。
+        """
+        # L0523 原文档中的说明或续行。
+        Creates an `UnnormalizerProcessorStep` using statistics from a `LeRobotDataset`.
+
+        # L0525 以下列出调用参数及其含义。
+        Args:
+            # L0526 原文档对“dataset”的说明。
+            dataset: The dataset from which to extract normalization statistics.
+            # L0527 原文档对“features”的说明。
+            features: The feature definition for the processor.
+            # L0528 原文档对“norm_map”的说明。
+            norm_map: The mapping from feature types to normalization modes.
+            # L0529 原文档对“device”（运算设备）的说明。
+            device: The target device for the processor.
+
+        # L0531 以下说明调用者接收到的结果。
+        Returns:
+            # L0532 原文档中的说明或续行。
+            A new instance of `UnnormalizerProcessorStep`.
+        # L0533 文档字符串的边界。
+        """
+        # L0534 调用 cls，用它的结果作为当前调用的返回值。
+        return cls(features=features, norm_map=norm_map, stats=dataset.meta.stats, device=device)
+
+    # L0536 对已有输入执行反归一化。本次后处理中处理的是动作。
+    def __call__(self, transition: EnvTransition) -> EnvTransition:
+        # L0537 调用 transition.copy，用它的结果给 “new_transition” 赋值。
+        new_transition = transition.copy()
+
+        # L0539 归一化或反归一化的说明，注意数据尺度的转换。
+        # Handle observation unnormalization.
+        # L0540 调用 new_transition.get，用它的结果给 “observation”（观测） 赋值。
+        observation = new_transition.get(TransitionKey.OBSERVATION)
+        # L0541 条件 observation is not None 成立时进入下方分支。
+        if observation is not None:
+            # L0542 调用 self._normalize_observation，用它的结果给 “new_transition[TransitionKey.OBSERVATION]” 赋值。
+            new_transition[TransitionKey.OBSERVATION] = self._normalize_observation(observation, inverse=True)
+
+        # L0544 归一化或反归一化的说明，注意数据尺度的转换。
+        # Handle action unnormalization.
+        # L0545 调用 new_transition.get，用它的结果给 “action”（单步动作） 赋值。
+        action = new_transition.get(TransitionKey.ACTION)
+
+        # L0547 条件 action is None 成立时进入下方分支。
+        if action is None:
+            # L0548 引用已有的值 new_transition作为当前调用的返回值。
+            return new_transition
+        # L0549 条件 not isinstance(action, torch.Tensor) 成立时进入下方分支。
+        if not isinstance(action, torch.Tensor):
+            # L0550 抛出 ValueError，中断当前路径并交给上层的异常处理。
+            raise ValueError(f"Action should be a PolicyAction type got {type(action)}")
+
+        # L0552 调用 self._normalize_action，用它的结果给 “new_transition[TransitionKey.ACTION]” 赋值。
+        new_transition[TransitionKey.ACTION] = self._normalize_action(action, inverse=True)
+
+        # L0554 引用已有的值 new_transition作为当前调用的返回值。
+        return new_transition
+
+    # L0556 定义方法 transform_features。
+    def transform_features(
+        # L0557 延续上面的语句，self, features: dict[PipelineFeatureType, dict[str, PolicyFeature]]。
+        self, features: dict[PipelineFeatureType, dict[str, PolicyFeature]]
+    # L0558 结束参数表。若箭头后有类型，它标注预期返回值，缩进块是函数体。
+    ) -> dict[PipelineFeatureType, dict[str, PolicyFeature]]:
+        # L0559 引用已有的值 features作为当前调用的返回值。
+        return features
+
+# …… 跳过原文第 560–587 行 ……

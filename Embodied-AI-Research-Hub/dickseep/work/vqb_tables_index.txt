@@ -1,0 +1,71 @@
+TOTAL TABLES: 35
+T  1 rows= 17 cols= 9 :: Table 1: End-to-end RTN on LIBERO (success %). Each setting uses 200 episodes, except X-VLA with 190. All formats use the grids in Section 3. Bold ent
+        hdr: Model | Suite | Baseline | W3 | W4 | W8
+T  2 rows=  4 cols= 8 :: Table 2: X-VLA beyond LIBERO. SIMPLER-VM averages variants within task families and then averages families (864 episodes per setting). CALVIN reports 
+        hdr: Benchmark (metric) | Baseline | W3 | W4 | W8 | W4A4
+T  3 rows=  5 cols= 5 :: Table 3: Component-only W4A4 on LIBERO-Spatial (success %). Only the indicated component is quantized; baseline denotes the released-precision policy.
+        hdr: Model | Baseline | VE | LLM | AH
+T  4 rows=  9 cols= 6 :: Table 4: π0.5\pi_{0.5}-Spatial W4A4 scope controls (SR %, 200 episodes; Wilson intervals). New isolated/union/126-layer calibrations use task-0 states
+        hdr: AH subset | #L | RTN | Calibrated | Exec. MAE | Gripper bias
+T  5 rows= 14 cols= 4 :: Table 5: Layer-group interventions on LIBERO-Spatial. Parameters count selected linear weights; Δ\Delta is the success change from the corresponding b
+        hdr: Quantized layers | Params | SR % | Δ\Delta
+T  6 rows= 16 cols= 5 :: Table 6: OFT-Long W3 localization (success %, 200 episodes per cell; 95% Wilson intervals). W3 uses asymmetric group-128 weights unless specified. The
+        hdr: Quantized scope | Grid | #L | Params | SR % [CI]
+T  7 rows=  6 cols= 6 :: Table 7: OFT protected-output comparisons (SR %, 200 episodes; Wilson intervals for protected cells). Both weights and input activations of the AH out
+        hdr:  |  | W4A8 | W8A8
+T  8 rows=  7 cols= 4 :: Table 8: Weight-grid controls for end-to-end π0.5\pi_{0.5} on LIBERO-Spatial (success %, 200 episodes). Sym./Asym. denote symmetric/asymmetric grids. 
+        hdr: Bits | Granularity | Sym. | Asym.
+T  9 rows=  7 cols= 7 :: Table 9: W4A4 smoothing-and-clipping controls on LIBERO-Spatial (SR %, 200 episodes). Component-only settings use α=0.5\alpha=0.5; the final two rows 
+        hdr:  | π0.5\pi_{0.5} (99.0) | π0\pi_{0} (78.0) | OFT (100.0)
+T 10 rows=  6 cols= 4 :: Table 10: Real-kernel measurements on OpenVLA-OFT (LLM only, RTX 4090, batch size one, 20 LIBERO episodes). Memory is peak CUDA allocation. Timings ar
+        hdr: Method | Memory (GiB) | Control call (ms) | Full inference (ms)
+T 11 rows=  6 cols= 8 :: Table 11: Franka Research 3 task success (%), 50 rollouts per condition. Each model is separately fine-tuned for the robot study; these are within-rob
+        hdr: Task | Model | SR (%)
+T 12 rows=  7 cols= 4 :: Table 12: Main RTN presets. W2 uses the W3/W4 weight-grid convention. Additional activation widths and alternative weight grids are restricted to the 
+        hdr: Preset | Weight bits | Weight grid | Activation grid
+T 13 rows=  5 cols= 5 :: Table 13: Selected linear-layer counts / weight parameters in millions for the LIBERO-Spatial W4 end-to-end scopes. Excluded modules are not counted. 
+        hdr: Model | VE | MP | LLM | AH
+T 14 rows= 16 cols= 2 :: Table 14: Checkpoint identifiers recorded for the main simulation sweeps. Each π\pi checkpoint and the X-VLA LIBERO checkpoint are shared across their
+        hdr: Model / setting | Checkpoint identifier
+T 15 rows= 10 cols= 3 :: Table 15: Calibration scope and strength for π0.5\pi_{0.5}-Spatial at W4A4 (200 evaluation episodes). Statistics use two unquantized-policy episodes, 
+        hdr: Quantized scope | Calibrated | SR %
+T 16 rows=  4 cols= 5 :: Table 16: Calibration-set stability for π0.5\pi_{0.5}-Spatial at W4A4 (SR %, 200 evaluation episodes on init states 0–19 per cell). Each column calibr
+        hdr:  | calibration init states (task 0)
+T 17 rows=  5 cols= 5 :: Table 17: π0\pi_{0}-Spatial W4A4 calibration controls (SR %, 200 episodes). Two unquantized episodes at task-0 states 20–21 provide statistics; MP is 
+        hdr: Quantized scope | RTN W4A4 | calibrated α\alpha=0.25 | α\alpha=0.5 | α\alpha=0.75
+T 18 rows=  9 cols= 2 :: Table 18: Selected independent evaluation-seed replications on LIBERO-Spatial. Each run uses 200 episodes, or 190 for X-VLA. These repetitions do not 
+        hdr: Cell | SR % across seeds
+T 19 rows= 31 cols= 5 :: Table 19: Task-clustered uncertainty for selected contrasts. A and B are success rates (%); Δ=A−B\Delta=A-B in pp. Intervals are two-stage bootstrap p
+        hdr: Contrast | A | B | Δ\Delta | 95% interval
+T 20 rows=  5 cols= 6 :: Table 20: Exploratory Spearman correlations between saved layer-averaged diagnostics and success loss. Average ranks handle ties; repeated seeds are e
+        hdr: Model | Scopes | Kurtosis | Output error | Activation error | Dispersion
+T 21 rows=  7 cols=13 :: Table 21: Real-kernel measurements of Table 10 (ref.) and three further independent profiling sessions (s1–s3), each a fresh process with the five met
+        hdr:  | Memory (GiB) | Control call (ms) | Full inference (ms)
+T 22 rows= 10 cols= 3 :: Table 22: LLM-only PTQ on OpenVLA-OFT, LIBERO-Spatial (baseline 100%; 200 episodes per setting). Brackets give 95% Wilson intervals. The near-ceiling 
+        hdr: Bits | Method | SR % [CI]
+T 23 rows=  6 cols= 3 :: Table 23: Action-space fidelity on paired observations (OpenVLA-OFT, LLM-only quantization). One held-out LIBERO-Spatial episode (task 0, init state 2
+        hdr: Bits | Method | mean |Δ​a||\Delta a|
+T 24 rows=  9 cols= 9 :: Table 24: Per-coordinate action deviations on the same held-out OFT trajectory as Table 23. Values are multiplied by 10310^{3} for readability. Signed
+        hdr: Method | Statistic | a1a_{1} | a2a_{2} | a3a_{3} | a4a_{4}
+T 25 rows= 15 cols= 2 :: Table 25: Hyperparameters for LoRA fine-tuning of π0.5\pi_{0.5}.
+        hdr: Parameter | Value
+T 26 rows= 14 cols= 2 :: Table 26: Hyperparameters for LoRA fine-tuning of OpenVLA-OFT.
+        hdr: Parameter | Value
+T 27 rows=  6 cols= 7 :: Table 27: Component-only quantization on LIBERO-Spatial. The weight-only floor is the lowest tested width among W2/W3/W4 whose success point estimate 
+        hdr:  | Weight-only floor | W4A4 (SR %)
+T 28 rows= 13 cols= 8 :: Table 28: Component-only activation precision with W4 weights (LIBERO-Spatial success %). Budget denotes the lowest tested activation width within 5 p
+        hdr: Model | Comp. | A4 | A5 | A6 | A8
+T 29 rows= 15 cols= 4 :: Table 29: Action-head subsets under W4A4 on π0.5\pi_{0.5}-Spatial (baseline 99.0%; 200 episodes per setting). Brackets give 95% Wilson intervals; Δ\De
+        hdr: Quantized subset (of the AH) | #L | SR % [CI] | Δ\Delta
+T 30 rows=  7 cols= 5 :: Table 30: The six-setting comparison of Table 29 repeated on LIBERO-Object at three evaluation seeds (π0.5\pi_{0.5}, W4A4 on subsets of the action hea
+        hdr: Quantized subset (of the AH) | #L | seed 0 | seed 1 | seed 2
+T 31 rows= 15 cols= 6 :: Table 31: Supporting scope, format, and flow-step controls. All entries use evaluation seed 0. The source manifest records the exact result files; no 
+        hdr: Model | Suite | Format | Intervention | nn | SR (%)
+T 32 rows=  7 cols= 5 :: Table 32: Matched action-head scopes on π0.5\pi_{0.5}-Spatial (success %, 200 episodes per cell; brackets: 95% Wilson intervals). The six W4/W4A8 sett
+        hdr: Quantized subset (of the AH) | #L | W4 | W4A8 | W4A4
+T 33 rows=  4 cols= 6 :: Table 33: Replay composition statistics over 219 chunks. Norm ratio is ‖eA∪B‖2/(‖eA‖2+‖eB‖2)\|e_{A\cup B}\|_{2}/(\|e_{A}\|_{2}+\|e_{B}\|_{2}); residua
+        hdr: Format | Norm ratio | Residual | Cosine | MAE: 126 / 167 | 167 lower (%)
+T 34 rows= 16 cols= 7 :: Table 34: Replay across formats on the same 20 held-out trajectories. Executed-action MAE uses environment units; chunk MAE uses the full normalized 5
+        hdr: Format | Scope | #L | SR (%) | Exec. MAE | Chunk MAE
+T 35 rows=  6 cols=10 :: Table 35: W4A4 signed action deviations (quantized minus full precision, environment units) and down-projection input summaries. Coordinates follow cl
+        hdr: Scope | a1a_{1} | a2a_{2} | a3a_{3} | a4a_{4} | a5a_{5}

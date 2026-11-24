@@ -1,0 +1,11 @@
+TOTAL TABLES: 7
+T  1 rows=  0 cols= 0 :: Table 1: Selective layer-quantization results under the QuantVLA architecture without ATM/OHB calibration for π​0.5\pi 0.5 and GR00T N1.5 on LIBERO.
+T  2 rows=  0 cols= 0 :: Table 2: Results on LIBERO for different QuantVLA variants on OpenPI π​0.5\pi 0.5 and GR00T N1.5. The table reports success rates (%) across four LIBE
+T  3 rows=  0 cols= 0 :: Table 3: LIBERO results on OpenPI π​0.5\pi 0.5 comparing FP16, W4A8, and W4A4 precision.
+T  4 rows=  0 cols= 0 :: Table 4: LIBERO results under different denoising steps on GR00T N1.5.
+T  5 rows=  6 cols= 6 :: Table 5: Additional quantization comparison on the LIBERO benchmark for OpenPI π\pi0.5.
+        hdr: Method | Spatial | Object | Goal | Long | Avg
+T  6 rows=  4 cols= 3 :: Table 6: Quantization results on Pick-and-Can.
+        hdr: Method | Precision | PickCan
+T  7 rows=  3 cols= 3 :: Table 7: Quantization results on LIBERO-Spatial for OpenVLA.
+        hdr: Model | Precision | Spatial

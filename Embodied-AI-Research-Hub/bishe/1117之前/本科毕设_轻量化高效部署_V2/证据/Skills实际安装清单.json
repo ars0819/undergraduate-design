@@ -1,0 +1,38 @@
+[
+  {
+    "name": "literature-review",
+    "path": "C:\\Users\\Administrator\\.codex\\skills\\literature-review\\SKILL.md",
+    "sha256": "20ce73246d4b60038638b221ab1b6fea43e0eb81dd920dcc3ad4df4a2716730b",
+    "bytes": 13098
+  },
+  {
+    "name": "paper-lookup",
+    "path": "C:\\Users\\Administrator\\.codex\\skills\\paper-lookup\\SKILL.md",
+    "sha256": "567d6e3f512ddf94406cf86ba10dbd14e547f2ec01446b811e86f031c337440d",
+    "bytes": 26452
+  },
+  {
+    "name": "scientific-critical-thinking",
+    "path": "C:\\Users\\Administrator\\.codex\\skills\\scientific-critical-thinking\\SKILL.md",
+    "sha256": "cd80217c03ac740b6c835b826f8d98d016b157e8cedd96419c84072b7225fa43",
+    "bytes": 13381
+  },
+  {
+    "name": "hypothesis-generation",
+    "path": "C:\\Users\\Administrator\\.codex\\skills\\hypothesis-generation\\SKILL.md",
+    "sha256": "687f107710a8f4ff5991458b26bccd0743325d35b828d8ecb431eb22677f5e52",
+    "bytes": 16912
+  },
+  {
+    "name": "experimental-design",
+    "path": "C:\\Users\\Administrator\\.codex\\skills\\experimental-design\\SKILL.md",
+    "sha256": "53bb303e2d1f127c0062a505b1b6abebd6e4de12e119953b89bdcc0bd93f1798",
+    "bytes": 16614
+  },
+  {
+    "name": "scientific-writing",
+    "path": "C:\\Users\\Administrator\\.codex\\skills\\scientific-writing\\SKILL.md",
+    "sha256": "234b312260c19946fbe0975304ca20d76ed624f704569f763b94d0d1f35a2d74",
+    "bytes": 15278
+  }
+]

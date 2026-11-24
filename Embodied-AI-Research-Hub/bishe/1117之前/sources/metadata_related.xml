@@ -1,0 +1,92 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/fE0wfjgs6p9xYklPlnMh03erAqU</id>
+  <title>arXiv Query: search_query=&amp;id_list=2512.01031,2605.08168,2606.31132&amp;start=0&amp;max_results=5</title>
+  <updated>2026-11-05T08:46:17Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=&amp;start=0&amp;max_results=5&amp;id_list=2512.01031,2605.08168,2606.31132" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>5</opensearch:itemsPerPage>
+  <opensearch:totalResults>3</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2606.31132v1</id>
+    <title>ELASTIC: Efficiently Learning to Adaptively Scale Test-Time Compute for Generative Control Policies</title>
+    <updated>2026-06-30T05:00:32Z</updated>
+    <link href="https://arxiv.org/abs/2606.31132v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2606.31132v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Generative control policies (GCPs), such as diffusion policies and flow-based vision-language-action models, enable test-time scaling in robot control. Test-time compute can be allocated along two axes: sequential scaling, which increases denoising steps to refine actions, and parallel scaling, which samples multiple candidate actions to search across modes of the policy distribution. However, the optimal allocation of sequential and parallel compute is hard to know a priori as it is state-, task-, and policy-dependent. For example, early stages of a grasp may benefit from broader parallel exploration, while near-contact phases may require more sequential refinement for precision. We present ELASTIC, an algorithm that learns state-dependent test-time compute schedules for GCPs. We formulate compute allocation as a meta-Markov Decision Process in which a meta-policy interacts with a frozen pretrained robot policy and selects sequential steps and parallel samples at each denoising iteration to maximize task success while minimizing compute. Using reinforcement learning, this meta-policy also learns adaptive compute schedules without access to the GCP's training data. Across simulated manipulation benchmarks with diffusion policies, ELASTIC Pareto-dominates fixed and single-axis scaling baselines at matched compute budgets. On real-world robot manipulation with the $π_{0.5}$ vision-language-action model, ELASTIC matches best-of-$10$ success while reducing wall-clock latency by 34%.</summary>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-06-30T05:00:32Z</published>
+    <arxiv:primary_category term="cs.RO"/>
+    <author>
+      <name>Andrew Zou Li</name>
+    </author>
+    <author>
+      <name>Gokul Swamy</name>
+    </author>
+    <author>
+      <name>Yonatan Bisk</name>
+    </author>
+    <author>
+      <name>Andrea Bajcsy</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.08168v1</id>
+    <title>Understanding Asynchronous Inference Methods for Vision-Language-Action Models</title>
+    <updated>2026-05-04T18:01:15Z</updated>
+    <link href="https://arxiv.org/abs/2605.08168v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.08168v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Vision-Language-Action (VLA) models offer a promising path to generalist robot control, but their inference latency causes observation staleness when generated actions are executed asynchronously. Several methods have been proposed concurrently to mitigate this problem: inference-time inpainting (IT-RTC), training-time delay simulation (TT-RTC), future-state-aware conditioning (VLASH), and lightweight residual correction (A2C2). Each takes a fundamentally different approach, but they have so far been evaluated independently with different codebases, base policies, and protocols. We present a systematic comparison of these four methods under controlled conditions. We develop two unified codebases that integrate all methods with harmonized library and dataset versions, and we benchmark them on the Kinetix suite with MLPMixer policies and on the LIBERO manipulation benchmark with SmolVLA, sweeping inference delays up to $d=20$ control steps. A2C2's per-step residual correction is the most effective method on Kinetix, holding above 90% solve rate up to $d=8$, and also leads on LIBERO from $d=4$ onwards. IT-RTC is competitive at low delays but degrades sharply under long chunks ($H=30$) and high delays. TT-RTC is the most robust training-based method: stable across $d_\max$ choices, generalizes beyond its training delay distribution, and adds zero inference overhead. VLASH exhibits a clear low-delay vs. high-delay trade-off governed by the fine-tuning delay range $[0,d_\max]$. Code is available at https://github.com/TheAyos/async-vla-inference</summary>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-04T18:01:15Z</published>
+    <arxiv:primary_category term="cs.RO"/>
+    <author>
+      <name>Ayoub Agouzoul</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2512.01031v2</id>
+    <title>VLASH: Real-Time VLAs via Future-State-Aware Asynchronous Inference</title>
+    <updated>2026-07-26T23:00:24Z</updated>
+    <link href="https://arxiv.org/abs/2512.01031v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2512.01031v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Vision-Language-Action models (VLAs) are becoming increasingly capable across diverse robotic tasks. However, these models are typically deployed under synchronous inference, where the robot waits for model inference to complete before acting, and cannot perceive or respond to environmental changes during action execution. This not only introduces noticeable action stalls, but also significantly increases reaction latency, fundamentally limiting the applicability of VLAs to dynamic, real-time tasks. Asynchronous inference offers a promising solution to achieve continuous and low-latency control by enabling robots to execute actions and perform inference simultaneously. However, because the robot and environment continue to evolve during inference, a temporal misalignment arises between the prediction and execution intervals. This leads to significant action instability, while existing asynchronous methods either degrade accuracy or introduce runtime overhead to mitigate it. We propose VLASH, a simple yet effective method for asynchronous VLA inference that delivers smooth, accurate, and fast reaction control without architectural changes or additional runtime overhead. VLASH leverages the future execution-time state by rolling the robot state forward with the previous action chunk, thereby bridging the gap between prediction and execution. Experiments show that VLASH reduces reaction latency by up to 11.8x compared to synchronous inference and consistently outperforms all asynchronous baselines in accuracy. With action quantization, it further achieves 1.5-2.0x task completion speedup with minimal accuracy loss. Moreover, it empowers state-of-the-art VLAs such as $π_{0.5}$ to handle fast-reaction, high-precision tasks including playing ping-pong and playing whack-a-mole, where traditional synchronous inference fails. Code is available at https://github.com/mit-han-lab/vlash</summary>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-11-30T18:59:24Z</published>
+    <arxiv:primary_category term="cs.RO"/>
+    <author>
+      <name>Jiaming Tang</name>
+    </author>
+    <author>
+      <name>Yufei Sun</name>
+    </author>
+    <author>
+      <name>Yilong Zhao</name>
+    </author>
+    <author>
+      <name>Shang Yang</name>
+    </author>
+    <author>
+      <name>Yujun Lin</name>
+    </author>
+    <author>
+      <name>Zhuoyang Zhang</name>
+    </author>
+    <author>
+      <name>James Hou</name>
+    </author>
+    <author>
+      <name>Yao Lu</name>
+    </author>
+    <author>
+      <name>Zhijian Liu</name>
+    </author>
+    <author>
+      <name>Song Han</name>
+    </author>
+  </entry>
+</feed>

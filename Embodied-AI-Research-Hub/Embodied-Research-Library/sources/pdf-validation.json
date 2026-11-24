@@ -1,0 +1,202 @@
+[
+  {
+    "key": "ACT",
+    "pages": 18,
+    "parsed_pages": 18,
+    "text_chars": 83175,
+    "ok": true,
+    "bytes": 5353485,
+    "sha256": "2e2fe25860f5f9cee9e655a2714e9f2264a7a5078bcd267c16d3f39af461345a",
+    "source": "https://arxiv.org/pdf/2304.13705"
+  },
+  {
+    "key": "AWQ",
+    "pages": 15,
+    "parsed_pages": 15,
+    "text_chars": 67409,
+    "ok": true,
+    "bytes": 19804976,
+    "sha256": "6e35c8fe7af1f18a5c48dd2524629d859a2013a91d4b3666b554705287a17764",
+    "source": "https://arxiv.org/pdf/2306.00978"
+  },
+  {
+    "key": "DDPM",
+    "pages": 25,
+    "parsed_pages": 25,
+    "text_chars": 56240,
+    "ok": true,
+    "bytes": 10267274,
+    "sha256": "aee5e07a802e8dfd2a386374c94fd61d1d056cb7e1e0fec4f28e8120ff5d8505",
+    "source": "https://arxiv.org/pdf/2006.11239"
+  },
+  {
+    "key": "DiffusionPolicy",
+    "pages": 19,
+    "parsed_pages": 19,
+    "text_chars": 101542,
+    "ok": true,
+    "bytes": 6192199,
+    "sha256": "b65c474b696a4802d8f1457d86b637ce2c5521412570d3aa928cd54563babc8f",
+    "source": "https://arxiv.org/pdf/2303.04137"
+  },
+  {
+    "key": "DreamerV3",
+    "pages": 40,
+    "parsed_pages": 40,
+    "text_chars": 85089,
+    "ok": true,
+    "bytes": 2874717,
+    "sha256": "d0385798e8bada8e81b915c1743be81d9ce8776f12ed937e09351995e099ce37",
+    "source": "https://arxiv.org/pdf/2301.04104"
+  },
+  {
+    "key": "EfficientVLA",
+    "pages": 15,
+    "parsed_pages": 15,
+    "text_chars": 51977,
+    "ok": true,
+    "bytes": 851758,
+    "sha256": "7de176b58edc5b1c86f6c86cb6af54715ebc437915e2ca31f9d0bb2bc5847a9b",
+    "source": "https://arxiv.org/pdf/2506.10100"
+  },
+  {
+    "key": "FAST",
+    "pages": 19,
+    "parsed_pages": 19,
+    "text_chars": 83045,
+    "ok": true,
+    "bytes": 7468382,
+    "sha256": "3739b31f5fecdde371509ff5bb13619979734e894a255a9b264253f4cc53934a",
+    "source": "https://arxiv.org/pdf/2501.09747"
+  },
+  {
+    "key": "ForeAct",
+    "pages": 16,
+    "parsed_pages": 16,
+    "text_chars": 65272,
+    "ok": true,
+    "bytes": 10959643,
+    "sha256": "d35a86c35bb88f7bd48a14d2d744cab63078b2f957e2fd1d7ef756dcbf3044da",
+    "source": "https://arxiv.org/pdf/2602.12322"
+  },
+  {
+    "key": "OpenVLA",
+    "pages": 37,
+    "parsed_pages": 37,
+    "text_chars": 135580,
+    "ok": true,
+    "bytes": 13240309,
+    "sha256": "353c37df34458f12f969b14dfd8b77175b727b9cddea7bb891759beddeefe1be",
+    "source": "https://arxiv.org/pdf/2406.09246"
+  },
+  {
+    "key": "OpenVLAOFT",
+    "pages": 24,
+    "parsed_pages": 24,
+    "text_chars": 94661,
+    "ok": true,
+    "bytes": 26994977,
+    "sha256": "b860aa1206b6cfb0ce8be177f961379dd6a133d52cc74ac346636e0f4952a596",
+    "source": "https://arxiv.org/pdf/2502.19645"
+  },
+  {
+    "key": "pi0",
+    "pages": 17,
+    "parsed_pages": 17,
+    "text_chars": 89701,
+    "ok": true,
+    "bytes": 7893845,
+    "sha256": "fbdfba56258bdbd220207ba63410c6c943e43a73e97a7a5a47ca0bc74204f821",
+    "source": "https://arxiv.org/pdf/2410.24164"
+  },
+  {
+    "key": "pi05",
+    "pages": 19,
+    "parsed_pages": 19,
+    "text_chars": 98390,
+    "ok": true,
+    "bytes": 16213397,
+    "sha256": "6a1029fd8ab6944b74cf22f5e5d30e60bc15699d964b2900af799b807a34b64c",
+    "source": "https://arxiv.org/pdf/2504.16054"
+  },
+  {
+    "key": "ReviewRealWorld",
+    "pages": 38,
+    "parsed_pages": 38,
+    "text_chars": 254816,
+    "ok": true,
+    "bytes": 7705369,
+    "sha256": "35b9fad5b156b6ac70d6abc3b8083ca35cd66bdaa96728cc5d6769d86ceb9784",
+    "source": "https://arxiv.org/pdf/2510.07077"
+  },
+  {
+    "key": "RTC",
+    "pages": 25,
+    "parsed_pages": 25,
+    "text_chars": 84368,
+    "ok": true,
+    "bytes": 9502903,
+    "sha256": "dd6d602be1f50b894d88517bf68916c4272885b2e29d96cffc426dacff41898f",
+    "source": "https://arxiv.org/pdf/2506.07339"
+  },
+  {
+    "key": "SAC",
+    "pages": 14,
+    "parsed_pages": 14,
+    "text_chars": 52046,
+    "ok": true,
+    "bytes": 4388102,
+    "sha256": "5c33fae017d02f7025730f05198d4a6b103402822c8bbf48cbc5d8a0474c336a",
+    "source": "https://arxiv.org/pdf/1801.01290"
+  },
+  {
+    "key": "SmolVLA",
+    "pages": 24,
+    "parsed_pages": 24,
+    "text_chars": 97328,
+    "ok": true,
+    "bytes": 8921356,
+    "sha256": "cb1bb9a8f824187fcdc32af8c290214487c524f139a3c2def1c6d97adb1fa40c",
+    "source": "https://arxiv.org/pdf/2506.01844"
+  },
+  {
+    "key": "Transformer",
+    "pages": 15,
+    "parsed_pages": 15,
+    "text_chars": 39615,
+    "ok": true,
+    "bytes": 2215244,
+    "sha256": "bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697",
+    "source": "https://arxiv.org/pdf/1706.03762"
+  },
+  {
+    "key": "VLACache",
+    "pages": 19,
+    "parsed_pages": 19,
+    "text_chars": 58090,
+    "ok": true,
+    "bytes": 6116171,
+    "sha256": "7dda68f7b192481a25dbdd2de9591f068fabe9966b799de3403a75ef93245ee6",
+    "source": "https://arxiv.org/pdf/2502.02175"
+  },
+  {
+    "key": "VLASH",
+    "pages": 10,
+    "parsed_pages": 10,
+    "text_chars": 47425,
+    "ok": true,
+    "bytes": 5598269,
+    "sha256": "3393d84dfc9679a382e11a78b7ad5f3925ea2bfbbddb1a8521dc405f0578fa8c",
+    "source": "https://arxiv.org/pdf/2512.01031"
+  },
+  {
+    "key": "WorldModels",
+    "pages": 21,
+    "parsed_pages": 21,
+    "text_chars": 83671,
+    "ok": true,
+    "bytes": 3147467,
+    "sha256": "b0c1e30aab53efd28ddf61d661f680150918d4d03b77bae62bc52d62dbd76cce",
+    "source": "https://arxiv.org/pdf/1803.10122"
+  }
+]

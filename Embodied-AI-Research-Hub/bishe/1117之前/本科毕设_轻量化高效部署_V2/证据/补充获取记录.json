@@ -1,0 +1,48 @@
+[
+  {
+    "file": "smolvla_api.json",
+    "url": "https://huggingface.co/api/models/lerobot/smolvla_libero",
+    "error": "HTTP Error 502: Bad Gateway"
+  },
+  {
+    "file": "oft_spatial_api.json",
+    "url": "https://huggingface.co/api/models/moojink/openvla-7b-oft-finetuned-libero-spatial",
+    "error": "HTTP Error 502: Bad Gateway"
+  },
+  {
+    "file": "vqb_scripts__env__setup_openvla_oft.sh",
+    "url": "https://raw.githubusercontent.com/jiuyixu25/VLAQuantBench/4a2cb7c1bf9160ae683fe598ec583d7c9b9c13c9/scripts/env/setup_openvla_oft.sh",
+    "status": "ok",
+    "sha256": "a1d5e75ddf2115e24af361c34502755aee2c25dc0b124c03fa4eb70d99330a67"
+  },
+  {
+    "file": "vqb_scripts__profile_kernels.py",
+    "url": "https://raw.githubusercontent.com/jiuyixu25/VLAQuantBench/4a2cb7c1bf9160ae683fe598ec583d7c9b9c13c9/scripts/profile_kernels.py",
+    "status": "ok",
+    "sha256": "1fd7bcdd35e1b5e55a938312f730c292d0ad3877ceb076f48cab278dd33a14b4"
+  },
+  {
+    "file": "vqb_docs__protocol.md",
+    "url": "https://raw.githubusercontent.com/jiuyixu25/VLAQuantBench/4a2cb7c1bf9160ae683fe598ec583d7c9b9c13c9/docs/protocol.md",
+    "status": "ok",
+    "sha256": "0fd2c317ef855a3836076293f4987d73dbadf6d495a267b4278cdc9ce6f7804e"
+  },
+  {
+    "file": "vqb_pyproject.toml",
+    "url": "https://raw.githubusercontent.com/jiuyixu25/VLAQuantBench/4a2cb7c1bf9160ae683fe598ec583d7c9b9c13c9/pyproject.toml",
+    "status": "ok",
+    "sha256": "0a7610238201d41580cba132916a2a7bb98d3d152fe1f3e7173d8176eb3b9fbd"
+  },
+  {
+    "file": "oft_transformers_commit.json",
+    "url": "https://api.github.com/repos/moojink/transformers-openvla-oft/commits/HEAD",
+    "status": "ok",
+    "sha256": "296bf752cb6f7f8376a02a973d7c49cc13ceb0d305a5d102276a2c438db1cc13"
+  },
+  {
+    "file": "oft_dlimp_commit.json",
+    "url": "https://api.github.com/repos/moojink/dlimp_openvla/commits/HEAD",
+    "status": "ok",
+    "sha256": "aaf3d0d19fa812ffd4aded51ff13bd3e000f3e90abce846d0992a751b4145472"
+  }
+]

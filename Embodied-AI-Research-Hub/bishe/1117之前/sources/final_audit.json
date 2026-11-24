@@ -1,0 +1,14 @@
+{
+  "reference_count": 38,
+  "research_paper_count": 36,
+  "focused_fulltext_count": 15,
+  "body_chinese_characters": 20359,
+  "total_characters": 57448,
+  "missing_citations": [],
+  "chapter_count": 18,
+  "mermaid_blocks": 2,
+  "mermaid_check": "manual syntax inspection; parser/render not executed; bundled mermaid unavailable",
+  "pilot_rows": 180,
+  "pilot_status": "design only; no experimental results",
+  "report_sha256": "432e63723802d164c574f40ccb0d7fec51d101c492c4d10df0cf5d2110bda852"
+}

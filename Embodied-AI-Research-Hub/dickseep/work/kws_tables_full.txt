@@ -1,0 +1,70 @@
+
+=== Table ?0 (id=S3.T1) ===
+CAPTION: TABLE I: RoboTwin 2.0 task statistics.
+  Task | Avg. Frames | Horizon
+  Place phone stand | 127.74 | Short
+  Place fan | 147.66 | Short
+  Move can pot | 151.68 | Short
+  Place dual shoes | 227.94 | Medium
+  Place bread basket | 238.80 | Medium
+  Hand over block | 284.98 | Medium
+  Stack blocks two | 313.58 | Medium
+  Blocks rank rgb | 461.00 | Long
+  Stack blocks three | 473.16 | Long
+  Put bottles dustbin | 622.42 | Long
+
+=== Table ?1 (id=S3.T2) ===
+CAPTION: TABLE II: Success Rate (%) and Average Action Length for π0.5\pi_{0.5} in RoboTwin 2.0 benchmark.
+   | Success Rate (%) by Execution Chunk | Ours
+  Task Name | 10 | 15 | 20 | 25 | SA | MS | Ours | Avg. Len.
+  Blocks rank rgb | 80.0 | 62.0 | 52.7 | 43.3 | 58.3 | 74.7 | 77.3 | 20.83
+  Put bottles dustbin | 89.3 | 90.0 | 84.7 | 82.7 | 87.3 | 78.0 | 91.3 | 19.54
+  Stack blocks three | 63.0 | 43.3 | 28.7 | 36.7 | 53.0 | 66.0 | 62.3 | 18.30
+  Stack blocks two | 91.7 | 85.0 | 82.0 | 77.3 | 85.0 | 81.3 | 89.3 | 20.31
+  Hand over block | 19.0 | 27.0 | 29.0 | 25.3 | 26.0 | 10.0 | 25.3 | 15.91
+  Place dual shoes | 31.0 | 37.0 | 37.0 | 38.7 | 36.0 | 33.7 | 39.3 | 17.10
+  Place bread basket | 55.7 | 54.7 | 55.7 | 55.0 | 52.3 | 48.0 | 57.3 | 14.88
+  Move can pot | 90.7 | 87.0 | 73.0 | 68.3 | 75.3 | 84.7 | 87.3 | 17.89
+  Place fan | 44.0 | 42.7 | 37.3 | 39.0 | 41.3 | 51.0 | 42.7 | 21.42
+  Place phone stand | 52.0 | 51.0 | 58.0 | 55.3 | 61.0 | 42.7 | 56.7 | 14.88
+  Average | 61.6 | 58.0 | 53.8 | 52.2 | 57.6 | 57.0 | 62.9 | 18.11
+
+=== Table ?2 (id=S4.T3) ===
+CAPTION: TABLE III: Success Rate (%) for X-VLA.
+   | SR (%) by Execution Chunk
+  Task Name | 15 | 20 | 25 | 30 | Ours
+  Blocks rank rgb | 33.0 | 84.0 | 85.7 | 82.7 | 84.0
+  Put bottles dustbin | 46.0 | 72.7 | 80.0 | 80.0 | 71.3
+  Stack blocks three | 22.0 | 52.7 | 58.0 | 45.3 | 59.3
+  Stack blocks two | 32.0 | 94.0 | 90.0 | 81.3 | 94.0
+  Hand over block | 80.3 | 61.7 | 80.3 | 90.0 | 94.0
+  Place dual shoes | 72.0 | 70.0 | 76.0 | 76.7 | 76.0
+  Place bread basket | 50.7 | 67.3 | 64.3 | 71.0 | 64.7
+  Move can pot | 32.7 | 61.0 | 82.0 | 76.3 | 88.0
+  Place fan | 26.0 | 40.7 | 72.3 | 66.0 | 74.3
+  Place phone stand | 40.0 | 45.0 | 52.0 | 91.3 | 84.0
+  Average | 43.5 | 64.9 | 74.1 | 76.1 | 79.0
+
+=== Table ?3 (id=S4.T4) ===
+CAPTION: TABLE IV: Success rate (%) on the LIBERO benchmark.
+  Execution | Spatial | Object | Goal | Long | Avg.
+  Fixed-2 | 97.5 | 96.5 | 93.0 | 85.0 | 93.00
+  Fixed-4 | 97.5 | 97.0 | 94.5 | 89.5 | 94.63
+  Fixed-6 | 98.0 | 97.0 | 94.5 | 90.0 | 94.88
+  Fixed-8 | 97.0 | 97.5 | 92.5 | 89.5 | 94.13
+  Fixed-10 | 97.0 | 97.0 | 95.5 | 89.5 | 94.75
+  Ours | 99.5 | 98.5 | 96.5 | 94.5 | 97.25
+
+=== Table ?4 (id=S4.T5) ===
+CAPTION: TABLE V: Success rate for real-world tasks.
+   | SR (%) by Execution Chunk
+  Task Name | 10 | 20 | 30 | 40 | 50 | SA | MS | Ours
+  Hang Mug | 55 | 45 | 60 | 60 | 65 | 60 | 20 | 75
+  Stack Cups | 60 | 55 | 60 | 65 | 50 | 65 | 15 | 70
+  Tidy Pens | 20 | 40 | 35 | 15 | 10 | 40 | 20 | 40
+  Average | 45 | 46.7 | 51.7 | 46.7 | 41.7 | 55 | 18.3 | 61.7
+
+=== Table ?5 (id=S4.T6) ===
+CAPTION: TABLE VI: Latency Analysis
+  Method | Fixed | MS | SA | Ours
+  Latency / s ↓\downarrow | 0.2661 | 0.2956 | 0.2728 | 0.2725

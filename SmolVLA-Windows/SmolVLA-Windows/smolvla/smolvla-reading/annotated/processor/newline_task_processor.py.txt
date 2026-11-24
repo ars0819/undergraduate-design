@@ -1,0 +1,110 @@
+# 原文件 lerobot/src/lerobot/processor/newline_task_processor.py
+# 原行范围 1–59
+# L 后是官方源码或本机文件的原行号。每条中文注释对应紧随其后的原文。
+# 这是静态阅读副本。请在编辑器中阅读。空行保留，节选之间标出跳过的范围。
+# L0001 原作者对相邻代码的说明。
+#!/usr/bin/env python
+
+# L0003 原版权或开源许可声明。
+# Copyright 2025 HuggingFace Inc. team. All rights reserved.
+# L0004 原作者对相邻代码的说明。
+#
+# L0005 原版权或开源许可声明。
+# Licensed under the Apache License, Version 2.0 (the "License");
+# L0006 原版权或开源许可声明。
+# you may not use this file except in compliance with the License.
+# L0007 原版权或开源许可声明。
+# You may obtain a copy of the License at
+# L0008 原作者对相邻代码的说明。
+#
+# L0009 原版权或开源许可声明。
+#     http://www.apache.org/licenses/LICENSE-2.0
+# L0010 原作者对相邻代码的说明。
+#
+# L0011 原作者对相邻代码的说明。
+# Unless required by applicable law or agreed to in writing, software
+# L0012 原版权或开源许可声明。
+# distributed under the License is distributed on an "AS IS" BASIS,
+# L0013 原版权或开源许可声明。
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# L0014 原版权或开源许可声明。
+# See the License for the specific language governing permissions and
+# L0015 原版权或开源许可声明。
+# limitations under the License.
+
+# L0017 从模块 lerobot.configs 导入 PipelineFeatureType、PolicyFeature。
+from lerobot.configs import PipelineFeatureType, PolicyFeature
+
+# L0019 从模块 .pipeline 导入 ComplementaryDataProcessorStep、ProcessorStepRegistry。
+from .pipeline import ComplementaryDataProcessorStep, ProcessorStepRegistry
+
+
+# L0022 兼容旧版本配置或接口的说明。
+# NOTE: The registry name "smolvla_new_line_processor" is kept for backward compatibility
+# L0023 原作者对相邻代码的说明。
+# with serialized processor configs that reference this name.
+# L0024 把该类注册在旧 checkpoint 保存的名字 smolvla_new_line_processor 下。
+@ProcessorStepRegistry.register(name="smolvla_new_line_processor")
+# L0025 定义类 NewLineTaskProcessorStep，括号列出基类 ComplementaryDataProcessorStep。
+class NewLineTaskProcessorStep(ComplementaryDataProcessorStep):
+    # L0026 文档字符串的边界。
+    """
+    # L0027 原文档中的说明或续行。
+    A processor step that ensures the 'task' description ends with a newline character.
+
+    # L0029 原文档中的说明或续行。
+    This step is necessary for certain tokenizers (e.g., PaliGemma) that expect a
+    # L0030 原文档中的说明或续行。
+    newline at the end of the prompt. It handles both single string tasks and lists
+    # L0031 原文档中的说明或续行。
+    of string tasks.
+    # L0032 文档字符串的边界。
+    """
+
+    # L0034 处理 transition 中独立于观测 Tensor 的附加数据。
+    def complementary_data(self, complementary_data):
+        # L0035 条件 "task" not in complementary_data 成立时进入下方分支。
+        if "task" not in complementary_data:
+            # L0036 引用已有的值 complementary_data作为当前调用的返回值。
+            return complementary_data
+
+        # L0038 用方括号按键或索引读取 complementary_data给 “task”（任务） 赋值。
+        task = complementary_data["task"]
+        # L0039 条件 task is None 成立时进入下方分支。
+        if task is None:
+            # L0040 引用已有的值 complementary_data作为当前调用的返回值。
+            return complementary_data
+
+        # L0042 调用 dict，用它的结果给 “new_complementary_data” 赋值。
+        new_complementary_data = dict(complementary_data)
+
+        # L0044 原作者对相邻代码的说明。
+        # Handle both string and list of strings
+        # L0045 条件 isinstance(task, str) 成立时进入下方分支。
+        if isinstance(task, str):
+            # L0046 原作者对相邻代码的说明。
+            # Single string: add newline if not present
+            # L0047 检查单条任务文字是否已经有末尾换行。
+            if not task.endswith("\n"):
+                # L0048 计算此行的右侧表达式给 “new_complementary_data['task']” 赋值。
+                new_complementary_data["task"] = f"{task}\n"
+        # L0049 前面的分支均未命中时，再判断 isinstance(task, list) and all(isinstance(t, str) for t in task)。
+        elif isinstance(task, list) and all(isinstance(t, str) for t in task):
+            # L0050 原作者对相邻代码的说明。
+            # List of strings: add newline to each if not present
+            # L0051 如果一批中有多条任务文字，逐项保证末尾有换行。
+            new_complementary_data["task"] = [t if t.endswith("\n") else f"{t}\n" for t in task]
+        # L0052 原作者对相邻代码的说明。
+        # If task is neither string nor list of strings, leave unchanged
+
+        # L0054 引用已有的值 new_complementary_data作为当前调用的返回值。
+        return new_complementary_data
+
+    # L0056 定义方法 transform_features。
+    def transform_features(
+        # L0057 延续上面的语句，self, features: dict[PipelineFeatureType, dict[str, PolicyFeature]]。
+        self, features: dict[PipelineFeatureType, dict[str, PolicyFeature]]
+    # L0058 结束参数表。若箭头后有类型，它标注预期返回值，缩进块是函数体。
+    ) -> dict[PipelineFeatureType, dict[str, PolicyFeature]]:
+        # L0059 引用已有的值 features作为当前调用的返回值。
+        return features

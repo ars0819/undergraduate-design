@@ -1,0 +1,13 @@
+TOTAL TABLES: 6
+T ?0 rows= 11 cols= 3 :: TABLE I: RoboTwin 2.0 task statistics.
+        hdr: Task | Avg. Frames | Horizon
+T ?1 rows= 13 cols= 9 :: TABLE II: Success Rate (%) and Average Action Length for π0.5\pi_{0.5} in RoboTwin 2.0 benchmark.
+        hdr:  | Success Rate (%) by Execution Chunk | Ours
+T ?2 rows= 13 cols= 6 :: TABLE III: Success Rate (%) for X-VLA.
+        hdr:  | SR (%) by Execution Chunk
+T ?3 rows=  7 cols= 6 :: TABLE IV: Success rate (%) on the LIBERO benchmark.
+        hdr: Execution | Spatial | Object | Goal | Long | Avg.
+T ?4 rows=  6 cols= 9 :: TABLE V: Success rate for real-world tasks.
+        hdr:  | SR (%) by Execution Chunk
+T ?5 rows=  2 cols= 5 :: TABLE VI: Latency Analysis
+        hdr: Method | Fixed | MS | SA | Ours

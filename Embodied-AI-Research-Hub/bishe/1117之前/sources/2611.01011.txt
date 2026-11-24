@@ -1,0 +1,1435 @@
+
+--- PAGE 1 ---
+Leap-VLA: High-Rate Robot Control
+from a Low-Rate VLM Backbone
+Lin Yang*, Yunjie Shen, Zheyu Li, Zhenjie Tian, Yongli Wang, Dongze Huang,
+Weiqi Wang, Yucheng Zhu, Zhaoquan Jiang, Guofeng Xie, Peigen Fang
+Embodied Algorithm Group, Automation PBU, Leapmotor.
+*Corresponding author: Lin Yang.
+Abstract—Vision-language-action (VLA) models re-encode the
+full observation through a multi-billion-parameter vision–
+language model (VLM) at every control step, even though scene
+semantics evolve at roughly 1 Hz while reactive control requires
+20–50 Hz. We present Leap-VLA, a VLA that decouples the
+two: a VLM runs as a low-frequencysemantic anchorwhose
+cached contextis reused across control steps, while a flow-
+matching action expert operates at high frequency, consuming
+the cached semantics with a fresh, low-latency visual stream
+from a compact encoder pretrained on robot video with masked
+reconstruction, optical flow, and depth. Themeasuredageτof the
+cache conditions the expert through adaptive layer normalization.
+Reusing the cache makes the policy a function of its age, and
+training covers that function explicitly: cache ages sampled from
+real episode history, plus an age-ramped pixel corruption that
+erases the stale snapshot the way deployed staleness corrupts
+content. On the asynchronous deployment stack, the recipe closes
+most of the staleness gap—on LIBERO-Spatial, 61.4%→95.5%
+at a 2 s semantic refresh (95.9% at 1 s, within 1.6 points of the
+frequency-matched anchor); averaged over the four LIBERO
+suites, the deployed policy holds 95.2% at a 1 s refresh and
+94.5% at 2 s against a 96.3% matched anchor. A forward-only
+chunk-boundary correction (soft-nudge), an autograd-free refor-
+mulation of real-time-chunking guidance, carries per-control-step
+re-planning without loss (97.1%) at zero added latency. The
+same lens exposes a second defect: under an instruction–scene
+mismatch the policy keeps manipulating the scene, and a chain-
+of-thought verdict gate trained on zero-cost negative episodes
+freezes execution exactly on mismatched instructions without
+hurting feasible success.
+I. INTRODUCTION
+Vision-language-action models map camera observations
+and language instructions directly to robot actions, and recent
+systems built on pretrained VLMs have demonstrated strong
+generalization across tasks, objects, and scenes [2], [3], [4],
+[5]. A structural property shared by essentially all of these
+systems is that semantic understanding and action generation
+runin lockstep: at every re-planning step the full observation
+is re-encoded by the VLM backbone, and only then does the
+action head run.
+This coupling is mismatched to the statistics of manipula-
+tion. Scene semantics—which objects are present, where they
+roughly are, what the task requires—change at about 1 Hz and
+are often quasi-static for seconds at a time. Reactive control, in
+contrast, must respond to proprioceptive drift, contact events,
+and short-horizon object motion at 20–50 Hz. Running a multi-
+billion-parameter VLM at control frequency wastes the vast
+majority of its compute on observations that are semantically
+identical to the previous step, and it caps the re-planning rate
+at whatever the slow system affords. The mismatch becomes
+prohibitive as backbones scale or as deployment moves to edge
+hardware.
+The obvious fix—reuse the VLM’s processed features
+across control steps and re-run only the action head—fails
+in two specific ways. First, the cached prefix goesstale:
+it describes a past state of the world, and in current VLA
+designs it typically also embeds therobot state as textin the
+prompt, so the cache actively contradicts the fresh observation
+as soon as the robot moves. We measure this on the deployed
+asynchronous stack: a policy fine-tuned at the semantic refresh
+rate reaches 97.5%, but the same policy trained synchronously
+and then deployed with the semantic loop slowed to a 2 s
+refresh collapses to 61.4% on LIBERO-Spatial (Sec. IV-C).
+Second, even with a fresh cache, an action head that only sees
+semantics cannot be reactive: short-horizon correction requires
+fresh, low-level, spatially grounded input at the same rate as
+the control loop.
+Leap-VLA addresses both failures with three ingredients.
+(i) Age-conditioned cache reuse.The expert is conditioned
+on themeasuredageτof the cache (the time since the
+last refresh) alongside the flow time and the current propri-
+oceptive state. Training samples the cache age∆from the
+physical episode history, so the policy sees the full staleness
+distribution it will encounter at deployment, including the
+contradiction between stale semantics and fresh geometry that
+it must learn to arbitrate.(ii) A fresh visual stream on
+the fast clock.All fast-moving visual information enters the
+expert as a pluggable token block—appended to the expert’s
+input sequence and attended by its self-attention—and is
+refreshed wholesale at every re-planning step: motion-aware
+image tokens from a frozen encoder pretrained on robot video
+(masked reconstruction, optical flow, and depth, so inter-frame
+motion and geometry are learned exactly where the stream is
+consumed). Slower-reading signals attach through gated cross-
+attention with zero-initialized output projections; the cache age
+τenters through adaptive layer normalization (AdaRMS) and
+proprioception as a dedicated expert input token.(iii) A chain-
+of-thought-supervised anchor.The slow backbone carries
+a short chain-of-thought region appended after the prompt;
+because attention is causal, the features the expert consumes
+are unchanged by the appended region, so the reasoning shapes
+what the anchor knows without entering the action path—and
+arXiv:2611.01011v1  [cs.AI]  31 Oct 2026
+
+--- PAGE 2 ---
+a verdict head built on the same supervision gates execution
+under instruction–scene mismatch (Sec. V).
+We evaluate on LIBERO [17], zero-shot on the LIBERO-
+plus perturbation benchmark [18], on the LIBERO-PRO per-
+turbation benchmark [19], and on a four-platform real-robot
+suite. Our contributions are:
+•An asymmetric-frequency VLA architecture that pre-
+serves the layer-wise semantic coupling of shared-
+attention VLA backbones while reusing the semantic
+cache across control steps.
+•Staleness-aware cache reuse: measured-age condition-
+ing combined with physical-clock staleness-distribution
+training and a deployment-homomorphic corruption cur-
+riculum, evaluated as a single-variable training lad-
+der on the asynchronous deployment stack that recov-
+ers 61.4%→95.5% under slowed semantic refresh on
+LIBERO-Spatial (Table III).
+•A unified injection interface for the fast loop: the vi-
+sual stream—motion-aware image tokens—enters the ex-
+pert through one pluggable token-block interface (se-
+quence concatenation; gated cross-attention with stag-
+gered schedules and zero-initialized gating for additional
+streams), so streams can be added, upgraded, or dropped
+without backbone surgery; plus a robot-video pretraining
+recipe (masked reconstruction + optical flow + depth)
+that makes the frozen fast-stream encoder motion- and
+geometry-aware.
+•A deployment validation of the decoupled stack un-
+der physical asynchrony:soft-nudge, a forward-only
+chunk-boundary correction that matches autograd-based
+real-time-chunking guidance without backward passes—
+making per-control-step re-planning the best operating
+point (97.1%)—together with a conflict-geometry anal-
+ysis locating what inference-time correction can and
+cannot fix.
+•An instruction–scene consistency study: zero-cost neg-
+ative episodes built from cross-suite instruction re-
+assignment, a measuredachievability-priorfailure (the
+policy manipulates the scene under mismatched instruc-
+tions), and a chain-of-thought verdict gate that freezes the
+policy exactly on mismatched instructions at zero cost to
+feasible success (Sec. V).
+II. RELATEDWORK
+A. Vision-Language-Action Models
+VLA models inherit pretrained VLMs [21], [22] and fine-
+tune them for control, either by decoding actions as text [1],
+[2], by attaching regression heads [3], or by generative action
+decoders [4], [5], [7].π 0 [4] popularized the architecture
+we build on: a VLM prefix (frozen inπ 0) and a smaller
+flow-matching action expert coupled throughshared attention,
+where every expert layer attends the KV of the corresponding
+VLM layer.π 0.5 [5] extends this with open-world general-
+ization. All of these systems re-run the full VLM at every
+re-planning step; none conditions on the age of its semantic
+context.
+B. Hierarchical and Dual-Rate Robot Policies
+Several systems decouple slow reasoning from fast control.
+Hi Robot [9] lets a VLM restructure user commands for a
+fast low-level policy. Helix [10] runs a 7B VLM at 7–9 Hz
+and an 80M visuomotor policy at 200 Hz, communicating
+through a single fixed-size latent vector. G0 [11] couples a
+VLM planner with a separately trained VLA executor—two
+full models, each carrying its own vision–language backbone,
+joined through subtask instructions. RoboDual [12] and latent-
+bridge approaches [13] distill a generalist’s output into a
+specialist’s conditioning; Fast-in-Slow [14] repurposes the
+VLM’s final blocks as the fast system, which consumes the
+slow system’s latest latent regardless of its age. These works
+build the dual system bycomposingmodels: two separately
+parameterized, separately trained systems whose fast side sees
+the slow one only through language or a fixed latent that
+bottlenecks what crosses. Leap-VLA insteadsplitsa single
+VLA into its two loops: the slow and fast loops are the
+two halves of one shared-attention model, coupled layer-wise
+through the full cached context, and the staleness the split
+introduces is madeexplicit and learnablethrough measured-
+age conditioning rather than hidden behind a fixed latent. To
+our knowledge, no prior VLA work conditions its action expert
+on the measured age of its semantic context or studies success
+as a function of that age.
+C. Latency, Chunking, and Asynchrony
+Action chunking with temporal ensembling [8] smooths
+execution across overlapping chunks; real-time chunking [16]
+mitigates inference latency at deployment by inpainting actions
+that will execute while the next chunk is computed. These
+are inference-time remedies orthogonal to ours: they assume a
+policy queried at high rate, which is exactly what Leap-VLA’s
+fast expert enables.
+D. Structured Reasoning in VLA
+Embodied chain-of-thought [15] interleaves free-text rea-
+soning with control, placing explicit reasoning text on the
+inference critical path. We instead co-train the chain-of-
+thought with the control objective: the reasoning capability
+is internalized in the anchor during training, and explicit
+CoT generation at deployment is optional. Our slow backbone
+carries a short chain-of-thought region trained with a language-
+modeling objective; causal attention keeps the expert’s input
+features bitwise identical, so the reasoning shapes the anchor’s
+representation without entering the action path, and a verdict
+head built on the same supervision gates execution under
+instruction–scene mismatch (Sec. V).
+E. Self-Supervised Visual Pretraining for Control
+Robot-domain visual pretraining distills web-scale self-
+supervision into control-friendly features, from stage-one
+objectives (R3M [30], V oltron [31]) to masked autoen-
+coding [27]. Our fast-stream encoder follows the masked-
+autoencoder recipe but adds explicitinter-frame motionand
+geometryobjectives—dense optical flow against a frozen
+
+--- PAGE 3 ---
+teacher [28], and per-pixel depth against a frozen depth
+teacher [29]—precisely because the stream exists to carry
+short-horizon motion to the expert; the pretrained encoder
+is then consumed frozen through cross-attention injection
+(Sec. III-D).
+III. METHOD
+A. Overview
+Leap-VLA separates a VLA policy into aslow loopat
+frequencyf slow and afast loopat frequencyf fast, withf slow ≪
+ffast. The slow loop runs a Qwen2.5-VL-2B [21] VLMΦ—
+initialized from the pretrained checkpoint and, depending on
+the task, kept frozen, adapted with LoRA, or fully fine-tuned—
+that encodes the instruction, a camera observation, and its own
+short autoregressive output, and produces thecached context
+C: the features it has processed for the current scene prefix,
+held fixed until the next refresh. The concrete form ofC
+is exchangeable—per-layer key–value pairs read by shared
+attention, or backbone features read by cross-attention—and
+nothing downstream depends on which. The fast loop runs
+a flow-matching action expertE θ that, at every control step,
+denoises an action chunk while attending toCand to freshly
+encoded fast-stream features (motion-aware image tokens),
+all entering through one pluggable token-block interface. The
+only quantity coupling the two loops besidesCis the measured
+cache ageτ. Fig. 1 illustrates the architecture.
+B. Slow System: The Semantic Anchor
+1) Prompt and cache:At refresh timet r, the VLM prefix
+contains the language instruction and the current camera
+observation. Crucially, the robot state isnotpart of the prompt:
+embedding state as text in a cached prefix is self-defeating,
+since the cached copy becomes wrong the moment the robot
+moves. State enters the fast loop instead (Sec. III-C). The pre-
+fix therefore stays semantically valid under cache reuse: scene
+layout and task identity, not instantaneous proprioception.
+2) Chain-of-thought supervision:The backbone is a causal
+language model, and its structured output is a shortchain-
+of-thought(CoT) region appended after the prompt: a fixed
+set of fields, generated autoregressively and supervised with a
+language-modeling (cross-entropy) loss through an untied LM
+head. Because attention is causal and positions are relative,
+the prompt-region features that the action head consumes
+are bitwise identical with and without the appended block:
+CoT supervision shapes what the anchorknows—the features
+it hands the expert—without adding anything to the action
+path, and no CoT needs to be generated at deployment unless
+its output is consumed. We use the region in two roles: as
+training-side feature supervision, and—through a verdict head
+trained on the same supervision—as a deployment-side gate
+under instruction–scene mismatch (Sec. V).
+3) Cache refresh policy:The cache is refreshed (i) period-
+ically everyT ref seconds, (ii) on trigger events—large frame
+difference or optical flow at the image level, gripper open/close
+events, or subtask changes—and (iii) on episode reset. The
+reported deployments exercise (i) and (iii) on the request-gated
+schedule of Sec. IV-A; the trigger path is supported by the
+design but not exercised in any reported cell. Refreshes are
+executed asynchronously; the control loop never blocks on
+the VLM. Each control step reads themeasuredcache age
+τ=t−t refresh, which accounts for real scheduling jitter.
+The fast-stream encoder (Sec. III-D) is pretrained offline
+and frozen at deployment; the VLM starts from the pretrained
+checkpoint and is kept frozen, adapted with LoRA, or fully
+fine-tuned as the task requires. The slow loop’s runtime jobs
+are the periodic refresh and, when consumed, the structured
+output, all amortized over many control steps.
+C. Fast System: The Reactive Expert
+The expert follows the attention-based coupling ofπ 0 [4]:
+expert tokens attend the cached contextCand each other, with
+the concrete form of the coupling left open (per-layer shared
+attention as inπ 0, or cross-attention to the cached features).
+We turn the expert into afusion hubwith two mechanisms:
+a scalar conditioning vector for everything scalar, and a set
+ofmodalities—one pluggable token-block interface through
+which every stream-valued signal enters.
+1) Conditioning vector:c= MLP([t,enc(τ) ]), where
+tis the flow time andτthe measured cache age;cmodu-
+lates every expert layer via AdaRMS [23], [24]. The age is
+encoded as a sinusoidal embedding ofg(τ) = log(1 +τ)
+seconds (Sec. III-E). The proprioceptive states t enters as a
+dedicated input token alongside the action chunk, attended by
+the expert’s self-attention. Movings t out of the prompt is
+what makes arbitrary cache ages representable: the prefix no
+longer carries any instantaneous quantity. The age encoding
+enters through its own zero-initialized projection (Sec. III-E),
+so staleness conditioning, too, is a no-op at initialization. The
+fast loop’s control frequencyfis passed to the action head as
+an additional input.
+2) Modalities: one interface, many sources:Each modality
+mprovides a fixed-length token blockM m ∈R Nm×dm (per
+camera for multi-view streams), refreshed wholesale at every
+re-planning step, and enters the expert through one of two
+attention forms—both pluggable attachments, so a modality
+can be added, upgraded, or dropped without backbone surgery.
+(a) Sequence concatenation: the block is projected to the ex-
+pert width, given learned positional embeddings, appended to
+the expert’s input sequence, and consumed by its self-attention
+at every block—today’s fast visual stream, the highest-rate
+consumer.(b) Gated cross-attention: the block is read through
+a dedicated cross-attention whose output projection iszero-
+initialized(Flamingo-style gated injection [26]), so attaching
+it is a no-op at initialization and the pre-attachment behav-
+ior is recoverable; a per-block stride schedule (ℓ≥o m,
+(ℓ−o m) mode m = 0[6]) controls how often a modality
+is consulted (the cached context: every second block, in the
+deployed configuration). A stream is encodedonceper re-
+planning cycle and its features are reused across all Euler steps,
+so injection cost is linear in the number of attached modalities
+and independent of the camera count at deployment batch
+size (Sec. IV-E). All temporal aggregation happensbefore
+
+--- PAGE 4 ---
+Fig. 1. Leap-VLA overview.Slow system:the VLM runs atf slow over a token sequence that appends, after the prompt and the observation, the chain-of-
+thought region; it produces the cached contextCand the chain-of-thought-supervised anchor features, and its reasoning region is emitted as the structured
+output shown. Because attention is causal, the prompt-region features the expert consumes are unchanged by the appended block (Sec. III-B).Fast system:
+the flow-matching expert runs atf fast, consumingCandfresh fast-stream features through one pluggable token-block interface: image tokens from the
+frozen motion-aware encoder (dual-frame, robot-pretrained with reconstruction, optical flow, and depth). The measured cache ageτconditions the expert via
+AdaRMS, proprioception enters as a dedicated input token, and the control ratefis passed to the action head; training samplesτfrom the physical episode
+history.
+tokenization: perception streams are replaced wholesale each
+cycle, and the expert itself never aggregates time.
+The fast visual stream instantiates form (a) today; form (b)
+admits further batch-side streams:
+•Motion-aware image tokens(today’s visual stream): the
+frozen encoder of Sec. III-D encodes a fresh dual-frame
+pair per camera; each camera contributes196tokens
+(2242/patch-16), soVcameras giveV×196feature to-
+kens, projected to the expert width with a patch positional
+embedding shared across cameras.
+3) Cost:The expert suffix stays minimal—the flow-
+matching chunk (H=20action tokens plus a proprioceptive
+state token)—so the joint sequence length is independent of
+the number of attached modalities; streams are paid for only
+at their injection layers. The expert is a1536-wide, 32-block
+transformer; with 4 Euler steps it leaves ample headroom for
+control periods of 50 ms and below (Sec. IV-E).
+D. Motion-Aware Pretraining of the Fast Visual Stream
+The fast loop needs a visual encoder of its own, and three
+requirements separate it from the VLM’s vision tower: it
+must run every re-planning cycle (compact, launch-cheap);
+its features must bespatially dense and motion-informative
+rather than language-aligned semantics (they are consumed by
+the expert’s cross-attention, not by a language model); and it
+must see the robot’s own visual domain. We therefore pretrain
+a compact encoder on multi-source robot video, then freeze it
+into the image modality of Sec. III-C.
+1) Architecture:A∼23M-parameter encoder: a convolu-
+tional stem with four downsampling stages followed by three
+wide transformer layers with rotary position embeddings,
+so the positional encoding is resolution-agnostic (the same
+weights run at reduced resolution for ablations). Each sample
+is adual-frame pair(o t−δ, ot)whose two frames are fused
+into a 6-channel input at the stem (early fusion), yielding196
+tokens per camera at224 2/patch-16; the deployed geometry
+is identical to the pretraining geometry, so no representation
+shift is introduced at deployment.
+2) Objectives: reconstruction, motion, and depth:Three
+masked-autoencoder-style [27] objectives share the encoder
+(Fig. 2). (i)Masked reconstruction:∼49%of patches (a
+row/column strip mask) are held out, and a lightweight decoder
+reconstructsbothframes of the pair from the merged features.
+(ii)Inter-frame motion: a flow decoder predicts, for every
+masked patch, the dense optical flowo t−δ →o t in pixels,
+supervised by per-pixel end-point error against ground truth
+generated in the data loader by a frozen off-the-shelf flow
+teacher (W AFT [28]). Flow supervision penetrates the same
+merged features the reconstruction uses, so the encoder is
+explicitly taughtwhat changed between the two frames—
+the quantity the reactive loop cares about. (iii)Depth: a
+depth decoder predicts, for every masked patch, the per-pixel
+depth of each frame of the pair, supervised by per-pixel
+
+--- PAGE 5 ---
+Fig. 2. Fast-stream pretraining objective. A dual-frame pair(o t−δ, ot)is
+fused into a 6-channel input at the stem; a∼49%row/column strip mask is
+applied jointly to both frames (pair-level tube masking), and the visible patches
+go through the compact encoder. Three lightweight decoders share the encoded
+features: the reconstruction decoder fills inbothframes’ masked patches, the
+optical-flow decoder predicts the denseo t−δ →o t motion of masked patches,
+and the depth decoder predicts per-pixel depth for each frame. Panels show
+a held-out RoboTwin sample; decoder outputs are the training-time ground
+truth (W AFT flow, Depth Anything V2 depth, and the raw frames).
+depth error against ground truth generated in the same data
+loader by a frozen off-the-shelf depth teacher (Depth Anything
+V2 [29]). Reconstruction teaches appearance, flow teaches
+what changed, and depth teacheshow far—the contact-
+relevant geometry that appearance-only features drop, and that
+survives the lighting and texture shifts the reactive loop must
+operate through. At deployment the fresh dual-frame pair (gap
+δ= 0.2s, matching pretraining) hands the expert short-horizon
+motion for free.
+3) Data:The encoder must serve every robot embodiment,
+so pretraining draws from 62 robot datasets totalling∼319k
+episodes and∼73M frames: nine curated multi-camera suites
+(∼63.5k episodes,∼45M frames, 2–3 cameras each) mixed
+with 53 public OXE sources (∼256k episodes,∼28M frames),
+holding the physical pair gapδfixed across sources via
+fps-normalized frame strides. The motivation is empirical:
+an identical architecture initialized from a driving-domain
+checkpoint is nearly scene-blind on robot video (cross-scene
+feature cosine0.92), whereas after robot-video pretraining the
+same probe drops to0.58while same-scene features stay stable
+(0.99)—robot-data pretraining, not generic pretraining, is what
+makes the frozen encoder discriminative.
+E. Staleness-Aware Training
+1) Random cache-age sampling:For each training sample
+at time indexiof an episode, we sample
+∆∼ U[0,∆ max](seconds),∆ max =T ref +ϵ jit,
+retrieve the anchor frame at indexi− ⌊∆·fps⌋from the same
+episode, and clamp at the episode start, using theeffective
+age∆ eff (not the sampled one) for encoding. Sampling is
+performed on the fly at every epoch pass;∆ = 0is included,
+matching deployments where a control step immediately fol-
+lows a refresh. The effective age is encoded as a sinusoidal
+embedding ofg(τ) = log(1 +τ)and injected into the
+conditioning vectorcthrough a zero-initialized projection.
+2) Age-ramped pixel corruption:Random ages definewhen
+the snapshot is unreliable, nothowstaleness manifests. A
+deployed stale snapshot is not uniformly wrong: scene layout
+tends to persist while arm geometry and object poses drift.
+We therefore corrupt the stale snapshot itself: a contiguous
+rectangle of the VLM image (before the vision tower) is
+erased to gray, with area ramping continuously in the sam-
+pled age,frac = frac max ·clamp
+ 
+(∆−t 0)/(∆max −t 0)
+
+,
+capped below the full image. The corruption isdeployment-
+homomorphic(a stale snapshot is a partially invalid image,
+not a missing one), and it is applied at the pixel level so every
+downstream consumer—vision tower, cached prefix features,
+text grounding—sees the corrupted image. Belowt 0 the input
+is bit-identical, leaving theτ=0operating point unperturbed.
+The motivation is empirical: trained only on uncorrupted
+stale frames, the model hedges—it averages its way through
+contradictions between stale semantics and fresh geometry
+instead of arbitrating them.
+3) What staleness training teaches:Random ages turn the
+policy into an explicit functionπ(a|o fast(t),C(t−τ), τ)of
+all three inputs. Three behaviors are thereby trained rather than
+hoped for: (i)arbitration: when cached semantics and fresh
+geometry disagree (they do, by construction, for largeτ), the
+expert learns to weight the fresh stream; (ii)age-appropriate
+trust: theg(τ)encoding lets the expert modulate how far it
+plans against possibly outdated semantics; (iii)distribution
+coverage: deployment jitter and refresh-thread latency land
+inside the trained age range by construction of∆ max.
+F . Training and Inference
+Training uses the standard flow-matching objective of [4],
+[25] on the truncated action dimensions,L=E∥u t −
+vθ(xt,·)∥ 2 over the real action dimensions only, with the
+chain-of-thought language-modeling loss added when CoT
+annotations are available (Sec. III-B). Because the fast-stream
+encoder is frozen, its features can be precomputed; when the
+VLM is likewise kept frozen, so can the cached prefix features.
+This both speeds training and permits full-precision expert
+optimization without the memory footprint of the backbones.
+At inference, each environment holds its own cache; a re-
+planning cycle runs the prefix, encodes the fresh fast stream
+once (its features are reused across all Euler steps), then
+denoises with the measuredτ; (optionally) overlapping chunks
+are fused by temporal voting [8], [16].
+IV. EXPERIMENTS
+A. Setup
+Benchmarks.LIBERO [17] (goal, spatial, object, long)
+built on robosuite [20]; LIBERO-plus [18], which extends
+the same four suites with perturbed task variants over seven
+dimensions (Sec. IV-F); LIBERO-PRO [19], which perturbs
+
+--- PAGE 6 ---
+the same four suites along object, position, language, task,
+and environment dimensions with an official baseline protocol
+(Sec. IV-G); and a real-robot suite on four platforms—two
+dual-arm workstations (Realman, Galaxea), a Dobot Atom
+mobile dual-arm humanoid, and an in-house humanoid upper
+body (Sec. IV-H); seven tasks, 50 trials per task.Base-
+lines.(1) frequency-matched fine-tuning with same-frequency
+joint inference (full backbone re-encoding at every step;
+the compute-unconstrained anchor and the reference row of
+Sec. IV-C); (2) the same policy evaluated under slowed
+semantic refresh without staleness-aware training (the naive-
+reuse regime); (3) real-time chunking [16] stacked on Leap-
+VLA (Sec. IV-D).Protocol.50 episodes per task with fixed
+initial states (single seed); the deployment cells of Secs. IV-C–
+IV-D score all ten spatial tasks (500 episodes per cell). Re-
+planning rate held fixed across variants when comparing
+refresh rates, and vice versa; the measured cache-age dis-
+tribution is reported per regime. The deployment-line sec-
+tions below additionally run a chunk-level asynchronous loop
+with leftover-prefix passing, detailed in Appendix A. Unless
+stated otherwise, the LIBERO models in all tables are trained
+without chain-of-thought supervision; CoT supervision and
+the verdict gate are studied separately in Sec. V.Deployed-
+age protocol (measured).All LIBERO numbers below come
+from the asynchronous deployment stack. Because the con-
+tribution is atimescale decoupling, we parameterize operat-
+ing points by the semantic-condition refresh periodT slow ∈
+{0.2,0.5,1,2}s against a fixed re-plan clockT replan=0.5s
+(R=10of each chunk’s 20 actions are consumed at the 50 ms
+control period)—under request-gated stale-clock refresh on
+observation timestamps: a request due for refresh takes a fresh
+context (τ≈0), intermediate requests reuse the cache, so
+the measured context age cycles0→0.5→1.0→1.5s under
+the 2 s refresh (mean≈0.75s, p99≤1.5s, inside the trained
+range∆ max=2s), and every re-planning request reports the
+measuredage of the context it used. The fast stream keeps its
+data-anchored pair gap (δ=0.2s, Sec. III-D). All cells share
+the same denoiser and gating.
+Synchronous baselines under decoupled clocks.Syn-
+chronous systems are released as such, and our harness re-
+produces exactly that regime at the matched operating point
+(DiT:VLM1:1): a synchronous model’s matched cell sits at
+its published operating point (no handicap), and the decoupled
+fast loop we run for it reuses the cached backbone output
+while re-encoding proprioception at every control step—at
+the matched operating point this path is bitwise identical
+to its native synchronous forward pass. The slower-refresh
+cells (DiT:VLM2:1and4:1) therefore measure astructural
+property, not a harness artifact: a single-pathway system whose
+control path runs through the VLM output has no fresh visual
+input at control rate once the semantic loop slows (π0.5 embeds
+the robot state as prompt text, so its cache freezes proprio-
+ception as well; GR00T’s head re-encodes state but sees no
+images between refreshes), whereas Leap-VLA’s fast stream
+keeps per-step visual grounding by construction. Staleness-
+aware training is part of our method claim rather than a hid-
+den advantage; whether synchronous baselines would recover
+under staleness curricula of their own is an open question we
+do not claim to answer.
+B. LIBERO Four-Suite Comparison
+Table I is the anchor the rest of this section departs from,
+with one caveat governing the reading: each published row
+reports its own evaluation stack—episode budgets, initial-
+state distributions, and success checks differ across papers—
+so the table is public context, not a controlled comparison.
+Within that caveat, the published four-suite averages span94.4
+(π0 [4]) to98.9(G0.5 [42]), with Xiaomi-Robotics-0 [41]
+(98.7) close behind. Our fine-tuned model posts96.3—above
+π0 (94.4),0.7points behind GR00T-N1.7 [6] (97.0), and2.6
+behind the published top—measured, unlike any published
+row, through the full asynchronous deployment stack at its
+matched-rate operating point. Finally, the Long column is
+where published numbers spread widest (88.4to98.6)—the
+clearest sign that protocol choices, not only model quality,
+move the hardest suite. This frontier is the level the decoupled
+system must reach without paying for its structure.
+Holding the deployment stack fixed and slowing only the
+semantic loop (Table II), lengthening the semantic-condition
+refresh period from 0.5 s to 1 s—halving the slow loop’s
+compute—costs1.1points on average; doubling it again to
+2 s costs a further0.7, and the degradation is uniform,1.6–
+2.0points per suite from matched to 2 s (Long92.4→90.8,
+Object98.0→96.2). The sections that follow ask the
+complementary training-side question: which ingredients make
+a policy indifferent to this slowdown.
+C. Training for the Deployed Clock
+This section asks the deployment-facing question directly:
+on the real asynchronous stack, whichtraining-sideingredients
+recover the success that semantic staleness destroys? We run
+this ablation on LIBERO-Spatial: the configuration measured
+throughout is a vision–language backbone and a flow-matching
+action expert, fine-tuned from the shared four-suite LIBERO
+checkpoint, and every cell is evaluated through the full asyn-
+chronous deployment loop—a 50 ms client clock, re-planning
+every 0.5 s, semantic prefix refreshed at the stated period, stale-
+clock gating on observation timestamps. Each cell scores 500
+episodes. Rows of Table III add one ingredient at a time.
+(1) Exposure, not conditioning, is the main mechanism.
+Training on asynchronously timestamped data alone—with the
+conditioning inputs disabled and nothing else changed—lifts
+the 2 s cell from 61.4 to 91.8, recovering most of the 36.1-point
+gap: most of the deployed collapse is adistributionmismatch,
+and covering the deployed staleness distribution during train-
+ing closes most of it.(2) Conditioning sharpens the middle
+of the range.At a 1 s refresh, where the reference still loses
+14.6 points (82.9 vs. 97.5 at its matched rate), measured-age
+conditioning recovers 11.6 of them (94.5) and the stale-frame
+masking curriculum (the age-ramped corruption of Sec. III-E)
+adds the best asynchronous cell of the table: 95.9 at a 1 s
+refresh, within 1.6 points of the frequency-matched reference
+
+--- PAGE 7 ---
+TABLE I
+PUBLISHEDLIBEROFOUR-SUITE SUCCESS(%),TRANSCRIBED FROM EACH METHOD’S ORIGINAL PUBLICATION(AS AGGREGATED IN THE PUBLIC
+X-VLABENCHMARK TABLE). PUBLISHED ROWS FOLLOW EACH METHOD’S OWN EVALUATION PROTOCOL AND ARE NOT COMMENSURABLE WITH ONE
+ANOTHER;THE TABLE IS PUBLIC CONTEXT,NOT A CONTROLLED COMPARISON. THELEAP-VLAROW REPORTS OUR FINE-TUNED MODEL,MEASURED
+ON THE ASYNCHRONOUS DEPLOYMENT STACK USED THROUGHOUT THIS PAPER AT THE MATCHED-RATE OPERATING POINT(DIT:VLMSCHEDULING
+RATIO1:1;50EPISODES PER TASK; APPENDIXA).
+Model Goal Spatial Object Long Avg
+π0 [4] 94.4 98.0 96.8 88.4 94.4
+InternVLA-M1 [34] 93.8 98.0 99.0 92.6 95.9
+Leap-VLA (ours)97.2 97.5 98.0 92.4 96.3
+π0.5 [5] 98.0 98.8 98.2 92.4 96.9
+GR00T-N1.7 [6] 97.5 97.7 98.5 94.4 97.0
+OpenVLA-OFT [33] 97.9 97.6 98.4 94.5 97.1
+Fast-W AM [35] 97.0 98.2 100.0 95.2 97.6
+Motus [37] 96.6 96.8 99.8 97.6 97.7
+Being-H0.5 [36] 99.0 99.2 98.2 96.2 98.2
+EO1 [38] 99.2 99.7 99.8 94.8 98.4
+Cosmos Policy [39] 98.2 98.1 100.0 97.6 98.5
+LingBot-V A [40] 97.2 98.5 99.6 98.5 98.5
+Xiaomi-Robotics-0 [41] 98.8 98.8 100.0 97.2 98.7
+G0.5 [42] 98.6 98.4 100.0 98.6 98.9
+TABLE II
+LEAP-VLAON ALL FOURLIBEROSUITES AS THE SEMANTIC LOOP
+SLOWS(50EPISODES PER TASK,FIXED SEED;THE CLIENT RE-PLANS
+EVERY0.5S AND THE SEMANTIC CONDITION IS REFRESHED EVERY
+0.5/1/2S,I.E.,ON EVERY1ST/2ND/4TH RE-PLAN;STALE-CLOCK GATING
+ON OBSERVATION TIMESTAMPS, APPENDIXA).
+Semantic-condition refresh periodT slow
+Suite 0.5 s 1 s 2 s
+DiT:VLM1:1 2:1 4:1
+Goal 97.2 95.8 95.6
+Spatial 97.5 95.9 95.5
+Object 98.0 98.0 96.2
+Long 92.4 91.2 90.8
+Average 96.3 95.2 94.5
+at its own rate (97.5)—asynchronous training pays almost no
+synchronous tax at moderate rates.
+Table IV reads Table III along the ratio axis alone. Doubling
+the refresh period from1s to2s costs the frequency-matched
+reference21.5points; the asynchronous family drops0.9on
+average, and no variant loses more than1.6points. At 500
+episodes per cell (binomial SE≈1.1points) the honest reading
+is success-flat, not improvement: once the training distribution
+covers the deployed staleness, doubling the refresh period—
+i.e., halving the semantic loop’s compute—is free. The per-
+variant cells and the matched-rate anchor live in Table III;
+the aggregate answers the deployment question directly: the
+recipe, once fixed, does not degrade again as the slow loop
+slows further.
+Table V composes the training recipe with the boundary
+correction of Sec. IV-D. Re-planning every control step is
+the reactive ideal—every executed action then conditions on
+the current state—but for a chunked policy it replaces each
+executed trajectory with a sequence of mutually independent
+chunk heads, and plan jitter dominates: the reference loses
+34.5 points (61.4→26.9) and the asynchronous recipe 4.1
+(95.5→91.4). Soft-nudge supplies the missing cross-chunk
+consistency—at a one-step horizon, leftover alignment is ex-
+actly temporal ensembling of overlapping chunks [8], com-
+puted forward-only—and the asynchronous policy holds its
+default-schedule success at the most reactive setting: 97.1% at
+0.05 s vs. 95.5 at its own 0.5 s default, while the reference
+recovers only a third of its loss (39.2). Faster re-planning
+becomes free only when the training distribution and the
+boundary correction are both in place; neither substitutes for
+the other.
+D. Chunk-Boundary Continuity and Forward-Only Correction
+Success rates hide a failure mode of chunked execution:
+when a new chunk replaces the one being executed, its
+first executed action can jump. With 0.5 s re-planning these
+boundaries arrive twice a second, and on the uncorrected
+asynchronous stack the boundary displacement averages1.9×
+the mean intra-chunk displacement (Table VI)—a visible jerk
+exactly when the semantic loop refreshes.
+Real-time chunking [16] addresses this at inference time
+by conditioning the new chunk on theleftoverprefix of the
+executing one, either by inpainting the prefix region or by
+guidance, which adds, at every denoising step, a correction
+proportional to the gradient of the prefix-consistency error.
+Both variants reach the velocity field through autograd: the
+correction backpropagates through the expert at every step,
+which adds a backward pass to every denoise cycle and blocks
+export to compiled runtimes. We therefore use a forward-only
+reformulation,soft-nudge. Letˆx 1 =x t + (1−t)v θ(xt,·)
+be the one-step endpoint prediction at flow timet,ℓthe
+leftover prefix, andwthe same three-segment prefix weights
+as RTC (1 on the frozen region, exponentially decaying over
+the correction horizon, 0 beyond). Each Euler step becomes
+xt+δ = ˆx1 +η w⊙(ℓ−ˆx 1),(1)
+i.e., the step lands on its predicted endpoint and then blends
+a fractionηtoward the leftover (η=1throughout). This is the
+
+--- PAGE 8 ---
+TABLE III
+SUCCESS(%)ONLIBERO-SPATIAL VERSUS SEMANTIC-CONDITION REFRESH PERIOD(500SCORED EPISODES PER CELL). EACH ROW ADDS ONE
+TRAINING INGREDIENT TO THE ROW ABOVE. THE FREQUENCY-MATCHED REFERENCE IS FINE-TUNED AT THE MATCHED PERIOD AND NEVER SEES
+ASYNCHRONOUS DATA. RE-PLANNING IS HELD ATT replan=0.5S THROUGHOUT;THE MATCHED COLUMN EVALUATES AT THE FINE-TUNING REFRESH
+PERIOD(0.2S).
+Training variant Semantic-condition refresh periodT slow
+0.2 s (matched) 1 s 2 s
+Frequency-matched fine-tuning (reference)97.582.9 61.4
++asynchronous∆texposure – 92.5 91.8
++measured-∆tconditioning – 94.5 92.9
++stale-frame masking curriculum –95.995.5
+TABLE IV
+SUCCESS(%)VERSUS SEMANTIC-CONDITION REFRESH PERIOD ON THE DEPLOYMENT LINE(LIBERO-SPATIAL, 500EPISODES PER CELL—THE SAME
+MEASURED CELLS ASTABLEIII). ASYNCHRONOUS TRAINING(OURS)IS THE FULL ASYNCHRONOUS TRAINING RECIPE OF THAT TABLE;THE RANGE
+ROW SPANS THE THREE ASYNCHRONOUS TRAINING VARIANTS. MEASURED CONTEXT AGE FOLLOWS THE DEPLOYED-AGE PROTOCOL OFSEC. IV-A.
+Semantic-condition refresh period
+1 s 2 s∆(2 s−1 s)
+Measured context age (s)0/0.5alternating0→1.5cycle –
+Frequency-matched fine-tuning (reference) 82.9 61.4−21.5
+Asynchronous training (ours) 95.9 95.5−0.4
+per-variant range[92.5,95.9] [91.8,95.5] [−1.6,−0.4]
+TABLE V
+SUCCESS(%)ONLIBERO-SPATIAL AT THET slow=2S SEMANTIC-REFRESH OPERATING POINT OFTABLEIII,VARYING THE RE-PLANNING PERIOD
+Treplan—THE CLOCK AT WHICH A FRESH ACTION CHUNK IS REQUESTED,DISTINCT FROM THE SEMANTIC REFRESH(THER=1COLUMNS RE-PLAN ON
+EVERY50MS CONTROL STEP AND EXECUTE A SINGLE ACTION PER RE-PLAN). SOFT-NUDGE:η=1,EXPONENTIAL PREFIX SCHEDULE SPANNING THE
+FIRST10ENTRIES OF THE FRESH CHUNK(SEC. IV-D).
+Re-planning periodT replan
+Training variant 0.5 s (R=10; default) 0.05 s (R=1) 0.05 s (R=1)+soft-nudge
+Frequency-matched fine-tuning (reference) 61.4 26.9 39.2
+Asynchronous training (+stale-frame masking) 95.5 91.497.1
+RTC guidance update with the Jacobian transpose replaced
+by the identity, which saves the backward pass; Appendix B
+measures the two head-to-head and finds them behaviorally
+equivalent (2.6%vs.2.4%bridging on adversarial leftovers,
+equal suffix error), as expected when the leftover is the
+policy’s own recent output. Soft-nudge is one fused multiply-
+add per step and action dimension: no backward pass, no extra
+forward pass, no added latency, and the computation graph is
+unchanged for TensorRT/NPU export.
+Table VI and Fig. 3 compare three executions of the
+same policy on the 200-trajectory LIBERO evaluation: no
+correction, RTC guidance, soft-nudge. Soft-nudge reduces
+the boundary/intra ratio from 1.91 to 1.04 —the 95% CI
+includes 1.0, i.e., a boundary step becomes statistically indis-
+tinguishable from a mid-chunk step—and the peak boundary
+displacement from 0.281 to 0.181, while overall action RMS
+and path length barely move: the correction bends trajectories
+at boundaries, it does not damp the motion. RTC guidance
+lands between the two (1.19 / 0.207); per episode, soft-nudge
+attains the lowest peak boundary displacement in the large
+majority of episodes and matches or beats guidance on most
+episodes. Appendix C reproduces the boundary reduction on
+Fig. 3. Chunk-boundary analysis over the seam events of the 200-trajectory
+evaluation behind Table VI. (a) Displacement at the boundary step, aligned
+over all boundary events (mean±95% CI; maxima 0.120 / 0.078 / 0.070;
+the double spike reflects the 10-step chunk cadence). (b) Boundary events
+paired by ordinal position, corrected vs. uncorrected displacement (log–log);
+the median corrected/uncorrected ratio is0.60for RTC guidance and0.52
+for soft-nudge.
+three further checkpoint families, and Appendix B shows what
+the same corrections cannot do: force execution to follow a
+leftover that genuinely conflicts with the fresh observation.
+E. Efficiency and Scaling
+Throughput accounting.On shared hardware the two loops
+contend for one GPU (serialized by a device lock), so achiev-
+
+--- PAGE 9 ---
+TABLE VI
+CHUNK-BOUNDARY SMOOTHNESS ON THE ASYNCHRONOUS STACK,BASE CHECKPOINT:THE200-TRAJECTORYLIBEROEVALUATION. BOUNDARY
+METRIC: 6-DOFDISPLACEMENT AT THE FIRST EXECUTED STEP OF EACH NEW CHUNK,NORMALIZED BY THE MEAN INTRA-CHUNK DISPLACEMENT;
+PEAK BOUNDARY=PER-EPISODE MAXIMUM;±IS THE95% CIOVER EPISODES.
+Execution boundary/intra↓peak bnd.↓RMS|∆a| ↓path len.↓
+No correction (baseline) 1.907±0.731 0.281±0.096 0.091±0.021 7.29±1.30
+RTC guidance (autograd) [16] 1.194±0.271 0.207±0.076 0.086±0.023 6.96±1.33
+Soft-nudge (ours, forward-only) 1.035±0.186 0.181±0.068 0.085±0.024 6.91±1.32
+able scheduling rates follow from the per-invocation costst vlm
+andt act: the same-frequency ceiling is1/(t vlm+tact), and
+decoupling lifts the fast loop tof fast ≤
+ 
+1−f slow tvlm
+
+/tact,
+wheref slow tvlm is the slow loop’s duty cycle. Three conse-
+quences we report rather than assume: (i) running the slow
+loop at saturation (f slow=1/tvlm) collapses the bound back
+to the synchronous ceiling—decoupling pays only when the
+slow loop runs below saturation (which the deployment study
+justifies) or on dedicated hardware; (ii) a request that lands on
+a due refresh waitst vlm+tact, so fast-loop latency is reported
+as p50/p99 under contention, not as the isolatedt act; (iii) the
+frequency bought by slowing the slow loop is only useful if
+the fast loop still observes the world: Leap-VLA’s fast stream
+re-encodes fresh images at every control step, so lowering
+fslow trades stale semantics for control frequency at a graceful
+success cost, whereas a single-pathway system making the
+same trade loses all visual feedback at control rate (Sec. IV-A).
+Table VII instantiates this accounting on a single RTX 4090D
+(batch 1, deployment stack): measured per-request costs, the
+same-frequency ceiling versus the decoupled bound, and p50
+action latency under contention; success as a function of the
+scheduling rates is measured separately in Secs. IV-C–IV-D.
+The gain of decoupling, on the deployment stack.Decou-
+pling changes neither the model nor the weights—only where
+the semantic encoding runs—and the effect lands directly on
+the serving path. Waiting for one action request costs the
+same-frequency system 73.9 ms (semantic refresh plus fast
+loop, serialized on the critical path) and the decoupled system
+26.7 ms:2.8×per request. Counting the semantic cost at its
+amortized share (11.8 ms per fast request at the 1:4 ratio), per-
+request compute drops from 73.9 to 38.5 ms (1.9×), and the
+re-planning clock a single stream can serve extends from 13.5
+to 26 Hz. Semantics stop being a per-action prerequisite and
+become a background expense amortized at1/f slow.
+Feasibility, not speed.The advantage concentrates at the
+reactive end. Serving the most reactive column of Table V—
+a fresh plan every 50 ms control step, each plan executing
+a single action under that column’s 2 s semantic refresh—
+the same-frequency joint occupies the GPU at 148%: past
+100%, the control loop cannot close in real time, so this clock
+is undeployable for the same-frequency layout on hardware,
+whatever its simulated success (26.9). The decoupled schedule
+occupies 56%: the only configuration that serves the reactive
+column in real time, and precisely the column where the
+asynchronous policy holds 91.4 (97.1 with soft-nudge).
+Fast-stream scaling.The fast stream is not the bottleneck:
+encodingVwrist-camera frame pairs costs 1.3/1.8/2.3 ms at
+V=1/2/3—the first camera costs 1.3 ms, each additional one
+0.5 ms—so the fast-loop budget belongs almost entirely to
+the denoise cycle, and the boundary-correction variants of
+Table VI measure at parity with the uncorrected path.
+F . Zero-Shot Robustness on LIBERO-plus
+We submit the deployed system to LIBERO-plus [18],
+which extends the four LIBERO suites to 10,030 perturbed
+task variants across seven dimensions—camera view, robot
+embodiment, language, lighting, background, camera noise,
+object layout—graded over five difficulty levels, one trial
+per task. The evaluated checkpoint is the shared four-suite
+LIBERO model (600k steps), trained only on the original
+LIBERO suites, so every perturbation dimension is zero-shot;
+it is served by the same asynchronous deployment server as
+the deployment studies (re-planning every 0.5 s, no boundary
+correction). Table VIII places the result on the benchmark’s
+leaderboard. At 69.2% total, the model lands in the first tier of
+the group trained without LIBERO-plus data (OpenVLA-OFT
+69.6, ahead ofπ 0-Fast 61.6); it leads the robot-embodiment
+dimension outright (68.4%) and leads camera view (77.2%)
+and camera noise (82.6%) within that group; per suite it scores
+81.0% (object), 68.9% (spatial), 68.8% (goal), and 58.0%
+(LIBERO-10), degrading from 80.4% at difficulty level 1 to
+53.3% at level 5. The dimension profile is complementary
+to the baselines’: lighting (53.5%) and background (55.6%)
+trail the strongest baselines by 35–40 points—the signature
+of a policy whose visual grounding is geometric and motion-
+based but overfit to the photometric statistics of its training
+distribution—exactly the dual of the baselines’ weakness in
+camera view and embodiment. Figure 4 shows one successful
+level-5 episode on each of the three strongest dimensions;
+Appendix D illustrates the characteristic failures of the two
+weakest.
+G. Official-Protocol Perturbation Evaluation
+We additionally evaluate on LIBERO-PRO [19], the official-
+protocol perturbation evaluation of the LIBERO suites: each
+suite in its original form plus five perturbation dimensions
+(object swap, position swap, language, task, environment),
+evaluated at the official protocol’s sample size of 50 ini-
+tial states per perturbed task, i.e., 500 episodes per suite–
+dimension. The checkpoint is the same four-suite LIBERO
+model at 600k steps, again trained only on the original
+LIBERO suites and served by the asynchronous deployment
+
+--- PAGE 10 ---
+TABLE VII
+DEPLOYMENT COST ON A SINGLERTX 4090D (BATCH1,THE STACK OFSEC. IV-D:BF16SEMANTIC BACKBONE,FP32FAST LOOP AND ACTION
+EXPERT;P50OVER≥30REQUESTS AFTER WARM-UP):THE SAME MODEL AND WEIGHTS,ONLY THE SCHEDULE CHANGES,EACH SYSTEM AT ITS BEST
+MEASURED CONFIGURATION(DENOISE LOOP GRAPH-CAPTURED ON BOTH SIDES). OCCUPANCY IS THEGPUDUTY CYCLE WHILE SERVING THE MOST
+REACTIVE RE-PLANNING CLOCK OFTABLEV (ONE REQUEST PER50MS CONTROL STEP,AT THAT COLUMN’S2S SEMANTIC REFRESH).
+Single system (same-frequency) Leap-VLA (decoupled) Gain
+Action latency per request 73.9 ms26.7ms2.8×
+Compute per request (semantics amortized 1:4) 73.9 ms38.5ms1.9×
+Max single-stream re-planning rate 13.5 Hz26Hz1.9×
+GPU occupancy at the 0.05 s clock 148 % (infeasible)56% feasible only decoupled
+TABLE VIII
+LIBERO-PLUS[18]LEADERBOARD:SUCCESS(%)OVER THE FULL10,030PERTURBED TASKS,GROUPED BY PERTURBATION DIMENSION. ALL ROWS
+EXCEPTLEAP-VLAARE QUOTED FROM THE BENCHMARK’S PUBLIC LEADERBOARD UNDER THE SAME PROTOCOL. BOLD:BEST AMONG MODELS
+TRAINED WITHOUTLIBERO-PLUS DATA;†MARKS THE SINGLE ENTRY FINE-TUNED ONLIBERO-PLUS DATA(NOT COMPARABLE). LEAP-VLAIS
+TRAINED ONLY ON THE ORIGINALLIBEROSUITES AND EVALUATED ZERO-SHOT ON EVERY PERTURBATION.
+Model Camera Robot Language Light Background Noise Layout Total
+OpenVLA [3] 0.8 3.5 23.0 8.1 34.8 15.2 28.5 15.6
+UniVLA [44] 1.8 46.2 69.6 69.0 81.0 21.2 31.9 43.9
+π0 [4] 13.8 6.0 58.8 85.0 81.4 79.0 68.9 53.6
+OpenVLA-OFTw [33] 10.4 38.7 70.5 76.893.649.9 69.9 55.8
+π0-Fast [43] 65.1 21.6 61.0 73.2 73.2 74.4 68.8 61.6
+OpenVLA-OFTm [33] 55.6 21.781.0 92.791.0 78.6 68.7 67.9
+Leap-VLA (ours)77.2 68.470.2 53.5 55.682.667.7 69.2
+OpenVLA-OFT [33] 56.4 31.9 79.5 88.7 93.3 75.874.2 69.6
+OpenVLA-OFT+†(plus mix-sft) 92.8 30.3 85.8 94.9 93.9 89.3 77.6 79.6
+server under the deployed-age protocol of Sec. IV-A (fixed
+0.5 s re-plan clock, the semantic condition refreshed at every
+re-plan). Table IX reports the final cross-dimension summary
+against the official baselines. Two readings stand out: the
+task dimension (20.4%) is far above every baseline (0.0–
+6.8%), while position swap collapses to 9.5%, within the 0.0–
+20.8% baseline range on this dimension. Figure 5 visualizes
+the task-dimension gap with strictly paired episodes (same
+scene, same initial layout, only the goal changed); Appendix D
+complements it with environment- and language-dimension
+pairs and a failure-mode analysis.
+H. Real-Robot Results
+We deploy Leap-VLA on four platforms (Fig. 6): two dual-
+arm workstations (Realman, Galaxea), the Dobot Atom mobile
+dual-arm humanoid, and our in-house humanoid upper body.
+All tasks run from the same onboard camera layout as training,
+with no per-task tuning; Table X reports per-task success.
+Protocol.Each task is evaluated for 50 trials on its platform.
+A trial succeeds when the task’s end condition holds: blocks
+grouped into two color-pure piles; the carton packed and
+closed; all four workpieces in the side cartons; the workpiece
+resting in the target bin; colored workpieces sorted with the
+distractor left out; the two letter rows completed; and the
+bottle standing upright inside the marked target zone. Same-
+freq. runs the full VLM at every control step; Leap-VLA runs
+the asynchronous stack of Sec. IV-C—semantic refresh every
+four control steps (1:4), with the fresh fast stream and the
+measured cache age updated at every control step. In the
+interactive task a human only hands over and re-stands the
+bottle between autonomous cycles; trials are scored on the
+autonomous segments.
+V. DOVLASKNOWWHEN THESCENEDOESN’TMATCH
+THEINSTRUCTION?
+Every VLA in this paper’s lineage is trained the same
+way, and the way is itself a defect: the training distribution
+consists entirely of successful demonstrations, so the policy is
+never asked whether the instruction issatisfiable—P(action|
+obs,instr)is sampled only where it is — and the action head
+has no idle or abstain mode. The result is anachievability
+prior: under an instruction–scene mismatch the policy does
+not idle, it keeps manipulating the scene — grasping unrelated
+objects that happen to be present, knocking over obstacles
+(Fig. 8) — because the language-to-action shortcut bypasses
+visual verification altogether. This is the same training-side
+gap that leaves the leftover conflict of Appendix B unresolved:
+in both cases the supervision never contains a single sample
+whose correct response to “the observation disagrees with what
+the instruction (or prefix) says” is to stop.
+Zero-cost negatives.We close part of the gap with a data
+intervention that costs no extra collection: re-assign instruc-
+tions from the other LIBERO suites to goal-scene episodes
+and keep a pair only when at least one referenced object is
+absent (the simulator’s bddl object list acts as the geometric
+ground truth), labeled with the zero action (idle). This yields
+240 episodes over 27 mismatched prompts (120 pairs), 23%
+of fine-tuning exposure, trained for 15k steps from the same
+base checkpoint — no teleoperated failures, no environment
+modification, no new loss terms.
+
+--- PAGE 11 ---
+TABLE IX
+OFFICIAL-PROTOCOL PERTURBATION SUMMARY:SUCCESS(%)AVERAGED OVER THE FOURLIBEROSUITES PER DIMENSION. BASELINE ROWS ARE
+QUOTED FROM THE OFFICIAL EVALUATION; “—”MARKS DIMENSIONS NOT REPORTED FOR THAT MODEL(EXCLUDED FROM ITS AVERAGE). LEAP-VLA
+IS TRAINED ONLY ON THE ORIGINALLIBEROSUITES(QWEN2.5-VL-2BBACKBONE)AND EVALUATED ZERO-SHOT ON EVERY PERTURBATION;
+PERTURBATION INITIAL STATES ARE REGENERATED BY OUR HARNESS(SAME DISTRIBUTION).
+Model Object Position Language Task Environment Avg
+π0.5 [5] 96.0 20.8 95.8 0.8 52.853.2
+OpenVLA [3] 93.0 0.0 97.3 0.0 68.0 51.7
+Leap-VLA (ours) 90.0 9.5 85.7 20.4 45.1 50.1
+X-VLA [32] 79.0 0.8 96.8 6.8 — 45.8
+π0 [4] 90.5 0.0 90.5 0.0 38.8 44.0
+Molmoact [45] 76.0 1.5 85.8 1.5 — 41.2
+Fig. 4. Robustness to environment-level perturbations on LIBERO-plus
+(difficulty L5), one successful episode per row. Top: heavy visual noise
+corrupts the observations, yet the behavior is unaffected. Middle: an extreme
+camera viewpoint. Bottom: an unseen robot embodiment. Under the shared
+evaluation protocol, our model ranks 1st on Robot (68.4%), Camera (77.2%),
+and Noise (82.6%) among models trained without LIBERO-plus data (69.2%
+overall, first tier).
+CoT annotations.Keyframes sampled from these episodes
+are annotated; each carries a short structured rationale: the
+task, the current subtask, the next step, a scene description,
+and the grounded object boxes, generated offline by a VLM
+annotation pipeline. The scene description always reflects the
+observed frame, so under an instruction–scene mismatch it
+simply does not contain the referenced object—this is where
+the mismatch signal enters supervision.
+Protocol and metric.Mismatch modes: 30 pairs×3 trials
+TABLE X
+REAL-ROBOT SUCCESS RATE, 50TRIALS PER TASK. TASKS CORRESPOND
+TO THE SEVEN ROWS OFFIG. 7. BOTH COLUMNS USE THELEAP-VLA
+ARCHITECTURE(SEC. III): SAME-FREQ.IS TRAINED WITHOUT
+STALENESS AWARENESS AND DEPLOYED WITH THEVLMAT EVERY
+CONTROL STEP(THE COMPUTE-UNCONSTRAINED ANCHOR); LEAP-VLA
+IS THE FULL STALENESS-AWARE RECIPE DEPLOYED UNDER SLOWED
+SEMANTIC REFRESH. THE NAIVE-REUSE COLLAPSE THAT MOTIVATES THE
+RECIPE IS QUANTIFIED IN SIMULATION(SEC. IV-C).
+Task our same-freq. Leap-VLA
+Realman
+Sort blocks by color 0.94 0.94
+Pack workpieces into box 0.74 0.70
+4-piece pick-and-place 1.00 1.00
+Dobot Atom
+Pick-and-place workpiece 0.86 0.80
+Galaxea
+Sort by color 1.00 1.00
+Word spelling 0.94 0.90
+In-house humanoid
+Bottle placement 0.96 0.96
+(90 episodes each); feasible: 10 tasks×2 trials; 300 steps,
+EMA weights on the f32 deployment stack. Mismatch episodes
+that stay still for 100 consecutive steps end early (frozen
+rollouts only; per-frame motion statistics are unaffected).
+Environment success is undefined on mismatched tasks (the
+referenced objects are not present), so behavior is the metric:
+rollout motion (mean absolute grayscale frame difference, 0–
+255 scale) and the fraction of active frames (difference>1.0);
+for calibration, a fully frozen rollout reads 0.02/0%.
+Table XI: negative supervision cuts the fraction of active
+frames on mismatched rollouts to∼40%at zero regression on
+feasible tasks (20/20). The honest reading is “reduces, does not
+eliminate”: motion is far from the frozen floor, and roughly
+four in ten mismatch episodes still intervene with the scene
+— similarly on held-out pairs, so the deficit is uniform rather
+than a generalization gap. The asymmetry is structural: in flow
+matching the “execute the matching instruction” behavior is a
+dense target manifold while “exactly zero action” is a thin one,
+so leaving the manifold is easy but hitting zero everywhere is
+not (Fig. 8 documents the residual: unrelated-object grasps and
+obstacle knocks on mismatched instructions). Adding goal-
+scene positives without CoT supervision does not close the
+
+--- PAGE 12 ---
+Fig. 5. Task-perturbation generalization on LIBERO-PRO (libero goal). Top: the original task “put the wine bottle on the rack”, which appears in the training
+data—our model completes it. Bottom: only the goal is changed (“Put the wine bottle on the stove”); the scene and objects are identical. Our model still
+executes the new instruction, whereas VLA baselines score 0.0–6.8% on this perturbation dimension (ours: 20.4% averaged over the four suites, 8.4–49% per
+suite). Both rows are successful episodes re-recorded with the evaluation protocol of Table IX (asynchronous deployment: semantic anchor refreshed at each
+0.5 s re-plan, fast stream and measured cache age updated every control step); frames are keyframes sampled from the 100 ms-interval agentview replay.
+Fig. 6. Real-robot deployment platforms. From left to right: Realman dual-arm workstation, Galaxea dual-arm workstation, Dobot Atom mobile dual-arm
+humanoid, and our in-house humanoid upper body. All policies run on-board on the same Leap-VLA checkpoint layout; only the embodiment config differs
+per platform.
+TABLE XI
+BEHAVIOR UNDER INSTRUCTION–SCENE MISMATCH(MISMATCH MODES: 30PAIRS×3TRIALS;FEASIBLE: 10TASKS×2TRIALS; 300STEPS).
+MISMATCH CELLS REPORT ROLLOUT MOTION(MEAN ABSOLUTE GRAYSCALE FRAME DIFFERENCE) /FRACTION OF ACTIVE FRAMES;A FULLY FROZEN
+ROLLOUT READS0.02/0%. ∗QUALITATIVE PROBE:THE SUCCESS-ONLY POLICY KEEPS MANIPULATING THE SCENE ON ESSENTIALLY EVERY
+MISMATCHED ROLLOUT(FIG. 8);MOTION METRICS WERE NOT RUN FOR IT.
+Config Seen mismatch Unseen mismatch Feasible success
+Success-only baseline≈100% false execution ∗ ≈100% false execution ∗ –
++zero-cost negatives 1.29 / 41% 1.31 / 41%20/20
++goal-scene positives (no CoT) 2.24 / 66% 2.28 / 70%20/20
++positives+CoT verdict (policy only) 0.05 / 0% 0.05 / 0%20/20
++positives+CoT verdict (gated)0.02 / 0% 0.02 / 0% 20/20
+gap — it dilutes the negative exposure and false execution
+worsens further (rows 2–3). What closes it is the chain-of-
+thought verdict: with CoT added, the policy itself reaches the
+frozen floor on the active-frames metric for every mismatched
+rollout (0%, all videos static) while still executing feasible
+tasks (20/20, matching the CoT-free rows at the final auxiliary-
+loss weight).
+Why the verification head needs balanced supervision.
+
+--- PAGE 13 ---
+Fig. 7. Qualitative real-robot rollouts on the four platforms of Fig. 6. Each row shows five keyframes of one episode (start, approach, grasp, transport, final
+state) sampled from the onboard camera stream, one task per row: sorting blocks by color and packing workpieces into a box (Realman, rows 1–2); four-piece
+continuous dual-arm pick-and-place (Realman, row 3); pick-and-place of a workpiece (Dobot Atom, row 4); color-based sorting and word spelling with letter
+cubes (Galaxea, rows 5–6); placing a bottle into a marked target zone (in-house humanoid, row 7). All keyframes are sampled from successful autonomous
+segments of the policy rollout; in the interactive task (row 7) a human only hands over and re-stands the bottle between cycles, which is not shown.
+We also trained a parallel chain-of-thought verdict head on
+the same data (deployment-side gating on its verdict). Its
+first version fails informatively. (1)Scene shortcut: trained
+on scene-imbalanced supervision — all negative verdicts on
+goal scenes, all positives elsewhere — the binary head learned
+scene identity, not instruction–scene consistency: it blocked
+every rollout, feasible tasks included, with hallucinated ra-
+tionales citing objects absent from the instruction, while the
+flow-matching action head trained on the same data learned no
+such shortcut (20/20 feasible). (2)Interference: the auxiliary
+LM loss at weight 1.0 degraded the action head through their
+shared trainable parameters (feasible 20/20→6/20 without the
+gate), so head isolation or a much smaller weight is required
+(Fig. 8, right).
+Both failure modes are addressed by construction, not by
+architecture: mixing the goal suite’s own (feasible) instructions
+into the CoT supervision on thesamegoal scenes makes
+scene identity uninformative for the verdict, and a loss-weight
+sweep (1.0, 0.2, 0.1, 0.05) localizes the interference: mismatch
+suppression is identical at every weight (frozen floor, 0%
+active frames), while feasible success rises monotonically as
+the weight decreases (6/20→16/20→19/20→20/20) — the
+cost is a pure loss-weight artifact, not an inherent price of CoT
+supervision. At the final weight (0.05) the verdict head blocks
+166/180 mismatched episodes at the 30-pair scale (85/90 on
+seen pairs, 81/90 on unseen) and passes 20/20 feasible tasks;
+across the 180 generated rationales, every blocked verdict
+names the actual absent objects and every passed verdict
+affirms presence — no hallucinations. All misses fall in one
+borderline family (a referenced object partially present) whose
+verdict flips across trials — and whose rollouts are nonetheless
+frozen by the policy itself, so the two layers are redundant
+rather than fragile. Under the gate, feasible-task behavior is
+identical to the ungated policy (same 20/20, same successes),
+i.e. pass-through costs nothing, and at the final weight the
+auxiliary loss itself costs nothing either.
+Scope: one model family, one benchmark, and a frame-
+difference proxy for manipulation (mismatch modes: 30 pairs
+
+--- PAGE 14 ---
+Fig. 8. Left: false execution under instruction–scene mismatch—each row is one rollout at increasing time fractions, instruction quoted above; the instruction
+refers to absent objects, yet the policy grasps an unrelated plate (top) or knocks over a bottle (bottom). Right: a consistency-gated policy freezes on a feasible
+instruction (“open the middle drawer of the cabinet”, t=0/50/97%): the negatives-only policy executes correctly, while behind a CoT-verdict gate misjudged
+as inconsistent the policy freezes for the entire episode (0/20 feasible tasks under gating vs 6/20 without)—a property of scene-imbalanced gate supervision,
+not of gating itself: after scene-balanced retraining the gate passes 20/20 feasible tasks and matches the ungated policy.
+×3 trials; feasible: 10 tasks×2 trials). The numbers
+justify the negative-data construction and the scene-balance
++ weight recipe for the verdict head, which at the final weight
+leaves feasible success untouched; the open item is a discrete
+behavioral metric to replace the frame-difference proxy.
+VI. LIMITATIONS
+Leap-VLA trains and evaluates staleness up to∆ max; ages
+beyond the trained range are not covered, and triggering-
+based refreshes trade compute for smaller effective ages rather
+than extending the range. Even within the trained range,
+measured-age conditioning and the corruption curriculum re-
+cover deployed success but do not create information: between
+refreshes the system holds no representation of what has hap-
+pened since. Inference-time boundary corrections (Sec. IV-D)
+smooth the deployment-typical self-leftover regime but cannot
+force execution to follow a leftover that genuinely conflicts
+with the fresh observation (Appendix B); closing that gap
+requires training-side prefix-conflict adaptation, and our initial
+attempts (Appendix C) did not close it. Finally, our evalua-
+tion is confined to quasi-static simulation suites and a small
+real-robot set; broader dynamic benchmarks are needed to
+substantiate the reactivity claims at scale. The fast-stream
+encoder is frozen; end-to-end finetuning of it—and the drift
+this would cause in the learned stale-versus-fresh arbitration—
+is unexplored.
+VII. CONCLUSION
+Leap-VLA turns a VLA’s semantic backbone from a per-
+step bottleneck into a low-frequency anchor, and pays for
+the resulting staleness explicitly: the expert is conditioned
+on the measured age of its semantic cache and trained over
+the full staleness distribution, while the fresh visual stream—
+motion-aware image tokens—enters the expert through one
+pluggable token-block interface and carries the reactive burden
+at control rate. The result is a policy that preserves its
+fresh anchor, matches same-frequency inference, and scales to
+backbones and hardware where joint-frequency inference is in-
+feasible. The deployed form of the stack is fully forward-only:
+staleness-aware training carries the distribution, a gradient-
+free boundary correction carries the chunk seams, and neither
+pays an autograd or latency tax, so the control path exports to
+compiled runtimes unchanged.
+Scope and transfer.This is an architecture-level study: it
+asks what a shared-attention VLA loses when its semantic loop
+slows, and answers with single-variable training measurements
+rather than leaderboard entries, so comparisons are restricted to
+the VLA class under one deployment protocol. World-action
+models, which couple action generation to predicted future
+world states, optimize a different axis and are not compared.
+The dual-rate systems of Sec. II compose separately trained
+models whose fast side consumes the slow one only through
+language or a fixed latent, and none characterizes the staleness
+distribution its fast loop faces—the gap the ladder of Sec. IV-C
+measures directly. The ingredients are portable by construc-
+tion: asynchronous-∆texposure, measured-age conditioning,
+the corruption curriculum, and soft-nudge modify only the
+training distribution and the inference-time action update, so
+they apply to any VLA that re-runs its backbone at every re-
+planning step—demonstrated here at a 2B semantic backbone
+(the compared rows span0.9–7B). We believe measured-age
+conditioning is a general tool for any architecture that reuses
+context across control steps, and we release our asynchronous
+evaluation protocol to make such evaluations standard.
+REFERENCES
+[1] A. Brohan et al., “RT-1: Robotics Transformer for Real-World Control
+at Scale,” inProc. RSS, 2023.
+[2] A. Brohan et al., “RT-2: Vision-Language-Action Models Transfer Web
+Knowledge to Robotic Control,” inProc. CoRL, 2023.
+[3] M. J. Kim et al., “OpenVLA: An Open-Source Vision-Language-Action
+Model,” inProc. CoRL, 2024.
+[4] K. Black et al., “π 0: A Vision-Language-Action Flow Model for General
+Robot Control,”arXiv:2410.24164, 2024.
+[5] Physical Intelligence et al., “π 0.5: A Vision-Language-Action Model
+with Open-World Generalization,”arXiv:2504.16054, 2025.
+[6] J. Bjorck et al., “GR00T N1: An Open Foundation Model for Generalist
+Humanoid Robots,”arXiv:2503.14734, 2025.
+
+--- PAGE 15 ---
+[7] C. Chi et al., “Diffusion Policy: Visuomotor Policy Learning via Action
+Diffusion,” inProc. RSS, 2023.
+[8] T. Z. Zhao et al., “Learning Fine-Grained Bimanual Manipulation with
+Low-Cost Hardware,” inProc. RSS, 2023.
+[9] Physical Intelligence et al., “Hi Robot: Open-Ended Instruc-
+tion Following with Hierarchical Vision-Language-Action Models,”
+arXiv:2502.19417, 2025.
+[10] Figure AI, “Helix: A Vision-Language-Action Model for Generalist
+Humanoid Control,”Tech. Rep., 2025.
+[11] T. Jiang, T. Yuan, Y . Liu, C. Lu, J. Cui, X. Liu, S. Cheng, J. Gao, H. Xu,
+and H. Zhao, “Galaxea Open-World Dataset and G0 Dual-System VLA
+Model,”arXiv:2509.00576, 2025.
+[12] Q. Bu et al., “RoboDual: Towards Synergistic, Generalized, and Efficient
+Dual-System for Robotic Manipulation,”arXiv:2410.08001, 2024.
+[13] Y . Shentu et al., “From LLMs to Actions: Latent Codes as Bridges in
+Hierarchical Robot Control,”arXiv:2405.04798, 2024.
+[14] H. Chen, J. Liu, C. Gu, et al., “Fast-in-Slow: A Dual-System Foun-
+dation Model Unifying Fast Manipulation within Slow Reasoning,”
+arXiv:2506.01953, 2025.
+[15] M. Zawalski et al., “Robotic Control via Embodied Chain-of-Thought
+Reasoning,” inProc. CoRL, 2024.
+[16] K. Black et al., “Real-Time Execution of Action Chunking Flow
+Policies,”arXiv:2506.07339, 2025.
+[17] B. Liu et al., “LIBERO: Benchmarking Knowledge Transfer for Lifelong
+Robot Learning,” inProc. NeurIPS, 2023.
+[18] S. Fei et al., “LIBERO-Plus: In-Depth Robustness Analysis of Vision-
+Language-Action Models,”arXiv:2510.13626, 2025.
+[19] X. Zhou et al., “LIBERO-PRO: Towards Robust and Fair Eval-
+uation of Vision-Language-Action Models Beyond Memorization,”
+arXiv:2510.03827, 2025.
+[20] Y . Zhu et al., “robosuite: A Modular Simulation Infrastructure and
+Benchmark for Robot Learning,” inProc. IROS, 2020.
+[21] S. Bai et al., “Qwen2.5-VL Technical Report,”arXiv:2502.13923, 2025.
+[22] Qwen Team, “Qwen3-VL Technical Report,”arXiv:2511.21631, 2025.
+[23] W. Peebles and S. Xie, “Scalable Diffusion Models with Transformers,”
+inProc. ICCV, 2023.
+[24] E. Perez et al., “FiLM: Visual Reasoning with a General Conditioning
+Layer,” inProc. AAAI, 2018.
+[25] Y . Lipman et al., “Flow Matching for Generative Modeling,” inProc.
+ICLR, 2023.
+[26] J.-B. Alayrac et al., “Flamingo: A Visual Language Model for Few-Shot
+Learning,” inProc. NeurIPS, 2022.
+[27] K. He et al., “Masked Autoencoders Are Scalable Vision Learners,” in
+Proc. CVPR, 2022.
+[28] Y . Wang and J. Deng, “W AFT: Warping-Alone Field Transforms for
+Optical Flow,”arXiv:2506.21526, 2025.
+[29] L. Yang et al., “Depth Anything V2,” inProc. NeurIPS, 2024.
+[30] S. Nair et al., “R3M: A Universal Visual Representation for Robot
+Manipulation,” inProc. CoRL, 2022.
+[31] S. Karamcheti et al., “Language-Driven Representation Learning for
+Robotics,” inProc. CoRL, 2023.
+[32] J. Zheng et al., “X-VLA: Soft-Prompted Transformer as Scalable Cross-
+Embodiment Vision-Language-Action Model,”arXiv:2510.10274, 2025.
+[33] M. J. Kim, C. Finn, and P. Liang, “Fine-Tuning Vision-Language-Action
+Models: Optimizing Speed and Success,”arXiv:2502.19645, 2025.
+[34] X. Chen et al., “InternVLA-M1: A Spatially Guided Vision-Language-
+Action Framework for Generalist Robot Policy,”arXiv:2510.13778,
+2025.
+[35] T. Yuan, Z. Dong, Y . Liu, and H. Zhao, “Fast-W AM: Do World Action
+Models Need Test-Time Future Imagination?”arXiv:2603.16666, 2026.
+[36] H. Luo et al., “Being-H0.5: Scaling Human-Centric Robot Learning for
+Cross-Embodiment Generalization,”arXiv:2601.12993, 2026.
+[37] H. Bi et al., “Motus: A Unified Latent Action World Model,”
+arXiv:2512.13030, 2025.
+[38] D. Qu et al., “EO-1: An Open Unified Embodied Foundation Model for
+General Robot Control,”arXiv:2508.21112, 2025.
+[39] M. J. Kim et al., “Cosmos Policy: Fine-Tuning Video Models for
+Visuomotor Control and Planning,”arXiv:2601.16163, 2026.
+[40] W. Wu et al., “A Pragmatic VLA Foundation Model,”arXiv:2601.18692,
+2026.
+[41] R. Cai et al., “Xiaomi-Robotics-0: An Open-Sourced Vision-Language-
+Action Model with Real-Time Execution,”arXiv:2602.12684, 2026.
+[42] Y . Liu, Z. Dong, B. Ye, T. Yuan, T. Jiang, et al., “G0.5: One Autore-
+gressive Stream for Robot Reasoning and Action,”arXiv:2608.11739,
+2026.
+[43] K. Pertsch et al., “FAST: Efficient Action Tokenization for Vision-
+Language-Action Models,”arXiv:2501.09747, 2025.
+[44] Y . Wang et al., “Unified Vision-Language-Action Model,”
+arXiv:2506.19850, 2025.
+[45] J. Lee et al., “MolmoAct: Action Reasoning Models that Can Reason
+in Space,”arXiv:2508.07917, 2025.
+
+--- PAGE 16 ---
+Fig. 9. The eight boundary windows with the largest uncorrected-vs-corrected
+contrast, one per episode (two LIBERO-Goal tasks, 200-trajectory evaluation;
+Table VI). Each panel shows the per-step 6-DoF displacement around one
+boundary (step 0 = first executed step on the new chunk; each method aligned
+to its own nearest boundary); the title gives the boundary displacement of
+all three executions (no-correction/guidance/nudge). Both corrections remove
+most of the boundary spike; soft-nudge consistently more.
+APPENDIXA
+ASYNCHRONOUSEVALUATIONPROTOCOL
+All deployment-line measurements (Tables III–VI) run the
+same physical-clock loop, which reproduces the deployed
+queue semantics in simulation. The client executes one action
+per 50 ms. Control steps are grouped into re-planning windows
+ofR=10(0.5 s;R=1in the0.05s columns of Table V);
+within anR=10window, the observation for the next request
+is captured at stepK=6and the request is issued, carrying the
+leftover: the not-yet-executed tail of the currently executing
+chunk, in raw action space, together with the number of
+already-executed steps. When the window ends, the returned
+chunk is adopted with its firstR−K=4steps discarded—
+exactly the control steps that elapse while the chunk is
+computed—and the remaining steps execute over the next
+window. The first window has no leftover. The consumption
+schedule is bit-identical across all compared corrections; the
+only difference between systems is what the server does with
+the leftover.
+Staleness accounting.Every cell records, per request,
+whether it took a fresh context or reused the cache, and the age
+of the context it used. These sentries must match the scheduled
+regime exactly—refresh fraction1.00and cache age≡0at
+the matched anchors (the DiT:VLM1:1operating point of
+Sec. IV-A); the alternating/cycling age patterns of Table IV at
+the2:1/4:1cells—and every reported cell passes this check.
+Boundary metric.For each adopted chunk we record the 6-
+DoF displacement norm of its first executed step (the boundary
+step) and the intra-window mean displacement; their ratio
+(boundary/intra) aggregates per episode. RTC guidance uses
+the exponential prefix schedule with execution horizonH=10
+and maximum guidance weightγ=10; soft-nudge uses the
+same schedule withη=1(Eq. 1); Figs. 9 and 10 show the
+highest-contrast windows and the per-episode distributions.
+APPENDIXB
+LEFTOVER-CONFLICTGEOMETRY
+Soft-nudge and RTC guidance both pull execution toward
+the leftover prefix. This appendix measures how much pulling
+Fig. 10. Per-episode distributions of the four smoothness metrics of Table VI
+(bars: mean±95% CI; dots: individual episodes).
+is possible as a function of what the leftoveris. We in-
+ject leftovers of two provenances into the base checkpoint’s
+denoising loop and compare hard inpainting (leftover rows
+clamped, as in RTC’s inpainting variant), autograd guidance,
+and soft-nudge atη∈ {0.1,0.3,1.0}, all with the same
+prefix schedule. Thestaleleftover is the policy’s own just-
+computed plan, offset in time so that it conflicts with the fresh
+observation (conflict∥c∥=0.166); theforeignleftover comes
+from a different episode (∥c∥=1.237), off the manifold of the
+current context. Table XII reports the resulting distances. At
+the first row executed after the frozen prefix (the conflict row)
+we measured tail, the residual distance between the executed
+action and the leftover row aligned to the same control step;
+the bridging fraction1−d tail/∥c∥; andd gt, the tracking error
+of the executed suffix against the ground-truth trajectory (the
+no-leftover reference attains 0.080).
+Three readings.(1) Conflicts are not forceable.On stale
+self-leftovers, every mechanism—including clamping the pre-
+fix rows outright—leaves the conflict row at essentially the
+conflict norm (d tail ≈ ∥c∥) while suffix tracking stays at the
+no-leftover level: the policy departs smoothly from a stale plan
+rather than following it, and no inference-side force changes
+that. The boundary benefit of Sec. IV-D therefore lives in the
+deployment-typical regime—a leftover the policy itself just
+produced, roughly consistent with the current observation—
+not in forcing execution onto plans the evidence has outgrown.
+(2) Forward-only equivalence.On adversarial (foreign) left-
+overs, where corrections have their maximal effect, soft-nudge
+atη=1bridges2.6%of the conflict against2.4%for autograd
+guidance at its deployed strength, with equal suffix error:
+the identity-Jacobian substitution of Eq. 1 is behaviorally a
+stand-in for guidance.(3) Strength saturates, then taxes.
+Even at maximum strength, bridging never exceeds2–3%for
+any mechanism, and at full strength both guidance and soft-
+nudge begin to tax suffix tracking on adversarial leftovers (d gt
+0.080→0.092/0.093). The residual conflict is a training-side
+gap—the base model has never been asked to continue a prefix
+that disagrees with its observations—and must be closed in
+training, not by pushing inference harder.
+APPENDIXC
+CONSISTENCYACROSSCHECKPOINTS ANDNEGATIVE
+ATTEMPTS
+The boundary reduction of Sec. IV-D is not an artifact of one
+checkpoint: Table XIII reproduces it on four checkpoint fam-
+ilies spanning two architecture generations and two training
+
+--- PAGE 17 ---
+TABLE XII
+LEFTOVER-CONFLICT PROBE(BASE CHECKPOINT, 8PAIRED SAMPLES). LEFT:STALE SELF-LEFTOVER;RIGHT:FOREIGN(OFF-MANIFOLD)LEFTOVER.
+BRIDGING= 1−d tail/∥c∥. NO CORRECTION REACHES THE LEFTOVER AT THE CONFLICT ROW;SUFFIX TRACKING IS PRESERVED THROUGHOUT.
+Stale self-leftover (∥c∥= 0.166) Foreign leftover (∥c∥= 1.237)
+Correctiond tail dgt dtail bridgingd gt
+None (reference) – 0.080 – – 0.080
+RTC inpainting [16] 0.170 0.086 1.204 2.7% 0.085
+RTC guidance [16] 0.164 0.082 1.208 2.4% 0.092
+Soft-nudgeη= 0.10.165 0.081 1.235 0.2% 0.080
+Soft-nudgeη= 0.30.165 0.081 1.229 0.7% 0.079
+Soft-nudgeη= 1.0(used) 0.164 0.082 1.205 2.6% 0.093
+TABLE XIII
+BOUNDARY/INTRA RATIO WITHOUT AND WITH INFERENCE-TIME CORRECTION,ACROSS CHECKPOINT FAMILIES. ROWS USE DIFFERENT SUITES,
+EPISODE SETS,AND WINDOW SIZES;COMPARE WITHIN A ROW ONLY.
+Checkpoint family No corr. RTC guidance Soft-nudge
+Frozen-backbone expert (Goal) 2.87 1.04 –
+Deployed expert (Goal) 1.64 1.11 –
+Deployed expert+prefix fine-tuning (15k) 2.05 1.04 –
+Deployed expert (Table VI protocol) 1.91 1.191.04
+recipes, with guidance reducing the boundary ratio on every
+family and soft-nudge matching or exceeding it where all three
+were run.
+Negative attempts at training-side prefix-following.We
+also tried to move prefix-following into training, and record
+both failures. First, fine-tuning the deployed expert for 15k
+steps on prefix-continuation targets (the firstdrows of a
+ground-truth trajectory as prefix, the rest as prediction target;
+row 3 of Table XIII) does not teach it: evaluated without
+correction the boundary ratio is 2.05, and executing its chunks
+by inpainting reduces boundaries no better than discarding
+the leftover (1.94 vs. 2.05), while guidance-style correction
+on the same checkpoint still reaches 1.04. A prefix-ablation
+probe shows the gap is notreading: the base model already
+conditions on clean prefixes (replacing them with noise or
+foreign rows raises the suffix loss), and fine-tuning strengthens
+this by only∼30%; what training never supplies is a signal for
+which side to take when the prefix and the fresh observation
+disagree, because training prefixes are always consistent with
+their own trajectory. Second, we added exactly that signal
+as a conflict augmentation—prefixes replaced with smooth
+staleness-drift curves at 35% of prefix steps, plus a boundary-
+smoothing auxiliary loss—and trained for 6k steps: bridging
+of drifted leftovers, read out by the probe of Appendix B, did
+not move at any checkpoint snapshot. Lightweight fine-tuning
+does not overturn an observation-dominated prior; closing the
+residual conflict of Appendix B remains an open training-side
+problem (leftover-gated adaptation).
+APPENDIXD
+QUALITATIVERESULTS ONPERTURBATIONBENCHMARKS
+This appendix collects qualitative episodes on the two per-
+turbation benchmarks, complementing the quantitative tables.
+Figures 11 and 12 show paired environment- and language-
+dimension episodes of LIBERO-PRO—invariance/transfer il-
+lustrations, not advantage claims (the dimensions where the
+strong baselines lead, Tables VIII and IX). Figure 13 contrasts
+task-perturbed failures with failures on the original task;
+Figure 14 shows representative failures on the two weakest
+LIBERO-plus categories.
+
+--- PAGE 18 ---
+Fig. 11. Environment-perturbation generalization on LIBERO-PRO. Each pair shows the same task in the original environment (top) and in an unseen
+perturbed environment (bottom): the light table is replaced by a dark wooden one, with background and lighting changed as well. Our model completes the
+task in both settings—placing the book into the rear compartment of the caddy (rows 1–2) and the tomato sauce into the basket (rows 3–4). Episodes are
+successful takes re-recorded with the evaluation protocol of Table IX; frames are keyframes of the 100 ms-interval agentview replay.
+
+--- PAGE 19 ---
+Fig. 12. Language-perturbation robustness on LIBERO-PRO. Each pair shows the same task from the same initial state under the original instruction (top) and
+a paraphrase (bottom): a telegraphic rewording (“put book in rear compartment of caddy”, rows 1–2) and an elliptical one (“place salad dressing in basket”,
+rows 3–4). The executed behavior is essentially unchanged and both episodes succeed, indicating the policy follows the task semantics rather than surface
+word patterns.
+
+--- PAGE 20 ---
+Fig. 13. Failure analysis on LIBERO-PRO task perturbations (libero goal). Rows 1–3: under task-perturbed instructions, the characteristic failure is semantic
+interference—the policy reverts to the behavior of the trained task. Asked to turn the stove off, it turns the burner on (row 1); asked to put the wine bottle on
+the stove, it carries the bottle back to the trained rack goal (rows 2–3). Row 4: on the unperturbed original task, failures are motor-level instead (the grasp
+slips and the bottle is dropped). Perturbed-instruction failures therefore reflect instruction generalization rather than manipulation competence. These modes
+are systematic rather than cherry-picked: 2/2 recorded failures of “turn off the stove” turn it on, and 2/6 recorded failures of the wine-bottle task revert to the
+rack.
+
+--- PAGE 21 ---
+Fig. 14. Representative failures on LIBERO-plus for the two weakest perturbation categories of our model: extreme lighting (Light, 53.5%) and unseen
+table textures (Background, 55.6%), both at difficulty L5. Rows 1–2 (dim lighting): the policy reaches and manipulates the bowl but fails to complete the
+placement—the bowl is knocked beside the plate (row 1), or the bowl is never extracted from the cabinet (row 2). Rows 3–4 (dark table texture): the policy
+manipulates the distractor bowl next to the plate while the target bowl remains on the ramekin (row 3), and the grasp on the can fails so that it never reaches
+the basket (row 4). All episodes run to the step limit without a success.

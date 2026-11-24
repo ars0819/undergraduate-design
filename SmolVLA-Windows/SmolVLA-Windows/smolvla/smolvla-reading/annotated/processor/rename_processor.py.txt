@@ -1,0 +1,235 @@
+# 原文件 lerobot/src/lerobot/processor/rename_processor.py
+# 原行范围 1–127
+# L 后是官方源码或本机文件的原行号。每条中文注释对应紧随其后的原文。
+# 这是静态阅读副本。请在编辑器中阅读。空行保留，节选之间标出跳过的范围。
+# L0001 原作者对相邻代码的说明。
+#!/usr/bin/env python
+
+# L0003 原版权或开源许可声明。
+# Copyright 2025 The HuggingFace Inc. team. All rights reserved.
+# L0004 原作者对相邻代码的说明。
+#
+# L0005 原版权或开源许可声明。
+# Licensed under the Apache License, Version 2.0 (the "License");
+# L0006 原版权或开源许可声明。
+# you may not use this file except in compliance with the License.
+# L0007 原版权或开源许可声明。
+# You may obtain a copy of the License at
+# L0008 原作者对相邻代码的说明。
+#
+# L0009 原版权或开源许可声明。
+#     http://www.apache.org/licenses/LICENSE-2.0
+# L0010 原作者对相邻代码的说明。
+#
+# L0011 原作者对相邻代码的说明。
+# Unless required by applicable law or agreed to in writing, software
+# L0012 原版权或开源许可声明。
+# distributed under the License is distributed on an "AS IS" BASIS,
+# L0013 原版权或开源许可声明。
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# L0014 原版权或开源许可声明。
+# See the License for the specific language governing permissions and
+# L0015 原版权或开源许可声明。
+# limitations under the License.
+# L0016 从模块 collections.abc 导入 Mapping。
+from collections.abc import Mapping
+# L0017 从模块 copy 导入 deepcopy。
+from copy import deepcopy
+# L0018 从模块 dataclasses 导入 dataclass、field。
+from dataclasses import dataclass, field
+# L0019 从模块 typing 导入 Any。
+from typing import Any
+
+# L0021 从模块 lerobot.configs 导入 PipelineFeatureType、PolicyFeature。
+from lerobot.configs import PipelineFeatureType, PolicyFeature
+
+# L0023 从模块 .pipeline 导入 ObservationProcessorStep、ProcessorStepRegistry。
+from .pipeline import ObservationProcessorStep, ProcessorStepRegistry
+
+
+# L0026 数据类装饰器。Python 根据字段生成初始化等方法。
+@dataclass
+# L0027 注册装饰器。模块导入时，把随后的类或方法登记到框架的查找表。
+@ProcessorStepRegistry.register(name="rename_observations_processor")
+# L0028 按配置修改观测字典中的键，例如把外部相机键映射成 checkpoint 使用的键。
+class RenameObservationsProcessorStep(ObservationProcessorStep):
+    # L0029 文档字符串的边界。
+    """
+    # L0030 原文档中的说明或续行。
+    A processor step that renames keys in an observation dictionary.
+
+    # L0032 原文档中的说明或续行。
+    This step is useful for creating a standardized data interface by mapping keys
+    # L0033 原文档中的说明或续行。
+    from an environment's format to the format expected by a LeRobot policy or
+    # L0034 原文档中的说明或续行。
+    other downstream components.
+
+    # L0036 以下说明对象属性。
+    Attributes:
+        # L0037 原文档对“rename_map”的说明。
+        rename_map: A dictionary mapping from old key names to new key names.
+                    # L0038 原文档中的说明或续行。
+                    Keys present in an observation that are not in this map will
+                    # L0039 原文档中的说明或续行。
+                    be kept with their original names.
+    # L0040 文档字符串的边界。
+    """
+
+    # L0042 声明“rename_map”的类型为 dict[str, str]，调用 field，用它的结果作为初始值。
+    rename_map: dict[str, str] = field(default_factory=dict)
+
+    # L0044 定义方法 observation。
+    def observation(self, observation):
+        # L0045 把观测字典和改名映射交给通用函数。底层张量不需要重新编码。
+        return rename_keys(observation, self.rename_map)
+
+    # L0047 定义方法 get_config。
+    def get_config(self) -> dict[str, Any]:
+        # L0048 创建字典，用键查找对应的值作为当前调用的返回值。
+        return {"rename_map": self.rename_map}
+
+    # L0050 定义方法 transform_features。
+    def transform_features(
+        # L0051 延续上面的语句，self, features: dict[PipelineFeatureType, dict[str, PolicyFeature]]。
+        self, features: dict[PipelineFeatureType, dict[str, PolicyFeature]]
+    # L0052 结束参数表。若箭头后有类型，它标注预期返回值，缩进块是函数体。
+    ) -> dict[PipelineFeatureType, dict[str, PolicyFeature]]:
+        # L0053 原文档中的说明或续行。
+        """Transforms:
+        # L0054 原文档中的说明或续行。
+        - Each key in the observation that appears in `rename_map` is renamed to its value.
+        # L0055 原文档中的说明或续行。
+        - Keys not in `rename_map` remain unchanged.
+        # L0056 文档字符串的边界。
+        """
+        # L0057 声明“new_features”的类型为 dict[PipelineFeatureType, dict[str, PolicyFeature]]，调用 features.copy，用它的结果作为初始值。
+        new_features: dict[PipelineFeatureType, dict[str, PolicyFeature]] = features.copy()
+        # L0058 调用 rename_keys，用它的结果给 “new_features[PipelineFeatureType.OBSERVATION]” 赋值。
+        new_features[PipelineFeatureType.OBSERVATION] = rename_keys(
+            # L0059 延续上面的语句，features[PipelineFeatureType.OBSERVATION], self.rename_map。
+            features[PipelineFeatureType.OBSERVATION], self.rename_map
+        # L0060 闭合上方尚未结束的括号。
+        )
+        # L0061 引用已有的值 new_features作为当前调用的返回值。
+        return new_features
+
+
+# L0064 定义函数 rename_stats。
+def rename_stats(stats: dict[str, dict[str, Any]], rename_map: dict[str, str]) -> dict[str, dict[str, Any]]:
+    # L0065 文档字符串的边界。
+    """
+    # L0066 原文档中的说明或续行。
+    Renames the top-level keys in a statistics dictionary using a provided mapping.
+
+    # L0068 原文档中的说明或续行。
+    This is a helper function typically used to keep normalization statistics
+    # L0069 原文档中的说明或续行。
+    consistent with renamed observation or action features. It performs a defensive
+    # L0070 原文档中的说明或续行。
+    deep copy to avoid modifying the original `stats` dictionary.
+
+    # L0072 以下列出调用参数及其含义。
+    Args:
+        # L0073 原文档对“stats”（归一化统计量）的说明。
+        stats: A nested dictionary of statistics, where top-level keys are
+               # L0074 原文档中的说明或续行。
+               feature names (e.g., `{"observation.state": {"mean": 0.5}}`).
+        # L0075 原文档对“rename_map”的说明。
+        rename_map: A dictionary mapping old feature names to new feature names.
+
+    # L0077 以下说明调用者接收到的结果。
+    Returns:
+        # L0078 原文档中的说明或续行。
+        A new statistics dictionary with its top-level keys renamed. Returns an
+        # L0079 原文档中的说明或续行。
+        empty dictionary if the input `stats` is empty.
+    # L0080 文档字符串的边界。
+    """
+    # L0081 条件 not stats 成立时进入下方分支。
+    if not stats:
+        # L0082 创建字典，用键查找对应的值作为当前调用的返回值。
+        return {}
+    # L0083 用字典推导式从可迭代对象逐项取值并构造结果作为当前调用的返回值。
+    return {
+        # L0084 延续上面的语句，key: deepcopy(sub_stats) if sub_stats is not None else {}。
+        key: deepcopy(sub_stats) if sub_stats is not None else {}
+        # L0085 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+        for key, sub_stats in rename_keys(stats, rename_map).items()
+    # L0086 闭合上方尚未结束的括号。
+    }
+
+
+# L0089 定义函数 _rename_key_with_metadata。
+def _rename_key_with_metadata(key: str, rename_map: dict[str, str]) -> str:
+    # L0090 原文档中的说明或续行。
+    """Rename a feature key while preserving temporal sampling metadata suffixes."""
+    # L0091 条件 key in rename_map 成立时进入下方分支。
+    if key in rename_map:
+        # L0092 用方括号按键或索引读取 rename_map作为当前调用的返回值。
+        return rename_map[key]
+    # L0093 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+    for suffix in ("_is_pad", "_padding_mask"):
+        # L0094 条件 key.endswith(suffix) 成立时进入下方分支。
+        if key.endswith(suffix):
+            # L0095 对 key 做切片，右端索引不包含在结果中给 “base” 赋值。
+            base = key[: -len(suffix)]
+            # L0096 条件 base in rename_map 成立时进入下方分支。
+            if base in rename_map:
+                # L0097 计算此行的右侧表达式作为当前调用的返回值。
+                return f"{rename_map[base]}{suffix}"
+    # L0098 引用已有的值 key作为当前调用的返回值。
+    return key
+
+
+# L0101 定义函数 rename_batch_keys。
+def rename_batch_keys(batch: dict[str, Any], rename_map: dict[str, str] | None) -> dict[str, Any]:
+    # L0102 原文档中的说明或续行。
+    """Canonicalize raw dataset keys before they are grouped into a transition."""
+    # L0103 条件 not rename_map 成立时进入下方分支。
+    if not rename_map:
+        # L0104 引用已有的值 batch作为当前调用的返回值。
+        return batch
+    # L0105 调用 rename_keys，用它的结果作为当前调用的返回值。
+    return rename_keys(batch, rename_map)
+
+
+# L0108 支持任意值类型 V 的改名函数。映射的键会被检查和更新。
+def rename_keys[V](mapping: Mapping[str, V], rename_map: dict[str, str] | None) -> dict[str, V]:
+    # L0109 原文档中的说明或续行。
+    """Rename the keys of `mapping` (and their temporal padding keys) with `rename_map`.
+
+    # L0111 以下说明异常条件。
+    Raises:
+        # L0112 原文档对“ValueError”的说明。
+        ValueError: Two keys get the same name, e.g. `{"action.cartesian": "action"}` on data that
+            # L0113 原文档中的说明或续行。
+            already has an `action`. Rename the existing key as well, e.g. `{"action": "action.joint"}`.
+    # L0114 文档字符串的边界。
+    """
+    # L0115 声明“renamed”的类型为 dict[str, V]，创建字典，用键查找对应的值作为初始值。
+    renamed: dict[str, V] = {}
+    # L0116 声明“sources”的类型为 dict[str, str]，创建字典，用键查找对应的值作为初始值。
+    sources: dict[str, str] = {}
+    # L0117 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+    for key, value in mapping.items():
+        # L0118 调用 _rename_key_with_metadata，用它的结果给 “new_key” 赋值。
+        new_key = _rename_key_with_metadata(key, rename_map or {})
+        # L0119 条件 new_key in sources 成立时进入下方分支。
+        if new_key in sources:
+            # L0120 抛出 ValueError，中断当前路径并交给上层的异常处理。
+            raise ValueError(
+                # L0121 f 字符串片段，花括号中的表达式会被求值并插入文本。
+                f"Both {sources[new_key]!r} and {key!r} are named {new_key!r} after rename_map. Map one of "
+                # L0122 f 字符串片段，花括号中的表达式会被求值并插入文本。
+                f"them to another name as well, e.g. add {{{new_key!r}: {new_key + '.original'!r}}} to rename "
+                # L0123 f 字符串片段，花括号中的表达式会被求值并插入文本。
+                f"a key onto an existing {new_key!r}."
+            # L0124 闭合上方尚未结束的括号。
+            )
+        # L0125 引用已有的值 value给 “renamed[new_key]” 赋值。
+        renamed[new_key] = value
+        # L0126 引用已有的值 key给 “sources[new_key]” 赋值。
+        sources[new_key] = key
+    # L0127 引用已有的值 renamed作为当前调用的返回值。
+    return renamed

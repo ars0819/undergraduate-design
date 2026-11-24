@@ -1,0 +1,72 @@
+﻿[
+    {
+        "id":  "2609.25376",
+        "status":  "OK",
+        "arxiv_id":  "2609.25376",
+        "title":  "VLAQuantBench: Closed-Loop Evaluation of Post-Training Quantization for Vision-Language-Action Models",
+        "date":  "2026/09/21",
+        "doi":  {
+
+                },
+        "authors":  [
+                        "Xu, Jiuyi",
+                        "Jin, Qing",
+                        "Chen, Meida",
+                        "Wang, Song",
+                        "Sui, Yang",
+                        "Shi, Yangming"
+                    ],
+        "n_authors":  6,
+        "comments":  "28 pages, 35 tables, 4 figures",
+        "jref":  "",
+        "subjects":  "Robotics (cs.RO) ; Artificial Intelligence (cs.AI)",
+        "url":  "https://arxiv.org/abs/2609.25376"
+    },
+    {
+        "id":  "2604.04161",
+        "status":  "OK",
+        "arxiv_id":  "2604.04161",
+        "title":  "Adaptive Action Chunking at Inference-time for Vision-Language-Action Models",
+        "date":  "2026/04/05",
+        "doi":  {
+
+                },
+        "authors":  [
+                        "Liang, Yuanchang",
+                        "Wang, Xiaobo",
+                        "Wang, Kai",
+                        "Wang, Shuo",
+                        "Peng, Xiaojiang",
+                        "Chen, Haoyu",
+                        "Chua, David Kim Huat",
+                        "Vadakkepat, Prahlad"
+                    ],
+        "n_authors":  8,
+        "comments":  "accepted by CVPR 2026",
+        "jref":  "",
+        "subjects":  "Robotics (cs.RO)",
+        "url":  "https://arxiv.org/abs/2604.04161"
+    },
+    {
+        "id":  "2609.00908",
+        "status":  "OK",
+        "arxiv_id":  "2609.00908",
+        "title":  "Knowing When to Stop: Adaptive Action Chunking via Internal Cross-Attention Dynamics in VLAs",
+        "date":  "2026/09/01",
+        "doi":  {
+
+                },
+        "authors":  [
+                        "Xu, Runze",
+                        "Shan, Xiaolong",
+                        "Dai, Shuang",
+                        "Wang, Yu",
+                        "Yu, Jincheng"
+                    ],
+        "n_authors":  5,
+        "comments":  "8 pages",
+        "jref":  "",
+        "subjects":  "Robotics (cs.RO)",
+        "url":  "https://arxiv.org/abs/2609.00908"
+    }
+]

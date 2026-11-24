@@ -1,0 +1,131 @@
+[2603.13966] vla-eval: A Unified Evaluation Harness for Vision-Language-Action Models
+Skip to main content
+Search
+Submit
+Donate
+Log in
+Search arXiv
+Press Enter to search · Advanced search
+Computer Science > Artificial Intelligence
+arXiv:2603.13966 (cs)
+[Submitted on 14 Mar 2026 (v1), last revised 14 Sep 2026 (this version, v3)]
+Title:vla-eval: A Unified Evaluation Harness for Vision-Language-Action Models
+Authors:Suhwan Choi, Yunsung Lee, Yubeen Park, Chris Dongjoo Kim, Ranjay Krishna, Dieter Fox, Youngjae Yu
+View a PDF of the paper titled vla-eval: A Unified Evaluation Harness for Vision-Language-Action Models, by Suhwan Choi and 6 other authors
+View PDF
+HTML (experimental)
+Abstract:Vision-Language-Action (VLA) models are increasingly evaluated across multiple simulation benchmarks, yet adding each benchmark to an evaluation pipeline requires resolving incompatible dependencies, matching underspecified evaluation protocols, and reverse-engineering undocumented preprocessing. This burden scales with the number of models and benchmarks, making comprehensive evaluation impractical for most teams. We present vla-eval, an open-source evaluation harness that eliminates this per-benchmark cost by decoupling model inference from benchmark execution through a WebSocket+msgpack protocol with Docker-based environment isolation. Models integrate once by implementing a single predict() method; benchmarks integrate once via a four-method interface; the full cross-evaluation matrix works automatically. The framework supports 14 simulation benchmarks and six model servers. Parallel evaluation via episode sharding and batch inference achieves up to 47x wall-clock speedup, completing 2,000 LIBERO episodes in ~18 minutes. To validate the framework, we reproduce published scores across six VLA codebases and three benchmarks, documenting previously undocumented pitfalls. We additionally release a VLA leaderboard aggregating 657 published results across 17 benchmarks. Framework, evaluation configs, and all reproduction results are publicly available at this https URL and this https URL.
+Subjects:
+Artificial Intelligence (cs.AI)
+Cite as:
+arXiv:2603.13966 [cs.AI]
+(or
+arXiv:2603.13966v3 [cs.AI] for this version)
+https://doi.org/10.48550/arXiv.2603.13966
+Focus to learn more
+arXiv-issued DOI via DataCite
+Submission history
+From: Choi Suhwan [view email] [v1]
+Sat, 14 Mar 2026 14:38:53 UTC (332 KB)
+[v2]
+Fri, 17 Apr 2026 09:44:22 UTC (394 KB)
+[v3]
+Mon, 14 Sep 2026 07:03:56 UTC (395 KB)
+Full-text links:
+Access Paper:
+View a PDF of the paper titled vla-eval: A Unified Evaluation Harness for Vision-Language-Action Models, by Suhwan Choi and 6 other authors
+View PDF
+HTML (experimental)
+TeX Source
+view license
+Current browse context:
+cs.AI
+< prev
+|
+next >
+new
+|
+recent
+| 2026-03
+Change to browse by:
+cs
+References & Citations
+NASA ADS
+Google Scholar
+Semantic Scholar
+export BibTeX citation
+Loading...
+BibTeX formatted citation
+×
+loading...
+Data provided by:
+Bookmark
+Bibliographic Tools
+Bibliographic and Citation Tools
+Bibliographic Explorer Toggle
+Bibliographic Explorer (What is the Explorer?)
+Connected Papers Toggle
+Connected Papers (What is Connected Papers?)
+Litmaps Toggle
+Litmaps (What is Litmaps?)
+scite.ai Toggle
+scite Smart Citations (What are Smart Citations?)
+Code, Data, Media
+Code, Data and Media Associated with this Article
+alphaXiv Toggle
+alphaXiv (What is alphaXiv?)
+Links to Code Toggle
+CatalyzeX Code Finder for Papers (What is CatalyzeX?)
+DagsHub Toggle
+DagsHub (What is DagsHub?)
+GotitPub Toggle
+Gotit.pub (What is GotitPub?)
+Huggingface Toggle
+Hugging Face (What is Huggingface?)
+ScienceCast Toggle
+ScienceCast (What is ScienceCast?)
+Demos
+Demos
+Replicate Toggle
+Replicate (What is Replicate?)
+Spaces Toggle
+Hugging Face Spaces (What is Spaces?)
+Spaces Toggle
+TXYZ.AI (What is TXYZ.AI?)
+Related Papers
+Recommenders and Search Tools
+Link to Influence Flower
+Influence Flower (What are Influence Flowers?)
+Core recommender toggle
+CORE Recommender (What is CORE?)
+Author
+Venue
+Institution
+Topic
+About arXivLabs
+arXivLabs: experimental projects with community collaborators
+arXivLabs is a framework that allows collaborators to develop and share new arXiv features directly on our website.
+Both individuals and organizations that work with arXivLabs have embraced and accepted our values of openness, community, excellence, and user data privacy. arXiv is committed to these values and only works with partners that adhere to them.
+Have an idea for a project that will add value for arXiv's community? Learn more about arXivLabs.
+Which authors of this paper are endorsers? |
+Disable MathJax (What is MathJax?)
+We gratefully acknowledge support from
+our major funders,
+member institutions, ,
+and all contributors.
+About
+·
+Help
+·
+Contact
+·
+Subscribe
+·
+Copyright
+·
+Privacy
+·
+Accessibility
+·
+Operational Status (opens in new tab)
+Major funding support from

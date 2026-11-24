@@ -1,0 +1,1313 @@
+
+--- PAGE 1 ---
+Same Path, Less Time: Training-Free Fast Execution of
+Vision-Language-Action Models under Inference Latency
+Fuyi Chen
+University of Nottingham Ningbo China
+Abstract
+Vision-language-action (VLA) models predict chunks of future actions, yet deployed robots waste time in
+two ways that are independent of model capability: they halt while the next chunk is inferred, and they
+move at the speed of slow, cautious demonstrations. Existing remedies remove one loss each, and stacking
+them fails, because asynchrony and speed-up each change the correspondence between planned progress
+and executed motion. We presentPath-preserving Time Scaling(PTS), a training-free execution layer for
+frozen action-chunking policies built on one principle:the robot’s motion is a time reparameterization
+of a reference path, and the path changes only in response to new observations.A path layer decodes
+every replan deterministically in one step and enters it at the progress consumed during inference. A time
+layer sums the planned increments, keeps the arm at 1×while the gripper moves, and caps the rate by the
+actuator’slinearrangeandbychunkfeasibilityunderlatency. Weshowthatmisalignedentryandstochastic
+sampling add a bias and a variance to the continuation error, and derive a break-even success rate that
+states when speeding up pays off. On LIBERO with two frozen VLAs under injected inference latency,
+PTS raises task throughput over the strongest deployable baseline by 33% for𝜋0.5 and 104% for SmolVLA
+while matching or improving the success rate, is best on all six model–suite combinations, and exceeds
+zero-latency 1× execution. Against asynchronous 1× execution with the same one-step decoder, the time
+layer alone adds 28% and 38%. On LIBERO-Dynamic it improves on stop-and-wait execution by 38% and
+is comparable to asynchronous 1×execution.
+1 Introduction
+Vision-language-action models (VLAs) (Brohan et al., 2023; Kim et al., 2024; Black et al., 2024; Physical Intelligence
+et al., 2025; Shukor et al., 2025) predictaction chunks, short sequences of future actions (Zhao et al., 2023; Chi et al.,
+2023). The default deployment is synchronous: infer a chunk, execute part of it, stop, and infer again. This wastes time
+in two ways that do not depend on how capable the model is. First, the robot stands still during every inference: if one
+𝜋0.5 inference takes about 150ms, a 20Hz robot pauses for three steps after every eight it executes. Second, execution is
+locked to the speed of the demonstrations, which are typically slow, cautious teleoperation. Figure 1a shows both losses
+in one episode. This paper removes both for afrozenpolicy, without any training.
+Why the two fixes do not compose.Each loss has a known remedy. Asynchronous execution, e.g., real-time chunking
+(RTC) (Black et al., 2025a), keeps the robot moving during inference but executes at 1×. Training-free speed-up such
+as FreeSpeed (Hu et al., 2026) amplifies the actions but assumes synchronous execution. Stacking the two fails: run
+asynchronously, FreeSpeed drops the success rate of𝜋0.5 on our LIBERO-Spatial development set from 45/50 to 20/50,
+even with the same gripper handling as our method; keeping its speed profile but summing the planned increments
+instead of resampling them restores 47/50. The cause is bookkeeping. A chunk is a plan that starts at the moment its
+image was taken, and by the time it arrives the robot has already consumed part of it; speed-up changes how much. If
+the executor loses track of how much of the plan has actually been executed, the robot repeats or skips motion and
+leaves the planned path (Figure 2c).
+Key idea: separate the path from its timing.An action chunk defines a planned path. If execution changes only the
+timingalong that path, i.e., the robot follows the path the model planned but traverses it faster and never stops during
+inference, then speeding up reduces to shortening time inside a feasible set. This separation of path and time underlies
+time-optimal path parameterization (TOPP) in robotics (Bobrow et al., 1985; Shin and McKay, 1985; Pham and Pham,
+2018). Learned policies add two ingredients that classical TOPP lacks: closed-loopreplanningmakes the path a
+concatenationofchunks,andinference latencymeanstherobothasmovedonbythetimeanewchunkarrives. Execution
+1
+arXiv:2611.01390v1  [cs.RO]  1 Nov 2026
+
+--- PAGE 2 ---
+Same Path, Less Time: Fast Execution of VLAs under Inference Latency
+Sync-1×
+stop and wait
+a Same policy (π0.5), task, initial state and seed
+t = 3.0 s
+ t = 5.9 s
+ t = 8.1 s
+✓ 11.2 s
+t = 11.2 s
+Async-1×
+no stop, 1×
+✓ 8.1 s
+✓ 8.1 s
+PTS
+ours
+✓ 5.9 s
+✓ 5.9 s
+ ✓ 5.9 s
+0 2 4 6 8 10 12
+time (s) = control steps × 50 ms
+Sync-1×
+Async-1×
+PTS
+halted for inference
+6 7 8 9 10 11
+mean attempt duration (s)
+85.0
+87.5
+90.0
+92.5
+95.0
+97.5
+100.0success rate (%)
+Θ=4
+Θ=5Θ=6Θ=7Θ=8
+Sync-1×
+Sync-2×
+FreeSpeedRTC
+Async-1×
+One-step-1×
+PTS-K
+PTS
+faster and
+more reliable
+grey lines: equal throughput Θ
+b π0.5, 4 LIBERO suites, 400 test episodes
+π0.5 SmolVLA0
+4
+8throughput Θ
+5.99
+7.96
+Async-1×
+PTS
++33%
+3.40
+6.94
+Sync-2×
+PTS
++104%
+c vs. strongest baseline
+Figure 1 |Same policy, same episode, less time. a, Frozen𝜋0.5 on a LIBERO-Long task (same initial state and seed; columns
+at equal times, counted in 50ms control steps; the time line marks steps halted for inference). Stop-and-wait (Sync-1×) halts at
+every inference, asynchronous execution (Async-1×) never halts but stays at demonstration speed, and PTS never halts and traverses
+the planned path faster.b, Success rate versus mean attempt duration on the full𝜋0.5 test set; gray lines have equal throughput
+Θ =1000𝑃/E[𝑇].c, Pooled throughput of PTS against the strongest deployable baseline of each model.
+therefore has to answer two questions.Which pathshould the robot follow at each instant? Our answer is that the path
+should change only because of new information: decode the plan for the newest observation deterministically, and enter
+it at the progress actually consumed during inference.How fastshould it traverse that path? As fast as the actuator’s
+linear range and the chunk’s lifetime allow, but at 1×while the gripper moves, with commands formed by summing the
+planned increments.
+Results.We call the resulting methodPath-preserving Time Scaling(PTS, Figure 3). On the four LIBERO suites
+with frozen𝜋0.5 and SmolVLA under injected inference latency, PTS raises the pooled task throughput by 33% and
+104% over the strongest deployable baseline, matching the success rate on𝜋0.5 and raising it on SmolVLA, and is best
+on all six model–suite combinations (Figure 1b,c). Both layers contribute: with the same one-step decoder (Chen
+et al., 2026b), the time layer adds 28% and 38% over asynchronous 1×execution, and deterministic decoding raises
+SmolVLA’s success rate from 0.53 to 0.805 under the same timing rules.
+Contributions.
+• Method.PTS, a training-free execution layer for frozen VLAs that output relative-increment chunks. It consists of
+one path-layer rule (rolling continuation with deterministic one-step decoding) and three time-layer rules (incremental
+summation, gripper synchronization, rate limit), and has one tuned hyperparameter, the rate cap¯𝑟. For flow-matching
+policies it also makes inference cheaper than𝐾-step sampling.
+• Analysis.Adecompositionofthecontinuationerrorshowingthatmisalignedentryaddsabiasandstochasticsampling
+a variance (Proposition 1), and a break-even success rate that states when speeding up pays off (Proposition 2).
+• Evaluation.TwoVLAs,fourLIBEROsuites,sixbaselines,layerandruleablations,andadynamicbenchmark(6,160
+test episodes), plus studies of rate selection, actuator strength, and latency.
+2 Related Work
+Inference latency and asynchronous execution.Predicting chunks reduces compounding error (Zhao et al., 2023; Chi
+et al., 2023), and most VLAs adopt this output, generated by flow matching (Black et al., 2024; Physical Intelligence
+et al., 2025; Shukor et al., 2025) or decoded from action tokens (Pertsch et al., 2025). Asynchronous execution keeps
+2
+
+--- PAGE 3 ---
+Same Path, Less Time: Fast Execution of VLAs under Inference Latency
+grasp
+Sync-1×
+stops for every inference
+a
+✗ no stops ✗ > 1× speed ✓ on path
+‖
+‖ ‖
+‖ ‖
+55 steps
+grasp
+Async-1×
+no stops, demonstration speed
+b
+✓ no stops ✗ > 1× speed ✓ on path
+40 steps
+grasp
+Naive speed-up
+2×, new chunk entered at step 0
+c
+✓ no stops ✓ > 1× speed ✗ on path
+46 steps
+1×
+grasp
+PTS (ours)
+2× on the same path, 1× at the grasp
+d
+✓ no stops ✓ > 1× speed ✓ on path
+22 steps
+time to reach the grasp (dark: halted for inference)
+Figure 2 |Four ways to execute a chunking policy under inference latency(2-D schematic; dots are positions at successive
+control steps, so spacing is speed).a, Stop-and-wait halts at every inference (rings).b, Asynchronous 1× never halts but moves
+at demonstration speed.c, Naive asynchronous speed-up enters each chunk at its first step, replays motion already executed, and
+overshoots.d, PTS enters at the consumed progress, traverses the same path at twice the rate, and returns to 1× around the gripper
+event (shaded).
+executing the old chunk during inference, at the price of seams between chunks and of plans conditioned on outdated
+observations. Training-free methods make the new chunk agree with the old one: BID selects the most consistent of
+several samples (Liu et al., 2025), RTC freezes the executed prefix by guided inpainting (Black et al., 2025a), FreeBar
+replaces guidance by a closed-form barrier (Yu et al., 2026), PACT-VLA verifies candidates speculatively (Zhu et al.,
+2026b), andPICESadaptsthenumberofexecutedsteps(Leeetal.,2026); SmolVLAshipsaqueue-basedasynchronous
+stack (Shukor et al., 2025). Training-based methods condition on the executed prefix (Black et al., 2025b), on future
+states (Tang et al., 2025), or on the newest observation through a correction head (Sendai et al., 2025), or add adapters,
+preference learning, or streaming decoding (Jiang et al., 2026; Zhu et al., 2026a; Lu et al., 2026; Li et al., 2026;
+Yang et al., 2026b); Agouzoul (2026) compares them under one protocol. Apart from VLASH, which also speeds up
+execution (discussed below), these methods execute at 1×. The path layer of PTS approaches inter-chunk consistency
+differently: instead of steering a random sample toward the old chunk, it removes sampling randomness that carries no
+new information and enters the new plan at the consumed progress. It needs no guidance (RTC guidance multiplies
+inference time by about 1.8 in our implementation), and one-step decoding makes inference faster.
+Faster-than-demonstration execution.One route retrains the policy on accelerated or downsampled demonstrations
+(Guo et al., 2025; ju Kim et al., 2025; Cao et al., 2026), with speed as an input (Jing et al., 2026; Nam et al., 2025; Jeon
+et al., 2026), or with a learned scheduler (Wu et al., 2026; Yang et al., 2026a). A second changes the imitation target:
+SAILimitatesreachedratherthancommandedstatesandrequiresachunktooutlasttheinferencetime(Arachchigeetal.,
+2025), and VOLT segments trajectories to decide what may be accelerated (Sanchez et al., 2026). A third adjusts speed
+at test time: FreeSpeed resamples the chunk at the target rate in synchronous execution and shrinks the step size with
+the directional inconsistency of adjacent increments (Hu et al., 2026), RoboPace retimes chunks with TOPP-RA under
+a learned contact speed limit (Shirasaka et al., 2026), and VLASH, a training-based method, additionally speeds up
+executionviaactionquantization(Tangetal.,2025). Wearenotawareofpriorworkthathandlesspeed-upandinference
+latency jointly for a frozen VLA without training. Unlike FreeSpeed, PTS sums increments instead of resampling, does
+not speed up while the gripper moves, and executes asynchronously with entry at the consumed progress.
+One-step action generation.Consistency and shortcut models train few-step samplers (Song et al., 2023; Frans et al.,
+2025); forrobotpolicies,consistencydistillation(Prasadetal.,2024)andMean-Flow(Chenetal.,2026a)yieldone-step
+VLAs. Pan et al. (2025) argue that generative control does not owe its advantage mainly to multimodality. Chen et al.
+(2026b) show that one Euler step from the noise end returns the conditional mean for an ideal velocity field and evaluate
+off-the-shelf VLAs with one step under synchronous execution. We adopt this decoder in the path layer (Section 4.1);
+our contribution is its coordination with asynchronous execution and time scaling.
+Path parameterization and receding-horizon control.TOPP computes the minimum-time traversal of a fixed path
+under dynamic constraints (Bobrow et al., 1985; Shin and McKay, 1985), by convex optimization (Verscheure et al.,
+2009), numerical integration (Kunz and Stilman, 2012), or reachability analysis (Pham and Pham, 2018); under
+pointwise decoupled bounds the optimum saturates the bound. PTS’s time layer is this case applied to chunk execution
+(Section A.3); what is new is where the bounds come from: the actuator’s linear range, chunk feasibility under latency,
+and a rate cap selected from data. Receding-horizon control executes the beginning of each newly solved plan (Mayne
+et al., 2000); the path layer extends this practice to delayed inference and accelerated consumption of the plan.
+3
+
+--- PAGE 4 ---
+Same Path, Less Time: Fast Execution of VLAs under Inference Latency
+Frozen VLA
+image o′ + instruction
+VLA
+❄
+frozen
+one-step deterministic
+decoding
+A′ = −vθ(0, 1 ∣ o′)
+no noise; latency dK→d1
+Path layer which path to follow
+old
+image taken chunk arrives
+m consumed
+new
+R1  enter at step m
+enter at m: on path
+enter at 0: overshoot
+Time layer how fast to traverse it
+one ut per bracket
+R2  incremental summation
+ut = Φ(pt + ρt) − Φ(pt)
+Robot
+executes ut
+every 50 ms
+same path,
+less time
+referencepath
+Control loop (never halts)
+Inference (background)
+o′ A′ (after d1 steps) a new request every s plan steps
+plan progress σ
+1
+2
+3rate ρ Rfeas
+¹r
+Rbody
+gripper
+window R4
+R3
+ρt = min{Rbody(pt), Rfeas, ¹r}
+Figure 3 |PTS overview.The frozen VLA is queried in the background every𝑠 plan steps and decoded in one deterministic step.
+Thepath layerenterseachnewchunkattheprogress 𝑚 consumedduringinference(R1). Thetime layersumstheplannedincrements
+(R2), runs at 1×while the gripper moves (R3), and otherwise at the largest feasible rate (R4). The control loop never halts.
+3 Problem Formulation
+Policyandplannedpath.Thecontrolperiodis Δ𝑡=50 ms. Givenanobservation 𝑜,afrozenpolicydefinesadistribution
+𝜋(· |𝑜) over chunks 𝐴=(𝑎 0, . . . , 𝑎𝐻−1 ), where each action𝑎𝑖 =(𝑎 𝑥
+𝑖 , 𝑎𝑔
+𝑖 ) is a relative end-effector increment
+𝑎 𝑥
+𝑖 ∈ [−1,1] 6 and a gripper command𝑎𝑔
+𝑖 ; we write𝜇(𝑜):=E[𝐴|𝑜] . We measure progress𝜎∈ [0, 𝐻) in plan steps.
+The planned velocity is𝛼(𝜎):=𝑎 𝑥
+⌊𝜎⌋ and the cumulative planned command isΦ(𝜎):=
+∫ 𝜎
+0 𝛼. Under 1×execution, 𝑎𝑡
+is executed at step𝑡.
+Flow-matching policies and latency.𝜋0, 𝜋0.5, and SmolVLA generate chunks by flow matching (Lipman et al., 2023;
+Liu et al., 2023b): with𝜀∼ N (0, 𝐼) and 𝑥 𝜏 =𝜏𝜀+ (1−𝜏)𝐴 , they learn𝑣 𝜃 (𝑥, 𝜏|𝑜) ≈E[𝜀−𝐴|𝑥 𝜏 =𝑥, 𝑜] and
+integrate from𝜏=1 to 0with 𝐾 Euler steps (default𝐾=10 ). One inference takes𝑇VL +𝐾𝑇 step (the vision-language
+backbone once, the action expert𝐾times), i.e.,𝑑𝐾 :=⌈(𝑇 VL +𝐾𝑇 step)/Δ𝑡⌉control steps.
+Execution schedule.An executor chooses a progress sequence𝑝𝑡 with rate𝜌𝑡 :=𝑝 𝑡+1 −𝑝 𝑡 ≥0 and a command rule
+𝑢𝑡 =E (𝐴, 𝑝 𝑡 , 𝜌𝑡 ). A new inference is requested every𝑠 consumed plan steps; its result arrives𝑑 control steps later, and
+in asynchronous execution the robot keeps moving in between. The𝑘-th chunk defines a planned pathΦ𝑘, and the
+reference paththe robot follows is the concatenation ofΦ1,Φ 2, . . . at the switching points. The executor therefore
+decides two things: which chunk and entry point define the reference path (thepath), and how fast it is consumed and
+converted to commands (thetiming).
+Objective: task throughput.Attempts are drawn independently from the distribution of tasks and initial states. We
+maximize the task throughput
+Θ:=1000· E[𝑌]
+E[𝑇] ,(1)
+where 𝑌∈ {0,1} indicates success and𝑇 is the number of control steps of an attempt, including steps spent waiting for
+inference; 1000/Θ is the average number of steps per success.Θ rewards speed and success jointly: faster execution
+that fails more often is not necessarily better (Figure 1b). It is a ratio of pooled means, not a mean of per-task ratios.
+4 Path-Preserving Time Scaling
+PTS rests on one principle:the robot’s motion is a time reparameterization of a reference path, and the reference path
+changes only in response to new observations.The second clause yields the path layer (Section 4.1), the first the time
+layer (Section 4.2); Section 4.3 selects the rate cap. Algorithm 1 gives the complete procedure, and Section A the
+derivations and assumptions.
+4
+
+--- PAGE 5 ---
+Same Path, Less Time: Fast Execution of VLAs under Inference Latency
+4.1 Path layer: which path to follow
+A new chunk is a plan that starts at the moment its image𝑜′ was taken. While it was being inferred, the robot consumed
+𝑚 plan steps of the old chunk, so the part of the new plan that corresponds to “now” starts at its step𝑚. The path should
+change only when new information arrives: if every switch drew a fresh random sample, the path would jump even
+when nothing new had been observed.
+• R1 Rolling continuation.When the result for observation𝑜′ arrives, execute the plan decodeddeterministicallyfrom
+𝑜′, entered at the progress𝑚 consumed during inference. For flow-matching policies, decode with one Euler step
+from𝑥 1 =0:𝐴 ′ =−𝑣 𝜃 (0,1|𝑜 ′)(Chen et al., 2026b).
+Why both parts of R1 matter.LetΨ𝐴(𝑗):= Φ 𝐴(𝐸) −Φ 𝐴(𝑗) bethedisplacementthatchunk 𝐴stillcommandsfromstep
+𝑗 to a common end𝐸≤𝐻 . Let I:=(𝑜 ′, 𝑚, 𝐸) collect what is known at the switch. As a reference for what remains to
+be traveled, takeΨ∗ := Ψ 𝐴∗ (𝑚) for an independent policy sample𝐴∗ ∼𝜋(· |𝑜 ′). A continuation rule executes a chunk
+𝐶entered at step𝑗and thus commands ˆ𝑌:= Ψ 𝐶 (𝑗).
+Proposition 1(Error decomposition).If the executed pair(𝐶, 𝑗)is conditionally independent of𝐴 ∗ givenI, then
+E
+
+∥ ˆ𝑌−Ψ ∗ ∥2 | I
+
+=
+E[ ˆ𝑌| I] −Ψ 𝜇(𝑜 ′ ) (𝑚)
+2
+|                           {z                           }
+bias
++tr Cov( ˆ𝑌| I)|          {z          }
+execution variance
++tr Cov(Ψ ∗ | I)|            {z            }
+policy uncertainty
+.(2)
+The last term does not depend on the rule, so the error is smallest when the mean plan is executed from step𝑚. The
+twocommonpracticeseachaddoneterm. Enteringatstep0addsthebias ∥Φ 𝜇 (𝑚) −Φ 𝜇 (0) ∥2,thedisplacementalready
+executed during inference, which is replayed (Figure 2c). Executing a fresh sample entered at𝑚 adds a variance equal
+to the policy uncertainty, doubling the error, and lets the reference path jump at a switch even for identical observations.
+The decomposition concerns the remaining net displacement and assumes that the𝑚 steps executed during inference
+roughly agree with the first𝑚steps of the new plan (Section A.1).
+Deterministic one-step decoding.For the ideal velocity field𝑣 ∗(𝑥, 𝜏|𝑜)=E[𝜀−𝐴|𝑥 𝜏 =𝑥, 𝑜] , the noise end gives
+𝑣 ∗ (𝑥,1|𝑜)=𝑥−𝜇(𝑜) , so one Euler step from any𝑥1 returns the mean𝜇(𝑜) (Chen et al., 2026b). A learned field
+only approximates this, but R1 does not need the exact mean: a deterministic output removes the variance term of
+Equation (2) regardless of the approximation error. One-step decoding also shortens the latency from𝑑𝐾 to 𝑑1 control
+steps (𝜋0.5: 3 to 2; SmolVLA: 5 to 1), which relaxes the feasibility cap below.
+4.2 Time layer: how fast to traverse it
+On a given reference path, only the timing changes. Three requirements give three rules.
+Incremental summation (R2).The cumulative command should equal the cumulative path consumed so far,Í
+𝜏<𝑡 𝑢 𝑥
+𝜏 =
+Φ(𝑝 𝑡 ) −Φ(𝑝 0)for all𝑡. Differencing consecutive steps shows that exactly one command rule satisfies this:
+𝑢𝑡 = Φ(𝑝 𝑡 +𝜌 𝑡 ) −Φ(𝑝 𝑡 ),(3)
+i.e., each command sums the planned increments it covers. Resampling the planned velocity,𝑢𝑡 =𝑓 𝑡 𝛼(𝑝 𝑡 ), instead
+loses (𝜌 𝑡 −𝑓 𝑡 )𝛼(𝑝 𝑡 ) of progress per step whenever𝑓𝑡 < 𝜌 𝑡 on a locally constant plan (exact expression in Section A.3).
+Asynchronous execution enters new chunks by planned progress, so this deficit accumulates across switches. This is
+why asynchronous FreeSpeed fails in Section 1: its gain satisfies𝑓𝑡 ≤0.9𝜌 𝑡.
+Gripper synchronization (R3).After its command flips, the gripper moves for 2–12 control steps regardless of the arm’s
+rate. Arm and gripper therefore keep their planned relative timing only if𝜌𝑡 =1 inside this window. At a constant
+rate 𝑟 over a window of𝐺0 steps starting at𝜎𝑔, the arm ends ahead of the plan byΦ(𝜎𝑔 +𝑟𝐺 0) −Φ(𝜎 𝑔 +𝐺 0). With
+a planned speed of about 0.3 before closing, a 10-step window at𝑟=2 leaves the end effector about 40mm ahead,
+comparable to the size of LIBERO objects. PTS sets𝜌𝑡 =1 for 1≤𝑡−𝑡 0 ≤12 after a gripper flip at𝑡0, ending early
+once the fingers stop (Section B.1).
+Rate limit (R4).Two constraints bound the rate.Actuator: the end-effector displacement is proportional to the summed
+command (gain𝜅=12.8 mm per unit) only inside a boxU= Î
+𝑗 [−𝑐 𝑗,− , 𝑐 𝑗,+ ] on the translational axes. We identify
+theboxoncebyopen-looppulsetests; onthePanda, 𝑐=(2,2,3,3,3,2) for (𝑥 ±, 𝑦±, 𝑧±) (SectionB.1). Theactuatorcap
+𝑅body (𝑝) is the largest𝜌≥1 for which the summed commandΦ(𝑝+𝜌 ′) −Φ(𝑝) stays inU for all𝜌′ ∈ [1, 𝜌] . Since
+actions are clipped to[−1,1] , every plan admits𝜌=min 𝑗,± 𝑐 𝑗,± =2 on the Panda.Feasibility: a request is issued
+every 𝑠 consumed plan steps, and its result arrives𝑟 𝑑plan steps later at rate𝑟. The new chunk is entered at𝑚=𝑟 𝑑
+5
+
+--- PAGE 6 ---
+Same Path, Less Time: Fast Execution of VLAs under Inference Latency
+Algorithm 1PTS (executed at every control step𝑡)
+Require: frozen flow-matching policy𝑣 𝜃; current chunk𝐴 and plan position𝑝; replanning interval𝑠; latency𝑑1; actuator box𝑐;
+rate cap¯𝑟
+1:ifan inference result𝐴 ′ arrives (𝑚plan steps consumed since its image was taken)then
+2:𝐴←𝐴 ′,𝑝←𝑚 ⊲R1: rolling continuation
+3:if≥𝑠plan steps consumed since the last switch and no request is in flightthen
+4:take image𝑜 ′; compute𝐴 ′ ← −𝑣 𝜃 (0,1|𝑜 ′)in the background; keep executing⊲R1: one-step decoding
+5:ifgripper flipped at𝑡 0,1≤𝑡−𝑡 0 ≤12, and (𝑡−𝑡 0 ≤2or| ¤𝑞 𝑔 |>0.02)then
+6:𝜌←1 ⊲R3: gripper synchronization
+7:else
+8:𝜌←largest grid value in{1,1.25, . . .},≤min{𝑅 feas,¯𝑟}, connected-feasible from 1⊲R4: rate limit
+9:𝑢←Φ(𝑝+𝜌) −Φ(𝑝); gripper takes the command at the end of the interval⊲R2: summation
+10:ifthe chunk is exhaustedthen
+11:hold position
+12:execute𝑢;𝑝←𝑝+𝜌
+and must last another𝑠+𝑟 𝑑 plan steps until its successor arrives. At a constant rate it therefore lasts if and only if
+2𝑟 𝑑+𝑠≤𝐻, i.e.,𝑟≤𝑅 feas :=(𝐻−𝑠)/(2𝑑)(Section A.3). Outside gripper windows,
+𝜌𝑡 =min{𝑅 body (𝑝 𝑡 ), 𝑅 feas,¯𝑟}.(4)
+Because these bounds act pointwise along the path, taking each with equality minimizes the traversal time of a fixed
+path. This is the separation of path and time that underlies TOPP (Section A.3). As a fallback, the robot holds position
+if a chunk is exhausted.
+4.3 Choosing the rate cap: when does speed-up pay off?
+In closed loop, deviations also come from tracking lag, stale information, and the shift in the states the policy sees. All
+of these grow with the rate, and how much a task tolerates cannot be derived from the path. We therefore select the cap
+on a development set,¯𝑟:=arg max𝑟∈ {1,1.5,2,2.5,3} ˆΘdev(𝑟). The following identity states what this choice trades off.
+Proposition 2(Break-even success rate).Compare a rate rule 𝑟 with 1× execution, both asynchronous with the same
+decoder. Let 𝑃𝑟 be the success rate and 𝑇𝑠 (𝑟), 𝑇 𝑓 (𝑟) the mean steps of successful and failed attempts. If 𝑃1 >0 and
+𝐷:=E[𝑇 1] +𝑃 1(𝑇 𝑓 (𝑟) −𝑇 𝑠 (𝑟))>0, thenΘ(𝑟)>Θ(1)if and only if
+𝑃𝑟 > 𝑃 ∗ (𝑟):= 𝑃1 𝑇 𝑓 (𝑟)
+𝐷 .(5)
+The proof substitutesE[𝑇𝑟 ]=𝑃 𝑟𝑇𝑠 (𝑟) + (1−𝑃 𝑟 )𝑇 𝑓 (𝑟) into Θ(𝑟)>Θ(1) . 𝑃∗ is the success budget that speed-up
+buys. The faster the successful attempts, the more success may be lost; the costlier a failure (e.g., a long timeout), the
+tighterthebudget. Wecall 𝑀(𝑟):=𝑃 𝑟 −𝑃 ∗ (𝑟) themargin. Weuseittointerpretthemeasuredchoiceof ¯𝑟(Section5.4).
+Whether deterministic decoding costs success is an empirical question. It removes the random jump at each switch
+and shortens the information age, but the mean can fall between modes when the action distribution is multimodal
+(Section A.2). We therefore test one hypothesis in Section 5.3:under the same time-layer rules and rates, replacing
+𝐾-step sampling by deterministic one-step decoding does not lower the success rate.
+Requirements.PTS needs one open-loop identification per robot (the box 𝑐 and the gripper window) and one
+development-set selection of¯𝑟per (policy, latency) pair. It modifies no model parameter, and for flow-matching policies
+it reduces the integration steps per inference from𝐾to 1.
+5 Experiments
+We answer four questions:
+Q1How much does PTS raise throughput over deployable baselines, and does it cost success (Section 5.2)?
+Q2How much does each layer contribute, and what does each rule add (Section 5.3)?
+Q3 Doesthebreak-evensuccessrateexplainwhenspeedinguppaysoff,acrossrates,actuators,andlatencies(Section5.4)?
+Q4Does PTS still help when the target moves (Section 5.5)?
+6
+
+--- PAGE 7 ---
+Same Path, Less Time: Fast Execution of VLAs under Inference Latency
+Table 1 |Main results.Test-set throughput Θ(successes per 1000 control steps, waiting included; higher is better) with success
+rate in parentheses; 100 episodes per cell, identical initial states and seeds across methods. Bold: best deployable method per column.
+The zero-latency row is a non-deployable reference.
+𝜋0.5 SmolVLA
+Method Spatial Object Goal LongPooledObject GoalPooled
+Zero-latency 1×(ref.) 9.26 (.98) 7.32 (1.00) 7.18 (.90) 3.64 (.97) 6.07 (.963) 5.22 (.85) 3.73 (.65) 4.45 (.750)
+Sync-1×6.39 (.94) 5.44 (1.00) 6.13 (.94) 2.80 (.95) 4.65 (.958) 2.88 (.68) 2.90 (.60) 2.89 (.640)
+Async-1×8.30 (.94) 7.09 (.98) 8.59 (.97) 3.37 (.91) 5.99 (.950) 2.69 (.54) 3.88 (.66) 3.24 (.600)
+RTC (Black et al., 2025a) 7.88 (.92) 6.68 (.94) 7.38 (.91) 3.22 (.90) 5.56 (.917) – – –
+FreeSpeed (Hu et al., 2026) 7.01 (.93) 5.79 (.95) 6.22 (.90) 2.91 (.90) 4.90 (.920) 2.36 (.57) 2.26 (.50) 2.31 (.535)
+Sync-2×5.53 (.80) 6.62 (.94) 5.92 (.82) 3.00 (.84) 4.82 (.850) 4.26 (.79) 2.61 (.53) 3.40 (.660)
+PTS (ours) 10.57(.93) 10.09(.99) 10.41(.94) 4.67(.94) 7.96(.950) 6.82(.82) 7.06(.79) 6.94(.805)
+vs. best baseline +27% +42% +21% +39% +33% +60% +82% +104%
+5.1 Setup
+Benchmark and policies.We use the four LIBERO suites (Liu et al., 2023a) (Spatial, Object, Goal, Long; 10 tasks each)
+on robosuite (Zhu et al., 2020) and MuJoCo (Todorov et al., 2012), and LIBERO-Dynamic (Ren et al., 2026) for moving
+targets. We evaluate two frozen LIBERO-finetuned checkpoints released through LeRobot (Cadene et al., 2026):𝜋0.5
+(Physical Intelligence et al., 2025) and SmolVLA (Shukor et al., 2025), both with𝐻=50 . SmolVLA is evaluated on
+Object and Goal; on Spatial its 1×success rate is about 0.5 and results are dominated by episode noise.
+Latency.Latency is injected in control steps, converted from measured inference times:𝜋0.5 𝑑10 =3 and 𝑑1 =2 ;
+SmolVLA 𝑑10 =5 and 𝑑1 =1 (Section B.2). RTC’s guidance overhead is charged separately (1.79×, 𝑑=6 ). During
+these 𝑑 steps the simulator advances with the executing method’s commands (stop-and-wait methods hold position), and
+time is counted in 50ms control steps; Section 5.4 varies𝑑.
+Protocol.The development set is used to select¯𝑟(𝜋0.5: Spatial initial states 0–14; SmolVLA: Object and Goal, 0–4).
+The test set consists of initial states 20–29 of every task, i.e., 100 episodes per suite and method, with identical seeds
+across methods. The primary metric isΘ (Equation (1)); 95% intervals come from a task-stratified paired bootstrap
+(Efron, 1979) with 20,000 resamples. All methods use𝑠=8 ; ¯𝑟=1.5 for 𝜋0.5 and 2for SmolVLA, selected with PTS-𝐾
+and reused without reselection.
+Baselines.Sync-1 × (stop and wait);Async-1× (keep executing during inference; switch to the new sampled chunk
+at the consumed progress);RTC(Black et al., 2025a) (soft mask,𝛽=5 ; 𝜋0.5 only);FreeSpeed(Hu et al., 2026)
+(synchronous, commanded rate 2); andSync-2× (uniform 2× with summation, stop and wait).Zero-latency 1× is a
+non-deployable reference. Two component controls isolate the layers:PTS-𝐾 (time layer with 10-step sampling) and
+One-step-1×(path layer without time layer). Details are in Section B.5.
+5.2 Q1: Throughput over deployable baselines
+PTS has the highest throughput on every model–suite pair.On𝜋0.5, PTS reaches a pooledΘof 7.96,+1.97 [1.50,2.44]
+(+33%) over the strongest baseline, Async-1×, and +71% over Sync-1× (Table 1); the interval against Async-1×
+excludes zero on every suite. On SmolVLA, PTS reaches 6.94,+3.54 [2.69,4.49] (+104%) over the strongest baseline,
+Sync-2×. Against One-step-1×, which uses the same one-step decoder (Chen et al., 2026b) without the time layer, PTS
+gains +1.72 [1.21,2.24] (+28%) and+1.92 [1.03,2.84] (+38%) (Table 2a). On both models PTS also exceeds the
+non-deployable zero-latency reference (𝜋0.5 +1.89 [1.34,2.44]; SmolVLA +2.49 [1.55,3.48]), so the gain is not only
+from removing the waiting.
+Speed without loss of success.On 𝜋0.5 the pooled success rate of PTS equals that of Async-1× (380/400; paired
+difference 0.000 [-0.023,0.023]) and is within 0.02 of One-step-1× (−0.018 [-0.043,0.005]). On SmolVLA PTS has
+the highest success rate of all deployable methods (0.805 vs. at most 0.660;+0.145 [0.085,0.205] over Sync-2×). In
+Figure 1b, the other speed-up methods (FreeSpeed, Sync-2×) either trade success for speed or lose the speed gain to
+waiting.
+Where the time goes.Figure 4 splits each method’s steps per success. Stop-and-wait methods spend 27–55% of their
+steps halted, which is why speeding up synchronously (Sync-2×, FreeSpeed) gains little. Asynchronous 1× execution
+7
+
+--- PAGE 8 ---
+Same Path, Less Time: Fast Execution of VLAs under Inference Latency
+0 50 100 150 200
+control steps per success  (1000/Θ)
+Zero-latency 1×
+Sync-1×
+Async-1×
+RTC
+FreeSpeed
+Sync-2×
+One-step-1×
+PTS-K
+PTS (ours)
+165
+215
+167
+180
+204
+207
+160
+131
+126
+π0.5 (4 suites, 400 episodes per method)
+0 100 200 300 400
+control steps per success  (1000/Θ)
+Zero-latency 1×
+Sync-1×
+Async-1×
+FreeSpeed
+Sync-2×
+One-step-1×
+PTS-K
+PTS (ours)
+225
+346
+309
+432
+294
+199
+329
+144
+SmolVLA (2 suites, 200 episodes per method)
+waiting for inference moving, successful attempts (method color) moving, failed attempts
+Figure 4 |Where the time goes.Control steps per success (1000/Θ, lower is better), split into steps halted for inference and
+moving steps of successful and of failed attempts.
+Table 2 |Ablations. (a)Removing a layer: pooled test throughput; in parentheses, PTS minus the row with 95% paired-bootstrap
+interval.(b)Replacing one rule at a time on𝜋0.5 Spatial + Goal (200 paired episodes per row);𝑝: one-sided, Holm-corrected.
+(a) Removing a layer
+Configuration Path layer Time layer𝜋 0.5 SmolVLA
+PTS ✓ ✓ 7.96 6.94
+w/o time layer (One-step-1×)✓ ✗6.23 (+1.72 [1.21,2.24]) 5.02 (+1.92 [1.03,2.84])
+w/o deterministic decoding (PTS-𝐾)✗ ✓7.65 (+0.31 [-0.30,0.92]) 3.04 (+3.90 [2.84,4.99])
+w/o both (Async-1×)✗ ✗5.99 (+1.97 [1.50,2.44]) 3.24 (+3.70 [2.77,4.69])
+(b) Replacing one rule
+ConfigurationΘSuccess PTS−row [,]𝑝 Holm
+PTS 10.49 0.935 – –
+R2: summation→resampling𝑢 𝑡 =𝜌 𝑡 𝛼(𝑝 𝑡 )9.27 0.905+1.22[-0.02,2.49] 0.027
+R3: gripper synchronization removed 7.95 0.860+2.54[1.24,3.83]<0.001
+R1: entry at consumed progress→entry at step 0 4.28 0.710+6.21[4.97,7.53]<0.001
+removes the waiting but not the slow motion. PTS removes both while keeping the failed-attempt share small: 126 steps
+per success on𝜋0.5 versus 215 for Sync-1×, and 144 versus 329 for PTS-𝐾on SmolVLA.
+5.3 Q2: Contribution of each layer and rule
+Both layers contribute.Thetime layerraises throughput on both models (+28% and +38%; Table 2a) with a similar
+success rate (𝜋0.5 0.968→0.950; SmolVLA 0.790→0.805). The effect of thepath layerdepends on the model: it is
+decisive for SmolVLA, whose success rate under the same timing rules rises from 0.53 with sampled decoding to 0.805
+(+0.275 [0.200,0.350]), and positive but not significant for𝜋0.5 (Θ+0.31 [-0.30,0.92]; success +0.005 [-0.020,0.030]).
+The pooled success rates are consistent with the hypothesis of Section 4.3 in all four comparisons: one-step decoding
+never has a lower success rate (with the time layer:𝜋0.5 0.950 vs. 0.945, SmolVLA 0.805 vs. 0.530; at 1×: 0.968 vs.
+0.950 and 0.790 vs. 0.600). Removing one-step decoding also raises the latency (𝑑1 →𝑑 𝐾), so these comparisons
+combine both effects.
+Deterministic decoding keeps the path from jumping.By Proposition 1, sampled decoding lets the reference path jump
+at switches even when nothing new has been observed. Figure 5c is consistent with this in the executed commands:
+under the same rate rule, deterministic decoding lowers command jerk by 52% (time layer) and 72% (1×) on SmolVLA,
+and by 10% and 16% on𝜋0.5. The reduction tracks the success gain: large for SmolVLA, small for𝜋0.5. Figure 5a,b
+shows the failure mode: after reaching the goal region, the sampled end effector wanders back and forth.
+8
+
+--- PAGE 9 ---
+Same Path, Less Time: Fast Execution of VLAs under Inference Latency
+sampled
+a SmolVLA, same rules R2–R4, one episode
+t = 1.4 s
+ t = 2.8 s
+✗ 15.0 s (failed)
+t = 15.0 s
+deterministic
+ ✓ 2.8 s
+✓ 2.8 s
+−30 −20 −10
+x (cm)
+−10
+0
+10
+20
+30
+y (cm)
+dots: chunk switches
+b
+end-effector path
+1× time layer 1× time layer0.00
+0.02
+0.04
+0.06
+0.08
+0.10
+0.12command jerk  mean |Δ²u|−16%
+−10%
+−72%
+−52%
+π0.5 SmolVLA
+c
+all test episodes
+Async-1× (sampled)
+One-step-1× (det.)
+PTS-K (sampled)
+PTS (det.)
+Figure 5 |Deterministic decoding keeps the path from jumping. a, One SmolVLA LIBERO-Goal episode under the same rules
+R2–R4: with sampled decoding (PTS-𝐾) it times out; with one-step decoding (PTS) it succeeds in 2.8s.b, End-effector paths (top
+view; dots: chunk switches).c, Command jerk (mean|Δ2𝑢|, Section B.4) over all test episodes; mean±95% CI.
+PTS
+a  Entry position (R1): enter the new chunk at the consumed progress, or at step 0
+t = 1.3 s
+ t = 2.7 s
+✓ 4.0 s
+t = 4.0 s
+✓ 4.0 s
+t = 14.0 s
+enter at 0
+✗ 14.0 s (failed)
+−20 −10 0 10
+x (cm)
+0
+10
+20
+30
+40
+y (cm)
+end-effector path
+(dots: switches)
+PTS
+b  Gripper synchronization (R3): arm at 1× while the fingers move, or arm kept at ¹r
+t = 1.9 s
+ t = 2.1 s
+✓ 3.8 s
+t = 3.8 s
+✓ 3.8 s
+t = 14.0 s
+no sync
+✗ 14.0 s (failed)
+0
+50
+finger gap
+(mm)
+around the grasp
+0.0 0.5 1.0 1.5
+time from close command (s)
+0
+20
+40
+arm speed
+(cm/s)
+PTS
+no sync
+Figure 6 |What the rules prevent(𝜋0.5, LIBERO-Spatial; same initial state and seed per block, columns at equal simulated times).
+a, Entering each chunk at step 0 replays motion already executed: the end effector overshoots and wanders until the time limit,
+whereas PTS goes straight to the plate.b, Without gripper synchronization the arm accelerates while the fingers are still closing; the
+grasp slips and the gripper reopens at about 1.3s.
+Each replaced rule matters; entry position matters most.Replacing the entry point of R1, R2, or R3 lowers both
+throughput and success (Table 2b; one-sided bootstrap tests with Holm correction (Holm, 1979)). Entering new chunks
+9
+
+--- PAGE 10 ---
+Same Path, Less Time: Fast Execution of VLAs under Inference Latency
+1.0 1.5 2.0 2.5 3.0
+rate cap r
+0.9
+1.0
+1.1
+1.2
+1.3
+1.4
+^Θdev(r)/ ^Θdev(1)
+π0.5
+SmolVLA
+a  Selecting ¹r (dev set)
+0.6 0.8 1.0
+break-even success rate P ∗
+0.5
+0.6
+0.7
+0.8
+0.9
+1.0achieved success rate Pr throughput up
+(Pr > P ∗ )
+down (Pr < P ∗ )
+r = 2 weak arm
+dynamic
+b  Break-even check
+PTS vs 1×, per suite
+rate r vs 1×
+adaptive vs uniform
+dynamic
+0 3 8
+latency d (control steps)
+4
+6
+8
+10
+12throughput Θ
+ Rfeas = 2.62 active
+c  Latency sweep (π0.5 Spatial)
+Sync-1×
+Async-1×
+PTS-K
+Figure 7 |Whenspeedinguppaysoff. a,Development-setthroughputrelativeto 𝑟=1 (PTS-𝐾); circles: selected¯𝑟.b,Break-even
+check (Proposition 2) on paired episodes: points above the diagonal (𝑃𝑟 > 𝑃 ∗) gain throughput (orange), points below lose it (gray).
+c, Throughput versus injected latency,𝜋0.5 Spatial.
+Table 3 |LIBERO-Dynamic(target moving at 0.06m/s),𝜋0.5, 30 episodes per suite and method: throughputΘwith success rate in
+parentheses.
+Method Spatial Object Goal LongPooled
+Sync-1×1.14 (.47)1.28(.57) 1.35 (.53) 0.06 (.03) 0.87 (.400)
+Async-1×1.34 (.53) 1.13 (.50) 2.60 (.73) 0.30 (.17) 1.15 (.483)
+PTS (ours) 1.63(.57) 0.82 (.37) 2.95(.73) 0.43(.23) 1.20(.475)
+at step 0 replays the plan already traversed, the bias term of Proposition 1, and drops success to 0.71 (Figure 6a).
+Removing gripper synchronization has a large effect on Spatial (+3.89 [1.84,5.93]) and a small one on Goal (+0.93
+[-0.52,2.43]); Figure 6b shows the slipping grasp it prevents. Replacing summation by resampling has the smallest
+effect (+1.22,𝑝Holm =0.027). The same replacements on PTS-𝐾lead to the same conclusions (Section C).
+5.4 Q3: When speeding up pays off
+The rate cap transfers from development to test.The development set selects¯𝑟=1.5for𝜋0.5 and¯𝑟=2for SmolVLA
+(Figure 7a, Table 5). On the𝜋0.5 Spatial test set,𝑟=1/1.5/2 give Θ =8.30/10.48/8.02 , consistent with this choice; at
+𝑟=2the success rate 0.83 falls below the break-even success rate𝑃∗ =0.841.
+The break-even success rate separates gains from losses.Comparing PTS with One-step-1× (same decoder, both
+asynchronous), all six (model, suite) pairs have𝑃𝑟 > 𝑃 ∗ and higher throughput, and the throughput gain is close to the
+success speed-up (Table 5). The only two settings with𝑃𝑟 < 𝑃 ∗ are exactly the two with lower throughput (Figure 7b).
+This explains the rate choice:𝜋0.5’s 1× success rate is high and one timeout (280–520 steps) costs as much as 3–4
+successes, so its budget is tight; SmolVLA gains more time per success (𝑆=1.71) and has a wider budget.
+Actuator strength and latency.With joint torque scaled by 0.7 (𝑟body =1.25 ) on 𝜋0.5 Spatial, the adaptive rate
+min{𝑅 body,¯𝑟}does not beat uniform 1.25×(Θ =8.56 vs. 9.18,−0.62 [-2.22,0.97]); its success rate (0.87) falls below
+the break-even success rate (0.892), so the non-uniform gain expected for a fixed path (Section A.3) does not materialize.
+Across injected latencies, PTS-𝐾 has the highest throughput at every value (Figure 7c, Table 6); the larger the latency,
+the more stop-and-wait execution loses. At all tested latencies𝑅feas stays above¯𝑟(2.62 at𝑑=8).
+5.5 Q4: Moving targets
+PTS improves on stop-and-wait and is comparable to asynchronous 1×.On LIBERO-Dynamic the target moves at
+0.06m/s (10 tasks per suite, three motion levels, 30 episodes per suite and method; asynchronous methods replan
+every 𝑠=2 plan steps, stop-and-wait executes 10 steps per inference). Pooled over suites (Table 3), PTS improves
+on stop-and-wait by+0.33 [0.04,0.63] (+38%), significantly on Goal and Long, and Figure 8 shows an episode that
+only PTS completes. Async-1×, which also never halts, achieves most of this gain (+0.28 [0.05,0.51]), and PTS is
+comparable to it (+0.05 [-0.23,0.36]). On episodes both complete, PTS uses 21% fewer steps, but its success rate does
+10
+
+--- PAGE 11 ---
+Same Path, Less Time: Fast Execution of VLAs under Inference Latency
+Sync-1×
+waiting for inference
+t = 1.9 s
+waiting for inference
+t = 3.8 s
+ t = 7.6 s
+✗ 30.0 s (failed)
+t = 30.0 s
+Async-1×
+ ✗ 30.0 s (failed)
+PTS (ours)
+ ✓ 7.6 s
+✓ 7.6 s
+0 5 10 15 20 25 30
+time (s) = control steps × 50 ms;  dark: halted, waiting for inference
+✗ 30.0 s
+✗ 30.0 s
+✓ 7.6 s
+Figure 8 |Moving target( 𝜋0.5, LIBERO-Dynamic Goal, target at 0.06m/s; same seed in all rows). Neither 1×execution completes
+the task within the 600-step limit; PTS completes it in 7.6s. A failure case is shown in Section D.
+not improve (0.475 vs. 0.483) and drops on Object (0.37 vs. 0.50). With the policy’s own success rate near 0.5, the time
+gained is offset by fluctuations in success (the precision-limited regime𝑀≈0 of Proposition 2), and an¯𝑟selected on
+static tasks need not suit dynamic grasping (Xie et al., 2026).
+6 Limitations
+Assumptions and scope of the analysis.The time-layer rules preservecommands; how far this carries over to poses
+depends on actuator linearity, which we identified in simulation (Section A.1). Proposition 1 constrains only the
+remaining net displacement and relies on conditional independence and prefix consistency. That one-step decoding does
+not lower success is an empirical finding on two models, and Proposition 2 is an accounting identity that interprets
+rather than predicts the choice of¯𝑟.
+Deterministic decoding.One-step decoding is close to the conditional mean only for an accurate field, and the mean can
+fall between modes when a task requires choosing between clearly different actions (Section A.2).𝐾-step sampling with
+fixed noise keeps the path deterministic in that case, at the cost of latency. The measured one-step output differs from
+the mean of 10-step samples, which suggests that its benefit comes from being deterministic and fast rather than from
+averaging.
+Rate cap and actuator. ¯𝑟is selected on a development set and reflects the joint precision tolerance of policy, actuator,
+latency, and task distribution; the one-step version reuses the cap selected with PTS-𝐾. On the Panda𝑅body ≥2≥¯𝑟 , so
+the rate is uniform outside gripper windows, and with a weakened actuator the adaptive rate did not beat a uniform one.
+Evaluation.All results are in simulation with injected latency; there are no real-robot experiments, where reset and
+timeout costs would change𝑃∗ but not the form of Proposition 2. The static results use one set of test initial states, and
+the dynamic results 30 episodes per suite, which limits statistical power. With moving targets, PTS does not improve on
+asynchronous 1×execution; selecting or adapting¯𝑟for dynamic tasks is left open.
+7 Conclusion
+PTS brings the separation of path and time from classical trajectory planning to the execution of learned action chunks.
+The path layer lets the reference path change only with new observations, through deterministic one-step decoding and
+entry at the consumed progress; the time layer changes only the timing along that path, through incremental summation,
+11
+
+--- PAGE 12 ---
+Same Path, Less Time: Fast Execution of VLAs under Inference Latency
+gripper synchronization, and a rate limit. Without training, PTS raises the task throughput of frozen𝜋0.5 by 33% and of
+SmolVLA by 104% over the strongest deployable baseline (28% and 38% over the same one-step decoder at 1×), and
+exceeds zero-latency 1× execution on both. The same principle applies to any policy that outputs relative-increment
+chunks; testing it on real robots and with contact-aware rate caps remains future work.
+References
+Ayoub Agouzoul. Understanding Asynchronous Inference Methods for Vision-Language-Action Models.arXiv preprint
+arXiv:2605.08168, 2026.
+Nadun RanawakaArachchige, ZhenyangChen, WonsuhkJung, WooChulShin, RohanBansal, PierreBarroso, YuHang
+He, Yingyang Celine Lin, Benjamin Joffe, Shreyas Kousik, and Danfei Xu. SAIL: Faster-than-Demonstration
+Execution of Imitation Learning Policies. InConference on Robot Learning (CoRL), 2025. arXiv:2506.11948.
+Kevin Black, Noah Brown, Danny Driess, Adnan Esmail, Michael Equi, Chelsea Finn, Niccolo Fusai, Lachy Groom,
+Karol Hausman, Brian Ichter, Szymon Jakubczak, Tim Jones, Liyiming Ke, Sergey Levine, Adrian Li-Bell, Mohith
+Mothukuri, Suraj Nair, Karl Pertsch, Lucy Xiaoyang Shi, James Tanner, Quan Vuong, Anna Walling, Haohuan
+Wang, and Ury Zhilinsky.𝜋0: A Vision-Language-Action Flow Model for General Robot Control.arXiv preprint
+arXiv:2410.24164, 2024.
+Kevin Black, Manuel Y. Galliker, and Sergey Levine. Real-Time Execution of Action Chunking Flow Policies. In
+Advances in Neural Information Processing Systems (NeurIPS), 2025a. arXiv:2506.07339.
+KevinBlack,AllenZ.Ren,MichaelEqui,andSergeyLevine. Training-TimeActionConditioningforEfficientReal-Time
+Chunking.arXiv preprint arXiv:2512.05964, 2025b.
+J. E. Bobrow, S. Dubowsky, and J. S. Gibson. Time-Optimal Control of Robotic Manipulators Along Specified Paths.
+The International Journal of Robotics Research, 4(3):3–17, 1985. doi: 10.1177/027836498500400301.
+Anthony Brohan, Noah Brown, Justice Carbajal, Yevgen Chebotar, Xi Chen, Krzysztof Choromanski, Tianli Ding,
+Danny Driess, Avinava Dubey, Chelsea Finn, Pete Florence, Chuyuan Fu, Montse Gonzalez Arenas, Keerthana
+Gopalakrishnan, Kehang Han, Karol Hausman, Alexander Herzog, Jasmine Hsu, Brian Ichter, Alex Irpan, Nikhil
+Joshi, Ryan Julian, Dmitry Kalashnikov, Yuheng Kuang, Isabel Leal, Lisa Lee, Tsang-Wei Edward Lee, Sergey
+Levine, Yao Lu, Henryk Michalewski, Igor Mordatch, Karl Pertsch, Kanishka Rao, Krista Reymann, Michael Ryoo,
+Grecia Salazar, Pannag Sanketi, Pierre Sermanet, Jaspiar Singh, Anikait Singh, Radu Soricut, Huong Tran, Vincent
+Vanhoucke, Quan Vuong, Ayzaan Wahid, Stefan Welker, Paul Wohlhart, Jialin Wu, Fei Xia, Ted Xiao, Peng Xu,
+Sichun Xu, Tianhe Yu, and Brianna Zitkovich. RT-2: Vision-Language-Action Models Transfer Web Knowledge to
+Robotic Control. InConference on Robot Learning (CoRL), 2023. arXiv:2307.15818.
+Remi Cadene, Simon Aliberts, Francesco Capuano, Michel Aractingi, Adil Zouitine, Pepijn Kooijmans, Jade Choghari,
+Martino Russi, Caroline Pascal, Steven Palma, Mustafa Shukor, Jess Moss, Alexander Soare, Dana Aubakirova,
+Quentin Lhoest, Quentin Gallouédec, and Thomas Wolf. LeRobot: An Open-Source Library for End-to-End Robot
+Learning.arXiv preprint arXiv:2602.22818, 2026.
+JialeCao,YikeNiu,ZhengrongXue,andHuazheXu. AdaTempo: LearningSharedRelativeTempofromDemonstrations
+for Faster Robot Manipulation.arXiv preprint arXiv:2610.02706, 2026.
+Yang Chen, Xiaoguang Ma, and Bin Zhao. Mean-Flow based One-Step Vision-Language-Action.arXiv preprint
+arXiv:2603.01469, 2026a.
+Yitong Chen, Shiduo Zhang, Jingjing Gong, and Xipeng Qiu. Let It Be Simple: One-Step Action Generation for
+Vision-Language-Action Models.arXiv preprint arXiv:2606.05737, 2026b.
+Cheng Chi, Zhenjia Xu, Siyuan Feng, Eric Cousineau, Yilun Du, Benjamin Burchfiel, Russ Tedrake, and Shuran Song.
+Diffusion Policy: Visuomotor Policy Learning via Action Diffusion. InRobotics: Science and Systems (RSS), 2023.
+arXiv:2303.04137.
+Bradley Efron. Bootstrap Methods: Another Look at the Jackknife.The Annals of Statistics, 7(1):1–26, 1979. doi:
+10.1214/aos/1176344552.
+12
+
+--- PAGE 13 ---
+Same Path, Less Time: Fast Execution of VLAs under Inference Latency
+KevinFrans,DanijarHafner,SergeyLevine,andPieterAbbeel. OneStepDiffusionviaShortcutModels. InInternational
+Conference on Learning Representations (ICLR), 2025. arXiv:2410.12557.
+Lingxiao Guo, Zhengrong Xue, Zijing Xu, and Huazhe Xu. DemoSpeedup: Accelerating Visuomotor Policies via
+Entropy-Guided Demonstration Acceleration.arXiv preprint arXiv:2506.05064, 2025.
+Sture Holm. A Simple Sequentially Rejective Multiple Test Procedure.Scandinavian Journal of Statistics, 6(2):65–70,
+1979.
+Yuxuan Hu, Shilin Shan, Qiheng Wang, Jinghan Yang, Junqiao Fan, Hao Wan, and Jianfei Yang. FreeSpeed:
+Training-Free Speed Control for Generative Robot Policies.arXiv preprint arXiv:2610.05734, 2026.
+Hojin Jeon, Jimin Lee, Taekwan Kim, Nayoung Oh, Taeyoung Kim, Myungkyu Koo, Jinmo Koo, Joonwoo Ahn, and
+Jinwoo Shin. PaceVLA: Adaptive Temporal Action Quantization in Vision-Language-Action Models.arXiv preprint
+arXiv:2610.25961, 2026.
+Hai Jiang, Yixian Zou, Binbin Liang, Boqian Liu, Fanman Meng, and Shuaicheng Liu. FutureRTC: Real-Time Robot
+Execution with Anticipatory-Conditioned Action Chunking.arXiv preprint arXiv:2607.24008, 2026.
+Dong Jing, Jingchen Nie, Tianqi Zhang, Jiaqi Liu, Huaxiu Yao, Zhiwu Lu, and Mingyu Ding. TempoVLA: Learning
+Speed-Controllable Vision-Language-Action Policies.arXiv preprint arXiv:2606.06491, 2026.
+Byung ju Kim, Jinu Pahk, Chungwoo Lee, Jaejoon Kim, Jangha Lee, Theo Taeyeong Kim, Kyuhwan Shim, Jun Ki Lee,
+and Byoung-Tak Zhang. ESPADA: Execution Speedup via Semantics Aware Demonstration Data Downsampling for
+Imitation Learning.arXiv preprint arXiv:2512.07371, 2025.
+Moo Jin Kim, Karl Pertsch, Siddharth Karamcheti, Ted Xiao, Ashwin Balakrishna, Suraj Nair, Rafael Rafailov, Ethan
+Foster, Grace Lam, Pannag Sanketi, Quan Vuong, Thomas Kollar, Benjamin Burchfiel, Russ Tedrake, Dorsa Sadigh,
+Sergey Levine, Percy Liang, and Chelsea Finn. OpenVLA: An Open-Source Vision-Language-Action Model. In
+Conference on Robot Learning (CoRL), 2024. arXiv:2406.09246.
+Tobias Kunz and Mike Stilman. Time-Optimal Trajectory Generation for Path Following with Bounded Acceleration
+and Velocity. InRobotics: Science and Systems (RSS), 2012. doi: 10.15607/RSS.2012.VIII.027.
+Jehun Lee, Hajun Lee, Jimin Ryu, Youhan Lee, Beomseok Kang, Jonghyun Choi, and Jae-Joon Kim. Accelerating VLA
+Inference with Perturbation Informed Execution.arXiv preprint arXiv:2610.19656, 2026.
+Zekai Li, Jiaming Tang, and Zhijian Liu. FlashVLA: Streaming Action Decoding for Fast and Asynchronous VLA
+Inference.arXiv preprint arXiv:2608.27384, 2026.
+Yaron Lipman, Ricky T. Q. Chen, Heli Ben-Hamu, Maximilian Nickel, and Matt Le. Flow Matching for Generative
+Modeling. InInternational Conference on Learning Representations (ICLR), 2023. arXiv:2210.02747.
+Bo Liu, Yifeng Zhu, Chongkai Gao, Yihao Feng, Qiang Liu, Yuke Zhu, and Peter Stone. LIBERO: Benchmarking
+Knowledge Transfer for Lifelong Robot Learning. InAdvances in Neural Information Processing Systems (NeurIPS),
+Datasets and Benchmarks Track, 2023a. arXiv:2306.03310.
+Xingchao Liu, Chengyue Gong, and Qiang Liu. Flow Straight and Fast: Learning to Generate and Transfer Data with
+Rectified Flow. InInternational Conference on Learning Representations (ICLR), 2023b. arXiv:2209.03003.
+Yuejiang Liu, Jubayer Ibn Hamid, Annie Xie, Yoonho Lee, Maximilian Du, and Chelsea Finn. Bidirectional Decoding:
+ImprovingActionChunkingviaGuidedTest-TimeSampling.InInternational Conference on Learning Representations
+(ICLR), 2025. arXiv:2408.17355.
+YuxiangLu,ZheLiu,XianzheFan,ZhenyaYang,JinghuaHou,JunyiLi,KaixinDing,andHengshuangZhao. FASTER:
+Rethinking Real-Time Flow VLAs.arXiv preprint arXiv:2603.19199, 2026.
+D. Q. Mayne, J. B. Rawlings, C. V. Rao, and P. O. M. Scokaert. Constrained Model Predictive Control: Stability and
+Optimality.Automatica, 36(6):789–814, 2000. doi: 10.1016/S0005-1098(99)00214-9.
+13
+
+--- PAGE 14 ---
+Same Path, Less Time: Fast Execution of VLAs under Inference Latency
+Taewook Nam, Junmo Cho, Youngsoo Jang, and Sung Ju Hwang. SpeedAug: Policy Acceleration via Tempo-Enriched
+Policy and RL Fine-Tuning.arXiv preprint arXiv:2512.00062, 2025.
+Chaoyi Pan, Giri Anantharaman, Nai-Chieh Huang, Claire Jin, Daniel Pfrommer, Chenyang Yuan, Frank Permenter,
+Guannan Qu, Nicholas Boffi, Guanya Shi, and Max Simchowitz. Much Ado About Noising: Dispelling the Myths of
+Generative Robotic Control.arXiv preprint arXiv:2512.01809, 2025.
+Karl Pertsch, Kyle Stachowicz, Brian Ichter, Danny Driess, Suraj Nair, Quan Vuong, Oier Mees, Chelsea Finn, and
+Sergey Levine. FAST: Efficient Action Tokenization for Vision-Language-Action Models. InRobotics: Science and
+Systems (RSS), 2025. arXiv:2501.09747.
+Hung Pham and Quang-Cuong Pham. A New Approach to Time-Optimal Path Parameterization Based on Reachability
+Analysis.IEEE Transactions on Robotics, 34(3):645–659, 2018. doi: 10.1109/TRO.2018.2819195.
+Physical Intelligence, Kevin Black, Noah Brown, James Darpinian, Karan Dhabalia, Danny Driess, Adnan Esmail,
+Michael Equi, Chelsea Finn, Niccolo Fusai, Manuel Y. Galliker, Dibya Ghosh, Lachy Groom, Karol Hausman,
+Brian Ichter, Szymon Jakubczak, Tim Jones, Liyiming Ke, Devin LeBlanc, Sergey Levine, Adrian Li-Bell, Mohith
+Mothukuri, Suraj Nair, Karl Pertsch, Allen Z. Ren, Lucy Xiaoyang Shi, Laura Smith, Jost Tobias Springenberg, Kyle
+Stachowicz, James Tanner, Quan Vuong, Homer Walke, Anna Walling, Haohuan Wang, Lili Yu, and Ury Zhilinsky.
+𝜋0.5: a Vision-Language-Action Model with Open-World Generalization.arXiv preprint arXiv:2504.16054, 2025.
+Aaditya Prasad, Kevin Lin, Jimmy Wu, Linqi Zhou, and Jeannette Bohg. Consistency Policy: Accelerated Visuomotor
+Policies via Consistency Distillation. InRobotics: Science and Systems (RSS), 2024. arXiv:2405.07503.
+Shaojie Ren, Jingwen Sun, Zezhi Liu, Hongjin Chen, Xin Jin, Wei Zou, and Zhibo Chen. LIBERO-Dynamic:
+Benchmarking Robotic Manipulation in Dynamic Environments.arXiv preprint arXiv:2610.24579, 2026.
+Robert Ramirez Sanchez, Daniel J. Evans, Dylan P. Losey, and Siddarth Jain. VOLT: Vision and Language Trajectory
+Segmentation for Faster-than-Demonstration Policies.arXiv preprint arXiv:2606.06323, 2026.
+Kohei Sendai, Maxime Alvarez, Tatsuya Matsushima, Yutaka Matsuo, and Yusuke Iwasawa. Leave No Observation
+Behind: Real-time Correction for VLA Action Chunks.arXiv preprint arXiv:2509.23224, 2025.
+Kang G. Shin and Neil D. McKay. Minimum-Time Control of Robotic Manipulators with Geometric Path Constraints.
+IEEE Transactions on Automatic Control, 30(6):531–541, 1985. doi: 10.1109/TAC.1985.1104009.
+Mimo Shirasaka, Takehiko Ohkawa, Takuya Okubo, Nicola Scianca, Tatsuya Matsushima, and Kei Ota. RoboPace:
+Contact-Aware Time-Optimal Retiming for Action-Chunk Policies.arXiv preprint arXiv:2610.09696, 2026.
+Mustafa Shukor, Dana Aubakirova, Francesco Capuano, Pepijn Kooijmans, Steven Palma, Adil Zouitine, Michel
+Aractingi, Caroline Pascal, Martino Russi, Andres Marafioti, Simon Alibert, Matthieu Cord, Thomas Wolf, and
+Remi Cadene. SmolVLA: A Vision-Language-Action Model for Affordable and Efficient Robotics.arXiv preprint
+arXiv:2506.01844, 2025.
+Yang Song, Prafulla Dhariwal, Mark Chen, and Ilya Sutskever. Consistency Models. InInternational Conference on
+Machine Learning (ICML), 2023. arXiv:2303.01469.
+Jiaming Tang, Yufei Sun, Yilong Zhao, Shang Yang, Yujun Lin, Zhuoyang Zhang, James Hou, Yao Lu, Zhijian
+Liu, and Song Han. VLASH: Real-Time VLAs via Future-State-Aware Asynchronous Inference.arXiv preprint
+arXiv:2512.01031, 2025.
+Emanuel Todorov, Tom Erez, and Yuval Tassa. MuJoCo: A Physics Engine for Model-Based Control. InIEEE/RSJ
+International Conference on Intelligent Robots and Systems (IROS), pages 5026–5033, 2012. doi: 10.1109/IROS.
+2012.6386109.
+Diederik Verscheure, Bram Demeulenaere, Jan Swevers, Joris De Schutter, and Moritz Diehl. Time-Optimal Path
+TrackingforRobots: AConvexOptimizationApproach.IEEE Transactions on Automatic Control,54(10):2318–2327,
+2009. doi: 10.1109/TAC.2009.2028959.
+14
+
+--- PAGE 15 ---
+Same Path, Less Time: Fast Execution of VLAs under Inference Latency
+Zhichao Wu, Junyin Ye, Zhilong Zhang, Yihao Sun, Haoxin Lin, Jiaheng Luo, Haoxiang Ren, Lei Yuan, and Yang
+Yu. Speedup Patch: Learning a Plug-and-Play Policy to Accelerate Embodied Manipulation.arXiv preprint
+arXiv:2603.20658, 2026.
+Haozhe Xie, Beichen Wen, Jiarui Zheng, Zhaoxi Chen, Fangzhou Hong, Haiwen Diao, and Ziwei Liu. DynamicVLA: A
+Vision-Language-Action Model for Dynamic Object Manipulation. InAdvances in Neural Information Processing
+Systems (NeurIPS), 2026. arXiv:2601.22153.
+Chen Yang, Yucheng Hu, Yunchao Ma, Yunhuan Yang, Jing Tan, and Haoqiang Fan. Realtime-VLA V2: Learning to
+Run VLAs Fast, Smooth, and Accurate.arXiv preprint arXiv:2603.26360, 2026a.
+ZebinYang,QiWang,YunheWang,XiuruiGuo,BoYu,ShaoshanLiu,JiafengXu,HaoDong,andMengLi. EagleVLA:
+Towards Onboard Real-Time Robot Control via Foresight-Aligned Asynchronous Inference. InConference on Robot
+Learning (CoRL), 2026b. arXiv:2607.12659.
+WenboYu,JifanLi,WenkeXia,YuchenLi,YizhuoZhang,PeiRen,ZhengpingChe,andDihu.Barrier-ConstrainedGuid-
+anceForReal-timeAsynchronousVLAExecution.InConference on Robot Learning (CoRL),2026.arXiv:2610.14997.
+Tony Z. Zhao, Vikash Kumar, Sergey Levine, and Chelsea Finn. Learning Fine-Grained Bimanual Manipulation with
+Low-Cost Hardware. InRobotics: Science and Systems (RSS), 2023. arXiv:2304.13705.
+Yixiang Zhu, Yonghao Chen, Jiaxiang Zou, Yusong Hu, and Xinyu Chen. DEFLECT: Temporal Counterfactual
+Preference Learning for Delay-Robust Asynchronous VLAs.arXiv preprint arXiv:2605.19294, 2026a.
+Yixiang Zhu, Ruilong Wu, Yonghao Chen, Jiaxiang Zou, Yusong Hu, and Xinyu Chen. PACT-VLA: Speculative
+Action-Chunk Verification with Pre-Commit Observations.arXiv preprint arXiv:2610.28019, 2026b.
+Yuke Zhu, Josiah Wong, Ajay Mandlekar, Roberto Martín-Martín, Abhishek Joshi, Kevin Lin, Abhiram Maddukuri,
+SoroushNasiriany,andYifengZhu. robosuite: AModularSimulationFrameworkandBenchmarkforRobotLearning.
+arXiv preprint arXiv:2009.12293, 2020.
+15
+
+--- PAGE 16 ---
+Same Path, Less Time: Fast Execution of VLAs under Inference Latency
+A Derivations and Assumptions
+This section states the assumptions behind Section 4 and gives the short derivations omitted there.
+A.1 Assumptions
+• Linear actuator.For commands inside the boxU, the end-effector displacement equals𝜅 times the summed
+translationalcommand,uptoaboundedtrackinglag. Weidentifiedthisinsimulation(SectionB.1);itdetermineshow
+far preservingcommandscarries over to preservingposes. Rotations, contacts, and gripper events are not covered.
+• Gripper timing.The duration of a gripper motion does not depend on the arm’s rate, and the finger velocity¤𝑞𝑔 is
+observable.
+• Prefix consistency.The 𝑚 steps of the old plan executed during inference roughly agree with the first𝑚 steps of the
+new plan, so the robot is roughly where the new plan expects it at step𝑚. If the two plans point in opposite directions
+over these steps, entering at𝑚is only an approximation.
+A.2 Path layer
+Proof of Proposition 1.With 𝜇=𝜇(𝑜 ′), write ˆ𝑌−Ψ ∗ =( ˆ𝑌−E[ ˆ𝑌| I]) + (E[ ˆ𝑌| I] −Ψ 𝜇 (𝑚)) + (Ψ 𝜇 (𝑚) −Ψ ∗).
+Given I=(𝑜 ′, 𝑚, 𝐸), Ψ∗ is a fixed linear function of𝐴∗ ∼𝜋(· |𝑜 ′), soE[Ψ ∗ | I]= Ψ 𝜇 (𝑚); the first and third terms
+have zero mean and are independent by assumption, and the second is constant. All cross terms therefore vanish in
+expectation, and the three squared norms give the bias,tr Cov( ˆ𝑌| I) , andtr Cov(Ψ∗ | I). The first two vanish if and
+only if ˆ𝑌= Ψ 𝜇 (𝑚) almost surely. Entering𝜇 at 𝑗 gives bias ∥Φ 𝜇 (𝑚) −Φ 𝜇 (𝑗) ∥ 2 and no variance; an independent
+sample entered at𝑚 gives no bias and variancetr Cov(Ψ∗ | I) . Conditioning on𝑚 and 𝐸 matters: they depend on
+earlier actions and gripper windows, and if they were left random,ˆ𝑌 and Ψ∗ could be correlated through𝑚 even when
+(𝐶, 𝑗)and𝐴 ∗ are independent given𝑜′.□
+Onestepatthenoiseend.At 𝜏=1 , 𝑥1 =𝜀 isindependentof 𝐴given 𝑜,so 𝑣 ∗ (𝑥,1|𝑜)=E[𝜀−𝐴|𝑥 1 =𝑥, 𝑜]=𝑥−𝜇(𝑜)
+and 𝑥1 −𝑣 ∗ (𝑥1,1|𝑜)=𝜇(𝑜) for every𝑥1 (Chen et al., 2026b). For the learned field𝑣 𝜃 =𝑣 ∗ +𝑒 𝜃, the output is
+𝜇(𝑜) −𝑒 𝜃 (0,1|𝑜) ,andpost-processing(unnormalization,clipping)doesnotcommutewiththeexpectation. Empirically,
+for a fixed observation and 16 ten-step samples, the distance from the one-step output to the sample mean is 2.05×
+(𝜋0.5) and 1.17× (SmolVLA) the average distance of a sample to the mean, measured on the cumulative translation of
+the first 10 steps. In practice the one-step output therefore differs from the sample mean, and we evaluate its effect on
+deployment directly (Section 5.3).
+Cost of deterministic decoding.If 𝜋(· |𝑜) is multimodal,𝜇(𝑜) may fall between modes, e.g., the average of two paths
+around an obstacle passes through it. Deterministic decoding gives up random selection between such branches.𝐾-step
+sampling with fixed noise is also deterministic and keeps the path from jumping without taking the mean, at the cost of
+latency.
+A.3 Time layer
+Summation and resampling.Writing the requirementÍ
+𝜏<𝑡 𝑢 𝜏 = Φ(𝑝 𝑡 ) −Φ(𝑝 0) for 𝑡 and 𝑡+1 and subtracting gives
+Equation (3); conversely, Equation (3) telescopes to the requirement. For resampling,𝑢sum
+𝑡 =𝜌 𝑡 𝛼(𝑝 𝑡 ) +
+∫ 𝑝𝑡 +𝜌𝑡
+𝑝𝑡
+(𝛼−
+𝛼(𝑝 𝑡 )), so
+𝑓𝑡 𝛼(𝑝 𝑡 ) −𝑢 sum
+𝑡 =(𝑓 𝑡 −𝜌 𝑡 )𝛼(𝑝 𝑡 ) −
+∫ 𝑝𝑡 +𝜌𝑡
+𝑝𝑡
+ 𝛼−𝛼(𝑝 𝑡 ).(6)
+For a consistently moving plan and𝑓𝑡 < 𝜌 𝑡, the first term opposes the planned motion at every step while the plan
+position still advances by𝜌𝑡.
+Gripper window.After 𝑖 window steps the arm has consumedÍ
+𝜏<𝑖 𝜌𝜏 plan steps while the gripper has moved for𝑖
+steps. Step-by-step synchronization,Í
+𝜏<𝑖 𝜌𝜏 =𝑖 for all𝑖, holds if and only if𝜌≡1 . At a constant rate𝑟, the arm
+reaches𝜎 𝑔 +𝑟𝐺 0 instead of𝜎𝑔 +𝐺 0, which by Equation (3) is a command offset ofΦ(𝜎𝑔 +𝑟𝐺 0) −Φ(𝜎 𝑔 +𝐺 0).
+Actuator cap.The set of feasible rates is in general not an interval: on one axis with𝛼=(1,1,−1,−1) and 𝑐=1.25 ,
+𝜌=4 is feasible (Φ(4) −Φ(0)=0 ) but𝜌=2 is not. 𝑅body therefore uses the connected range starting at 1, and the
+implementation checks the grid{1,1.25, . . .} . If |𝛼 𝑗 | ≤𝑀 𝑗,±, every𝜌≤min 𝑗,± 𝑐 𝑗,± /𝑀 𝑗,± is feasible; with clipping,
+𝑀=1.
+16
+
+--- PAGE 17 ---
+Same Path, Less Time: Fast Execution of VLAs under Inference Latency
+Feasibility and information age.A chunk is consumed for𝑠 plan steps before the next request, and another𝑟 𝑑steps until
+that request returns; the arriving chunk is entered at𝑚=𝑟 𝑑 and must last𝑠+𝑟 𝑑 further steps, hence2𝑟 𝑑+𝑠≤𝐻 . The
+newest executed chunk was captured between𝑑 and 2𝑑+𝑠/𝑟 control steps ago. These are continuous, constant-rate
+approximations; rounding of discrete requests and rate changes inside gripper windows alter the margin slightly, and
+the hold-position fallback covers the remainder. With one-step decoding,𝑑1 ≤𝑑 𝐾 raises 𝑅feas to (𝐻−𝑠)/(2𝑑 1) and
+shortens the information age.
+Time optimality for a fixed path.For a fixed path under pointwise bounds𝑟(𝜎) ≤𝑅(𝜎) , with 𝑅=1 in gripper
+windows and𝑅=min{𝑅 body, 𝑅feas,¯𝑟}elsewhere, the traversal time
+∫
+𝑑𝜎/𝑟(𝜎) is minimized by𝑟=𝑅 , uniquely almost
+everywhere, because the integrand decreases in𝑟 and the bounds are decoupled across𝜎. If ¯𝑟≤𝑅body everywhere, the
+optimal rate is the constant¯𝑟outside gripper windows, as on the Panda. With a weak actuator (¯𝑟 >min𝑅 body) and
+varying planned speed, it is non-uniform: slower on fast segments, at the cap on slow ones (tested in Section 5.4).
+A.4 Throughput
+Time ledger and success speed-up.Split the control steps into waiting steps (𝜌=0 ), gripper-window steps (𝜌=1 , 𝐺
+in total), and arm steps with mean rate˜𝑟. With consumed plan length𝐿=Í
+𝑡 𝜌𝑡,
+𝑇=|W | +𝐺+ 𝐿−𝐺
+˜𝑟 .(7)
+Stop-and-wait execution has|W |=𝑑 𝑁 replan and asynchronous execution|W |=0 . On episodes in which both
+executions succeed, with gripper fraction𝑔:=𝐺/𝐿 1 and plan inflation 𝜆:=𝐿 𝑟 /𝐿 1, the success speed-up of
+asynchronous execution at rate𝑟 is 𝑆(𝑟):= ¯𝑇1/ ¯𝑇𝑟 =1/  𝑔+ (𝜆−𝑔)/𝑟 , which is below1/𝑔 whenever 𝜆≥1 (about 8 on
+𝜋0.5 LIBERO-Spatial).
+Interpretation of the break-even success rate.When the margin𝑀≫0 , the throughput gain approaches𝑆 (actuator-
+limited regime); when𝑀≈0 , the best rate lies below the actuator limit (precision-limited regime); when𝑀 <0 ,
+speedinguplowersthroughput. 𝐷≤0 occursonlywhenfailuresaremuchshorterthansuccesses;inourdataallfailures
+are timeouts and𝐷 >0. On a real robot, reset and timeout costs change𝑃∗ but not the form of Proposition 2.
+B Implementation Details
+B.1 Actuator and gripper identification
+The actuator box is identified with open-loop pulses: starting from rest, a constant command on one translational axis is
+appliedforafixednumberofsteps,andtheratioofactualtonominalend-effectordisplacementisrecorded. Acommand
+level is inside the box if this ratio deviates from 1 by at most𝜖lin =0.05 . The gain is𝜅=12.8 mm per action unit.
+Table 4 lists the identified box for the default actuator and for the weakened actuator of Section 5.4 (joint-torque limits
+scaled by 0.7). The box is measured with single-axis pulses from rest and assumed to hold for multi-axis commands,
+contacts, and loads. The box is defined on the three translational axes only; rotational increments are summed by R2 in
+the same way as translations but are not boxed.
+Table 4 |Identified actuator box𝑐𝑗,± (action units per step) on the Franka Panda in LIBERO.
+Joint torque𝑥 + 𝑥 − 𝑦+ 𝑦− 𝑧+ 𝑧−
+×1.0(default) 2 2 3 3 3 2
+×0.7(weak) 1.25 1.25 3 3 1.25 1.75
+After a flip of the gripper command, the gripper moves for about 11 steps when empty and 2–12 steps when closing
+on an object. The gripper window of R3 starts at the flip step𝑡0 and lasts while1≤𝑡−𝑡 0 ≤12 and either𝑡−𝑡 0 ≤2 or
+the larger of the two finger joint speeds (slide joints, MuJoCo velocities) exceeds 0.02m/s. Inside the window the arm
+runs at𝜌=1; under incremental summation the gripper takes the command at the end of the consumed interval.
+B.2 Latency model and timing
+The first inference of an episode is not timed, identically for all methods. Afterwards, an inference requested at
+step 𝑡 returns at step𝑡+𝑑 . Stop-and-wait methods hold position (𝜌=0 ) during these𝑑 steps, and the steps count
+towards 𝑇. Asynchronous methods keep executing. The returned chunk is computed from the observation captured
+at the request. Latencies are converted from measured inference times (𝜋0.5: 150ms; SmolVLA: 206ms for 10
+17
+
+--- PAGE 18 ---
+Same Path, Less Time: Fast Execution of VLAs under Inference Latency
+steps). The one-step latency scales these times by the measured shares of the vision-language prefix and of one
+integration stepin a full inference (𝜋0.5: 0.549 and0.051 of the full inference; SmolVLA: 0.155 and 0.085), which gives
+𝑑1 =⌈150·0.600/50⌉=2 and 𝑑1 =⌈206·0.240/50⌉=1 . RTC’s guidance requires a vector–Jacobian product per
+integration step; we measured a 1.79× longer inference for𝜋0.5, i.e.,𝑑=6 . Other hardware gives other values of𝑑;
+Table 6 varies𝑑.
+B.3 Controller
+All methods use LIBERO’s default relative operational-space pose controller with one change: its input and output
+bounds are both multiplied by 4. This leaves the mapping from action units to commanded displacement unchanged
+(the same gain𝜅 per unit) but lets summed commands of up to 4 units pass without clipping; joint torque limits are
+unchanged. Each planned action is first clipped to[−1,1] by the policy’s post-processing and then summed by R2.
+The same setting is used for every method, including the 1× baselines, for which it has no effect inside[−1,1] , and
+the actuator box of Table 4 was identified under it. Checkpoints:lerobot/pi05_libero_finetuned_v044 and
+HuggingFaceVLA/smolvla_libero. Episode limits are LIBERO’s 280, 280, 300, and 520 control steps for Spatial,
+Object, Goal, and Long.
+B.4 Deterministic one-step decoding
+For both policies we call the policy’s own chunk-prediction routine with the initial noise set to the zero tensor and
+a single integration step from𝜏=1 to 𝜏=0 , so that the output is−𝑣 𝜃 (0,1|𝑜) followed by the policy’s standard
+post-processing (unnormalization and clipping). Unit tests on both models verify that the output is deterministic, that
+exactly one denoising step is made, and that post-processing matches the original pipeline. The command jerk in
+Figure 5c is, per episode, the mean absolute second difference of the executed 6-D arm commands over moving steps.
+B.5 Baselines
+All methods share the policy wrapper, the latency model, the replanning interval𝑠=8 , the environment seeds, and the
+episode horizons of LIBERO.
+• Zero-latency 1×: 10-step sampling,𝑑=0 . A reference for what the policy achieves without any inference delay; not
+deployable.
+•Sync-1×: execute𝑠plan steps, then hold for𝑑steps while the next chunk is inferred.
+• Async-1×: request a new chunk every𝑠 consumed steps and keep executing; on arrival, switch to the new sampled
+chunk at the consumed progress𝑚(the standard practice of skipping the stale prefix).
+• RTC(Black et al., 2025a): Async-1× with guided inpainting following the paper: exponentially decaying soft mask,
+maximum guidance weight𝛽=5 , guidance over the entire remaining part of the previous chunk, and the frozen
+prefix equal to the consumed delay. The guidance overhead is charged as latency (𝑑=6).
+• FreeSpeed(Hu et al., 2026): synchronous, commanded rate𝜌=2 . Each step resamples the plan at rate𝜌 and scales
+thetranslationandrotationincrementsby 𝑓=1+ (0.9𝜌−1)exp(−50𝐼 cos),where 𝐼cos isthedirectionalinconsistency
+of adjacent translation increments. Following the paper,𝑓 is computed once per cycle over the plan steps executed in
+that cycle. The gripper command is passed through unscaled.
+•Sync-2×: synchronous, uniform rate 2 with incremental summation (R2), no gripper synchronization.
+• PTS-𝐾: PTS with10-stepstochasticsampling instead ofone-stepdecoding, and 𝑑10 insteadof 𝑑1 inlatency and 𝑅feas.
+•One-step-1×: Async-1×with deterministic one-step decoding and𝑑1.
+B.6 Dynamic scene
+LIBERO-Dynamic (Ren et al., 2026) runs in a separate server process and latency is injected in control steps as in the
+static experiments; the target keeps moving during the injected inference steps, including those in which stop-and-wait
+methods hold position. We use target speed 0.06m/s, trajectory 0 of each task at the three motion levels provided by the
+benchmark, and 10 tasks per suite. Latency settings are as in the static experiments.
+B.7 Compute
+All test-set episodes ran on NVIDIA H100 GPUs.
+18
+
+--- PAGE 19 ---
+Same Path, Less Time: Fast Execution of VLAs under Inference Latency
+Table 5 |Left: development-set rate selection with PTS-𝐾 (success rate /ˆΘ; bold: selected). Right: throughput decomposition of
+PTS against One-step-1×on the test set (same decoder, both asynchronous; Proposition 2).
+𝑟1 1.5 2 2.5 3
+𝜋0.5 (Spatial, 150 episodes per cell)
+Success 0.973 0.933 0.887 – –
+ˆΘ9.2710.3910.14 – –
+SmolVLA (Object + Goal, 100 episodes per cell)
+Success 0.55 0.57 0.62 0.47 0.48
+ˆΘ2.84 3.193.932.59 2.73
+Quantity𝜋 0.5 SmolVLA
+Success speed-up𝑆1.39 1.71
+Plan inflation𝜆1.03 1.08
+Success𝑃 1 →𝑃 𝑟 .968→.950 .790→.805
+Break-even𝑃 ∗ 0.870 0.699
+Θ(𝑟)/Θ(1)1.28 1.38
+C Additional Results
+Table 6 |Latency sweep,𝜋 0.5 Spatial, initial states 20–24, 50 episodes per cell, throughputΘ(plotted in Figure 7c).
+𝑑Sync-1×Async-1×PTS-𝐾
+0 9.27 9.2710.60
+3 6.12 7.9911.64
+8 4.48 7.368.70
+Per-suite differences..Table 7 lists the paired differences of PTS against Async-1×(the strongest baseline for𝜋0.5; for
+SmolVLA the strongest is Sync-2×on Object and pooled, Table 1), against PTS-𝐾, against One-step-1×, and against
+the zero-latency reference on every suite.
+Table 7 |Per-suite paired differences in throughput, PTS minus the listed method, with 95% task-stratified bootstrap intervals (100
+episodes per suite).
+Model Suite−Async-1× −PTS-𝐾−One-step-1× −Zero-latency 1×
+𝜋0.5
+Spatial+2.27[0.73,3.91]+0.08[-1.70,1.89]+1.41[-0.11,3.04]+1.30[-0.44,3.22]
+Object+3.00[2.51,3.52]+0.06[-0.78,0.88]+3.11[2.35,3.77]+2.77[2.10,3.30]
+Goal+1.82[0.20,3.55]+0.17[-1.47,1.80]+1.96[0.36,3.69]+3.23[1.64,4.92]
+Long+1.30[0.81,1.83]+0.40[-0.33,1.12]+1.00[0.45,1.57]+1.03[0.43,1.65]
+Pooled+1.97[1.50,2.44]+0.31[-0.30,0.92]+1.72[1.21,2.24]+1.89[1.34,2.44]
+SmolVLA
+Object+4.13[3.00,5.35]+3.49[2.14,4.84]+2.33[1.17,3.56]+1.60[0.42,2.84]
+Goal+3.18[1.67,4.89]+4.30[2.68,6.06]+1.38[0.08,2.82]+3.33[1.89,4.95]
+Pooled+3.70[2.77,4.69]+3.90[2.84,4.99]+1.92[1.03,2.84]+2.49[1.55,3.48]
+Rule replacement per suite and on PTS-𝐾..Table 8 splits the full-method ablation of Table 2b by suite and repeats
+the three replacements on PTS-𝐾 (10-step sampling). The conclusions agree: entry at step 0 is the most harmful
+replacement, followed by removing gripper synchronization, and then resampling.
+Dynamic scene per suite..Table 9 gives the paired comparisons on LIBERO-Dynamic. “Wins” counts episodes in
+which only one of the two methods succeeds; the step ratio is computed on episodes in which both succeed (values
+above 1 mean the first method is faster).
+D Qualitative Results
+How the qualitative episodes were produced..All rollouts in the figures are re-executions of test-set episodes with the
+commands of the reported runs; a recording hook stores frames and states without changing the episode. Episodes
+were selected from the test logs before rendering by the outcome pattern each figure illustrates (e.g., near-median step
+ratio, or PTS succeeding where the ablated variant fails). Re-executions on a different machine can differ from the
+logs in episode length; for the entry-position comparison, the first candidate did not reproduce the logged failure on
+re-execution, and we show the next one.
+19
+
+--- PAGE 20 ---
+Same Path, Less Time: Fast Execution of VLAs under Inference Latency
+Sync-1×
+LIBERO-Spatial: pick up the black bowl on the stove and place it on the plate
+t = 1.5 s
+ t = 3.1 s
+ t = 4.6 s
+waiting for inference
+t = 6.1 s
+✓ 8.7 s
+t = 8.7 s
+Async-1×
+ ✓ 6.1 s
+✓ 6.1 s
+PTS (ours)
+ ✓ 4.6 s
+✓ 4.6 s
+ ✓ 4.6 s
+0 2 4 6 8
+time (s) = control steps × 50 ms;  dark: halted, waiting for inference
+✓ 8.7 s✓ 6.1 s✓ 4.6 s
+Sync-1×
+LIBERO-Object: pick up the salad dressing and place it in the basket
+t = 1.3 s
+ t = 2.6 s
+ t = 3.9 s
+waiting for inference
+t = 6.0 s
+✓ 7.6 s
+t = 7.6 s
+Async-1×
+ ✓ 6.0 s
+✓ 6.0 s
+PTS (ours)
+ ✓ 3.9 s
+✓ 3.9 s
+ ✓ 3.9 s
+0 1 2 3 4 5 6 7 8
+time (s) = control steps × 50 ms;  dark: halted, waiting for inference
+✓ 7.6 s✓ 6.0 s✓ 3.9 s
+Sync-1×
+LIBERO-Goal: put the wine bottle on top of the cabinet
+t = 1.2 s
+ t = 2.4 s
+ t = 3.7 s
+waiting for inference
+t = 5.0 s
+✓ 7.0 s
+t = 7.0 s
+Async-1×
+ ✓ 5.0 s
+✓ 5.0 s
+PTS (ours)
+ ✓ 3.7 s
+✓ 3.7 s
+ ✓ 3.7 s
+0 1 2 3 4 5 6 7
+time (s) = control steps × 50 ms;  dark: halted, waiting for inference
+✓ 7.0 s✓ 5.0 s✓ 3.7 s
+Figure 9 |Static LIBERO episodes,𝜋0.5.Each block shows one task and initial state executed three ways, at the same simulated
+times. In every block the three executions follow visibly the same strategy; PTS reaches each stage earlier because it neither halts for
+inference nor executes at demonstration speed. Step counts: Spatial 173/121/92, Object 151/119/78, Goal 139/99/73.
+20
+
+--- PAGE 21 ---
+Same Path, Less Time: Fast Execution of VLAs under Inference Latency
+Sync-1×
+LIBERO-Dynamic Spatial
+t = 2.1 s
+ t = 4.1 s
+ t = 6.2 s
+✗ 30.0 s (failed)
+t = 30.0 s
+Async-1×
+ ✗ 30.0 s (failed)
+PTS (ours)
+ ✓ 6.2 s
+✓ 6.2 s
+0 5 10 15 20 25 30
+time (s) = control steps × 50 ms;  dark: halted, waiting for inference
+✗ 30.0 s✗ 30.0 s✓ 6.2 s
+Sync-1×
+LIBERO-Dynamic Long
+t = 6.1 s
+ t = 12.2 s
+ t = 18.4 s
+✗ 30.0 s (failed)
+t = 30.0 s
+Async-1×
+ ✗ 30.0 s (failed)
+PTS (ours)
+ ✓ 18.4 s
+✓ 18.4 s
+0 5 10 15 20 25 30
+time (s) = control steps × 50 ms;  dark: halted, waiting for inference
+✗ 30.0 s✗ 30.0 s✓ 18.4 s
+Sync-1×
+LIBERO-Dynamic Object (a failure of PTS)
+t = 3.1 s
+ t = 6.2 s
+✓ 9.3 s
+t = 9.3 s
+✓ 9.3 s
+t = 18.6 s
+✓ 9.3 s
+t = 30.0 s
+Async-1×
+ ✓ 18.6 s
+✓ 18.6 s
+PTS (ours)
+ ✗ 30.0 s (failed)
+0 5 10 15 20 25 30
+time (s) = control steps × 50 ms;  dark: halted, waiting for inference
+✓ 9.3 s ✓ 18.6 s ✗ 30.0 s
+Figure 10 |LIBERO-Dynamic episodes, 𝜋0.5.Top and middle: episodes in which both 1× executions run out of time while PTS
+completes the task. Bottom: an Object episode in which PTS fails while both baselines succeed; on this suite PTS has the lowest
+success rate (Table 3).
+21
+
+--- PAGE 22 ---
+Same Path, Less Time: Fast Execution of VLAs under Inference Latency
+Table 8 |Rule replacement, 𝜋0.5, 100 paired episodes per suite. Entries:Θ (success) and PTS minus row with 95% interval;𝑝
+one-sided, Holm-corrected within each block.
+Base ConfigurationΘ(success) Base−row𝑝 Holm
+PTS, Spatial
+full 10.57 (.930) – –
+resampling 8.61 (.880)+1.95[0.19,3.81] 0.015
+no gripper sync 6.67 (.790)+3.89[1.84,5.93]<0.001
+entry at step 0 3.34 (.620)+7.23[5.55,9.03]<0.001
+PTS, Goal
+full 10.41 (.940) – –
+resampling 10.00 (.930)+0.41[-1.37,2.21] 0.318
+no gripper sync 9.48 (.930)+0.93[-0.52,2.43] 0.228
+entry at step 0 5.47 (.800)+4.94[3.09,6.88]<0.001
+PTS-𝐾, Spatial + Goal
+full 10.36 – –
+resampling 9.20 (.900)+1.16[0.07,2.28] 0.019
+no gripper sync 6.13 (.770)+4.23[3.08,5.38]<0.001
+entry at step 0 2.15 (.465)+8.21[7.17,9.33]<0.001
+Table 9 |LIBERO-Dynamic,𝜋 0.5, 30 paired episodes per suite (120 pooled).ΔΘwith 95% interval.
+Spatial Object Goal Long
+PTS−Sync-1× +0.49[-0.42,1.54]−0.46[-1.05,0.21]+1.60[0.77,2.74]+0.38[0.18,0.61]
+PTS−Async-1× +0.28[-0.56,1.28]−0.30[-0.75,0.19]+0.35[-0.80,1.69]+0.14[-0.20,0.48]
+Async-1× −Sync-1× +0.20[-0.55,0.92]−0.15[-0.61,0.34]+1.25[0.57,2.12]+0.24[0.06,0.44]
+PooledΔΘWins Step ratio (both succeed)
+PTS vs. Sync-1× +0.33[0.04,0.63] 25 : 16 1.59 (32 ep.)
+PTS vs. Async-1× +0.05[-0.23,0.36] 20 : 21 1.26 (37 ep.)
+Async-1×vs. Sync-1× +0.28[0.05,0.51] 22 : 12 1.04 (36 ep.)
+Async-1×
+LIBERO-Spatial: pick up the black bowl on the ramekin and place it on the plate (a failure of PTS)
+t = 4.6 s
+ t = 9.2 s
+✗ 14.0 s (failed)
+t = 14.0 s
+PTS (ours)
+✗ 14.0 s (failed)
+0 2 4 6 8 10 12 14
+time (s) = control steps × 50 ms;  dark: halted, waiting for inference
+✗ 14.0 s
+✗ 14.0 s
+Figure 11 |A static failure of PTS.𝜋0.5 on LIBERO-Spatial; both asynchronous executions (1×and PTS) fail to complete the task
+within the 280-step limit in this episode, whereas stop-and-wait execution succeeded in the logged test run.
+22

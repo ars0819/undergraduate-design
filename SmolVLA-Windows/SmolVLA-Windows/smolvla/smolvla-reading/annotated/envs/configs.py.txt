@@ -1,0 +1,233 @@
+# 原文件 lerobot/src/lerobot/envs/configs.py
+# 原行范围 56–116, 332–389
+# L 后是官方源码或本机文件的原行号。每条中文注释对应紧随其后的原文。
+# 这是静态阅读副本。请在编辑器中阅读。空行保留，节选之间标出跳过的范围。
+
+# …… 跳过原文第 1–55 行 ……
+# L0056 数据类装饰器。Python 根据字段生成初始化等方法。
+@dataclass
+# L0057 定义类 EnvConfig，括号列出基类 draccus.ChoiceRegistry、abc.ABC。
+class EnvConfig(draccus.ChoiceRegistry, abc.ABC):
+    # L0058 原文档中的说明或续行。
+    """An environment's options. `make_env` builds the environment from its `sim_settings()`."""
+
+    # L0060 声明“task”（任务）的类型为 str | None，设为空值 None作为初始值。
+    task: str | None = None
+    # L0061 声明“fps”的类型为 int，使用字面值 30作为初始值。
+    fps: int = 30
+    # L0062 原作者对相邻代码的说明。
+    # The policy-side features. `lerobot-eval` fills them from the env's descriptor; envs without one declare them.
+    # L0063 声明“features”的类型为 dict[str, PolicyFeature]，调用 field，用它的结果作为初始值。
+    features: dict[str, PolicyFeature] = field(default_factory=dict)
+    # L0064 声明“features_map”的类型为 dict[str, str]，调用 field，用它的结果作为初始值。
+    features_map: dict[str, str] = field(default_factory=dict)
+    # L0065 声明“max_parallel_tasks”的类型为 int，使用字面值 1作为初始值。
+    max_parallel_tasks: int = 1
+    # L0066 声明“disable_env_checker”的类型为 bool，使用布尔值 True作为初始值。
+    disable_env_checker: bool = True
+    # L0067 原作者对相邻代码的说明。
+    # Env server that runs this env, and how to reach it. When unset, the env runs locally.
+    # L0068 声明“server”的类型为 EnvClientConfig | None，设为空值 None作为初始值。
+    server: EnvClientConfig | None = None
+
+    # L0070 属性装饰器。调用方用 obj.name 的形式访问这个方法的结果。
+    @property
+    # L0071 定义方法 type。
+    def type(self) -> str:
+        # L0072 调用 self.get_choice_name，用它的结果作为当前调用的返回值。
+        return self.get_choice_name(self.__class__)
+
+    # L0074 属性装饰器。调用方用 obj.name 的形式访问这个方法的结果。
+    @property
+    # L0075 定义方法 package_name。
+    def package_name(self) -> str:
+        # L0076 原文档中的说明或续行。
+        """Package name to import if environment not found in gym registry"""
+        # L0077 计算此行的右侧表达式作为当前调用的返回值。
+        return f"gym_{self.type}"
+
+    # L0079 属性装饰器。调用方用 obj.name 的形式访问这个方法的结果。
+    @property
+    # L0080 定义方法 gym_id。
+    def gym_id(self) -> str:
+        # L0081 原文档中的说明或续行。
+        """ID string used in gym.make() to instantiate the environment"""
+        # L0082 计算此行的右侧表达式作为当前调用的返回值。
+        return f"{self.package_name}/{self.task}"
+
+    # L0084 属性装饰器。调用方用 obj.name 的形式访问这个方法的结果。
+    @property
+    # L0085 定义方法 gym_kwargs。
+    def gym_kwargs(self) -> dict:
+        # L0086 原文档中的说明或续行。
+        """Keyword arguments for ``gym.make``; empty by default."""
+        # L0087 创建字典，用键查找对应的值作为当前调用的返回值。
+        return {}
+
+    # L0089 定义方法 sim_settings。
+    def sim_settings(self) -> dict[str, Any]:
+        # L0090 原文档中的说明或续行。
+        """Return the sim settings, as in a server YAML's ``sim`` section; missing ones use sim defaults.
+
+        # L0092 原文档中的说明或续行。
+        The default is the Gymnasium env ``gym_id`` with ``gym_kwargs`` and delta actions; override otherwise.
+        # L0093 文档字符串的边界。
+        """
+        # L0094 调用 _gym_settings，用它的结果作为当前调用的返回值。
+        return _gym_settings(self, "delta")
+
+    # L0096 把环境配置输出的通用 sim_settings 解析成仿真工厂使用的 SimConfig。
+    def sim_config(self) -> SimConfig:
+        # L0097 原文档中的说明或续行。
+        """Return ``sim_settings()`` with the sim's defaults, as local envs and the env server run it."""
+        # L0098 调用 SimConfig.resolve，用它的结果作为当前调用的返回值。
+        return SimConfig.resolve(self.sim_settings())
+
+    # L0100 定义方法 create_envs。
+    def create_envs(self, *args: Any, **kwargs: Any) -> NoReturn:
+        # L0101 原文档中的说明或续行。
+        """Removed: build the envs with ``lerobot.envs.make_env(config, n_envs, use_async_envs)``."""
+        # L0102 抛出 RuntimeError，中断当前路径并交给上层的异常处理。
+        raise RuntimeError(
+            # L0103 字符串字面量，供上方的调用、容器或错误消息使用。
+            "EnvConfig.create_envs() was removed: build the envs with "
+            # L0104 字符串字面量，供上方的调用、容器或错误消息使用。
+            "lerobot.envs.make_env(config, n_envs=..., use_async_envs=...)"
+        # L0105 闭合上方尚未结束的括号。
+        )
+
+    # L0107 定义方法 create_env。
+    def create_env(self, *args: Any, **kwargs: Any) -> NoReturn:
+        # L0108 原文档中的说明或续行。
+        """Removed: build one task's env with ``lerobot.envs.make_task_env(config, task_group, task_id, ...)``."""
+        # L0109 抛出 RuntimeError，中断当前路径并交给上层的异常处理。
+        raise RuntimeError(
+            # L0110 字符串字面量，供上方的调用、容器或错误消息使用。
+            "EnvConfig.create_env() was removed: build one task's env with "
+            # L0111 字符串字面量，供上方的调用、容器或错误消息使用。
+            "lerobot.envs.make_task_env(config, task_group=..., task_id=..., n_envs=...)"
+        # L0112 闭合上方尚未结束的括号。
+        )
+
+    # L0114 环境配置提供一对前后处理器。LIBERO 用这里继承来的默认行为。
+    def get_env_processors(self):
+        # L0115 原文档中的说明或续行。
+        """Return (preprocessor, postprocessor) for this env. Default: identity."""
+        # L0116 创建两条没有步骤的流水线，输入会通过通用适配器返回。
+        return PolicyProcessorPipeline(steps=[]), PolicyProcessorPipeline(steps=[])
+
+# …… 跳过原文第 117–331 行 ……
+# L0332 把下方配置类注册在 libero 名字下，对应 --env.type=libero。
+@EnvConfig.register_subclass("libero")
+# L0333 数据类装饰器。Python 根据字段生成初始化等方法。
+@dataclass
+# L0334 配置 LIBERO 的任务、相机、重置和控制方式。
+class LiberoEnvConfig(EnvConfig):
+    # L0335 给出默认套件。原评测参数将它改为 libero_spatial。
+    task: str = "libero_10"  # can also choose libero_spatial, libero_object, etc.
+    # L0336 可限定套件内的任务索引。原评测传入列表 [0]。
+    task_ids: list[int] | None = None
+    # L0337 声明“fps”的类型为 int，使用字面值 20作为初始值。
+    fps: int = 20  # Must match robosuite's default control_freq (20 Hz)
+    # L0338 声明“episode_length”的类型为 int | None，设为空值 None作为初始值。
+    episode_length: int | None = None
+    # L0339 声明“obs_type”的类型为 str，使用字面值 'pixels_agent_pos'作为初始值。
+    obs_type: str = "pixels_agent_pos"
+    # L0340 声明“render_mode”的类型为 str，使用字面值 'rgb_array'作为初始值。
+    render_mode: str = "rgb_array"
+    # L0341 声明“camera_name”的类型为 str，使用字面值 'agentview_image,robot0_eye_in_hand_image'作为初始值。
+    camera_name: str = "agentview_image,robot0_eye_in_hand_image"
+    # L0342 声明“init_states”的类型为 bool，使用布尔值 True作为初始值。
+    init_states: bool = True
+    # L0343 声明“hard_reset”的类型为 bool，使用布尔值 True作为初始值。
+    hard_reset: bool = True
+    # L0344 原作者对相邻代码的说明。
+    # Raw camera name -> observation name. Default: agentview_image -> image,
+    # L0345 原作者对相邻代码的说明。
+    # robot0_eye_in_hand_image -> image2.
+    # L0346 声明“camera_name_mapping”的类型为 dict[str, str] | None，设为空值 None作为初始值。
+    camera_name_mapping: dict[str, str] | None = None
+    # L0347 相机 NumPy 图像的默认高度为 360。
+    observation_height: int = 360
+    # L0348 相机 NumPy 图像的默认宽度为 360。
+    observation_width: int = 360
+    # L0349 声明“is_libero_plus”的类型为 bool，使用布尔值 False作为初始值。
+    is_libero_plus: bool = False
+    # L0350 相对模式使控制器解释末端执行器命令的前六项为增量。
+    control_mode: str = "relative"  # or "absolute"
+
+    # L0352 定义方法 __post_init__。
+    def __post_init__(self):
+        # L0353 条件 self.fps <= 0 成立时进入下方分支。
+        if self.fps <= 0:
+            # L0354 抛出 ValueError，中断当前路径并交给上层的异常处理。
+            raise ValueError(f"fps must be positive, got {self.fps}")
+        # L0355 条件 not self.hard_reset and not self.init_states 成立时进入下方分支。
+        if not self.hard_reset and not self.init_states:
+            # L0356 抛出 ValueError，中断当前路径并交给上层的异常处理。
+            raise ValueError("hard_reset=False requires init_states=True")
+        # L0357 条件 self.obs_type not in ("pixels", "pixels_agent_pos") 成立时进入下方分支。
+        if self.obs_type not in ("pixels", "pixels_agent_pos"):
+            # L0358 抛出 ValueError，中断当前路径并交给上层的异常处理。
+            raise ValueError(f"Unsupported obs_type: {self.obs_type}")
+
+    # L0360 属性装饰器。调用方用 obj.name 的形式访问这个方法的结果。
+    @property
+    # L0361 定义方法 gym_kwargs。
+    def gym_kwargs(self) -> dict:
+        # L0362 声明“kwargs”（额外的关键字参数）的类型为 dict[str, Any]，创建字典，用键查找对应的值作为初始值。
+        kwargs: dict[str, Any] = {
+            # L0363 字典项“obs_type”，冒号右边给出它的值。
+            "obs_type": self.obs_type,
+            # L0364 字典项“render_mode”，冒号右边给出它的值。
+            "render_mode": self.render_mode,
+            # L0365 字典项“observation_height”，冒号右边给出它的值。
+            "observation_height": self.observation_height,
+            # L0366 字典项“observation_width”，冒号右边给出它的值。
+            "observation_width": self.observation_width,
+            # L0367 字典项“control_freq”，冒号右边给出它的值。
+            "control_freq": self.fps,
+            # L0368 字典项“hard_reset”，冒号右边给出它的值。
+            "hard_reset": self.hard_reset,
+        # L0369 闭合上方尚未结束的括号。
+        }
+        # L0370 条件 self.task_ids is not None 成立时进入下方分支。
+        if self.task_ids is not None:
+            # L0371 读取属性 self.task_ids给 “kwargs['task_ids']” 赋值。
+            kwargs["task_ids"] = self.task_ids
+        # L0372 引用已有的值 kwargs作为当前调用的返回值。
+        return kwargs
+
+    # L0374 汇总 LIBERO 仿真接入模块需要的参数。
+    def sim_settings(self) -> dict[str, Any]:
+        # L0375 创建字典，用键查找对应的值作为当前调用的返回值。
+        return {
+            # L0376 字典项“type”，冒号右边给出它的值。
+            "type": self.type,
+            # L0377 字典项“task”（任务），冒号右边给出它的值。
+            "task": self.task,
+            # L0378 字典项“fps”，冒号右边给出它的值。
+            "fps": self.fps,
+            # L0379 字典项“kwargs”（额外的关键字参数），冒号右边给出它的值。
+            "kwargs": {
+                # L0380 字典项“gym_kwargs”，冒号右边给出它的值。
+                "gym_kwargs": self.gym_kwargs,
+                # L0381 字典项“camera_name”，冒号右边给出它的值。
+                "camera_name": self.camera_name,
+                # L0382 字典项“init_states”，冒号右边给出它的值。
+                "init_states": self.init_states,
+                # L0383 字典项“control_mode”，冒号右边给出它的值。
+                "control_mode": self.control_mode,
+                # L0384 字典项“episode_length”，冒号右边给出它的值。
+                "episode_length": self.episode_length,
+                # L0385 字典项“camera_name_mapping”，冒号右边给出它的值。
+                "camera_name_mapping": self.camera_name_mapping,
+                # L0386 字典项“is_libero_plus”，冒号右边给出它的值。
+                "is_libero_plus": self.is_libero_plus,
+            # L0387 闭合上方尚未结束的括号。末尾逗号可用于分隔外层的元素。
+            },
+        # L0388 闭合上方尚未结束的括号。
+        }
+
+
+# …… 跳过原文第 390–782 行 ……

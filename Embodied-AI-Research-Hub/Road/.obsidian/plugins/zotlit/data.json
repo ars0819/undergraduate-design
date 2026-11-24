@@ -1,0 +1,16 @@
+{
+  "__VERSION__": 9,
+  "citation.open-as-links": true,
+  "zotero.library-scope": {
+    "mode": "selected",
+    "libraries": [
+      {
+        "type": "personal"
+      }
+    ]
+  },
+  "release.previous-version": "2.1.4",
+  "release.migration-pending": false,
+  "template.folder": "Templates",
+  "note.literature-folder": "Research/Literature"
+}

@@ -1,0 +1,19 @@
+{
+  "issues": [
+    {
+      "code": "CONFIDENTIALITY_GATE_NOT_CHECKED",
+      "location": "manifest",
+      "severity": "warning"
+    }
+  ],
+  "status": "pass",
+  "summary": {
+    "errors": 0,
+    "lines_checked": 108,
+    "raw_text_echoed": false,
+    "warnings": 1
+  },
+  "tool": "lint_manuscript"
+}
+
+STDERR:

@@ -1,0 +1,411 @@
+# 原文件 lerobot/src/lerobot/policies/common/flow_matching.py
+# 原行范围 49–66, 137–164, 256–421
+# L 后是官方源码或本机文件的原行号。每条中文注释对应紧随其后的原文。
+# 这是静态阅读副本。请在编辑器中阅读。空行保留，节选之间标出跳过的范围。
+
+# …… 跳过原文第 1–48 行 ……
+# L0049 定义类 FlowConvention，括号列出基类 str、enum.Enum。
+class FlowConvention(str, enum.Enum):
+    # L0050 原文档中的说明或续行。
+    """Which end of the ``[0, 1]`` schedule holds the noise.
+
+    # L0052 原文档中的说明或续行。
+    Both conventions describe the same family of probability paths, they only disagree on
+    # L0053 原文档中的说明或续行。
+    the direction of time (and therefore on the sign of the velocity field). A checkpoint is
+    # L0054 原文档中的说明或续行。
+    tied to the convention it was trained with, so this is a property of the policy, never a
+    # L0055 原文档中的说明或续行。
+    tunable.
+    # L0056 文档字符串的边界。
+    """
+
+    # L0058 使用字面值 'noise_at_one'给 “NOISE_AT_ONE” 赋值。
+    NOISE_AT_ONE = "noise_at_one"
+    # L0059 字符串字面量，供上方的调用、容器或错误消息使用。
+    """openpi (pi0, pi05, smolvla, eo1): ``x_1`` is noise, integrate ``t: 1 -> 0``.
+
+    # L0061 原文档中的说明或续行。
+    ``dt = -1/num_steps``, ``time = 1.0 + step * dt``, and the clean sample is
+    # L0062 原文档中的说明或续行。
+    ``x_0 = x_t - time * v_t``.
+    # L0063 文档字符串的边界。
+    """
+
+    # L0065 使用字面值 'noise_at_zero'给 “NOISE_AT_ZERO” 赋值。
+    NOISE_AT_ZERO = "noise_at_zero"
+    # L0066 字符串字面量，供上方的调用、容器或错误消息使用。
+    """groot / evo1 / wall_x: ``x_0`` is noise, integrate ``t: 0 -> 1``.
+
+# …… 跳过原文第 67–136 行 ……
+# L0137 构造采样初始噪声，默认分布为标准正态，默认 dtype 为 float32。
+def sample_noise(
+    # L0138 “shape”（各轴的长度）是当前括号中的一项，逗号将它与下一项分开。
+    shape,
+    # L0139 “device”（运算设备）是当前括号中的一项，逗号将它与下一项分开。
+    device,
+    # L0140 后续参数必须按名字传入。
+    *,
+    # L0141 为“dtype”（元素类型）提供这一项的值，注意它所在的参数表或外层表达式。
+    dtype: torch.dtype = torch.float32,
+    # L0142 为“distribution”提供这一项的值，注意它所在的参数表或外层表达式。
+    distribution: Literal["normal", "uniform"] = "normal",
+# L0143 结束参数表。若箭头后有类型，它标注预期返回值，缩进块是函数体。
+) -> Tensor:
+    # L0144 原文档概述本段功能，供应浮点初始噪声。
+    """The flow-matching ``x_1`` noise sample.
+
+    # L0146 以下列出调用参数及其含义。
+    Args:
+        # L0147 原文档对“dtype”（元素类型）的说明。此段讲供应浮点初始噪声。
+        dtype: Defaults to float32, so existing openpi-derived callers
+            # L0148 原文档中的说明或续行。此段讲供应浮点初始噪声。
+            (pi0/pi05/smolvla/eo1, wall_x) are unchanged. Pass the action dtype when the
+            # L0149 原文档中的说明或续行。此段讲供应浮点初始噪声。
+            policy samples directly in it (groot, evo1) instead of casting afterwards.
+        # L0150 原文档对“distribution”的说明。此段讲供应浮点初始噪声。
+        distribution: ``"normal"`` (default) draws standard-normal noise, matching
+            # L0151 原文档中的说明或续行。此段讲供应浮点初始噪声。
+            ``torch.randn``. ``"uniform"`` draws from ``[-1, 1)`` as ``rand * 2 - 1``
+            # L0152 原文档中的说明或续行。此段讲供应浮点初始噪声。
+            (evo1).
+    # L0153 文档字符串的边界。
+    """
+    # L0154 条件 distribution == "normal" 成立时进入下方分支。
+    if distribution == "normal":
+        # L0155 按给定 shape、dtype 和 device 创建正态随机 Tensor。
+        return torch.normal(
+            # L0156 为“mean”（均值）提供这一项的值，注意它所在的参数表或外层表达式。
+            mean=0.0,
+            # L0157 为“std”（标准差）提供这一项的值，注意它所在的参数表或外层表达式。
+            std=1.0,
+            # L0158 为“size”提供这一项的值，注意它所在的参数表或外层表达式。
+            size=shape,
+            # L0159 为“dtype”（元素类型）提供这一项的值，注意它所在的参数表或外层表达式。
+            dtype=dtype,
+            # L0160 为“device”（运算设备）提供这一项的值，注意它所在的参数表或外层表达式。
+            device=device,
+        # L0161 闭合上方尚未结束的括号。
+        )
+    # L0162 条件 distribution == "uniform" 成立时进入下方分支。
+    if distribution == "uniform":
+        # L0163 计算右侧表达式 dtype, device=device) * 2 - 1作为当前调用的返回值。
+        return torch.rand(shape, dtype=dtype, device=device) * 2 - 1
+    # L0164 抛出 ValueError，中断当前路径并交给上层的异常处理。
+    raise ValueError(f"Unknown noise distribution {distribution!r}, expected 'normal' or 'uniform'")
+
+# …… 跳过原文第 165–255 行 ……
+# L0256 通用显式 Euler 采样。参数 denoise_fn 是根据当前 x_t 和 t 返回速度的可调用对象。
+def euler_integrate(
+    # L0257 延续上面的语句，denoise_fn: Callable[..., Tensor],。本段处理沿估计速度场执行多次显式 Euler 更新。
+    denoise_fn: Callable[..., Tensor],
+    # L0258 “noise”（采样起点噪声）是当前括号中的一项，逗号将它与下一项分开。
+    noise: Tensor,
+    # L0259 为“num_steps”（每块动作生成的积分步数）提供这一项的值，注意它所在的参数表或外层表达式。
+    num_steps: int | None = None,
+    # L0260 后续参数必须按名字传入。
+    *,
+    # L0261 为“convention”提供这一项的值，注意它所在的参数表或外层表达式。
+    convention: FlowConvention = FlowConvention.NOISE_AT_ONE,
+    # L0262 为“step_aware”提供这一项的值，注意它所在的参数表或外层表达式。
+    step_aware: bool = False,
+    # L0263 为“time_grid”提供这一项的值，注意它所在的参数表或外层表达式。
+    time_grid: Tensor | None = None,
+    # L0264 为“velocity_scale”提供这一项的值，注意它所在的参数表或外层表达式。
+    velocity_scale: Tensor | None = None,
+    # L0265 为“rtc_processor”提供这一项的值，注意它所在的参数表或外层表达式。
+    rtc_processor: "RTCProcessor | None" = None,
+    # L0266 为“rtc_enabled”提供这一项的值，注意它所在的参数表或外层表达式。
+    rtc_enabled: bool = False,
+    # L0267 为“inference_delay”提供这一项的值，注意它所在的参数表或外层表达式。
+    inference_delay: int | None = None,
+    # L0268 为“prev_chunk_left_over”提供这一项的值，注意它所在的参数表或外层表达式。
+    prev_chunk_left_over: Tensor | None = None,
+    # L0269 为“execution_horizon”提供这一项的值，注意它所在的参数表或外层表达式。
+    execution_horizon: int | None = None,
+    # L0270 为“hard_prefix”提供这一项的值，注意它所在的参数表或外层表达式。
+    hard_prefix: Tensor | None = None,
+    # L0271 为“hard_prefix_mask”提供这一项的值，注意它所在的参数表或外层表达式。
+    hard_prefix_mask: Tensor | None = None,
+    # L0272 为“precompute_times”提供这一项的值，注意它所在的参数表或外层表达式。
+    precompute_times: bool = False,
+# L0273 结束参数表。若箭头后有类型，它标注预期返回值，缩进块是函数体。
+) -> Tensor:
+    # L0274 原文档概述本段功能，沿估计速度场执行多次显式 Euler 更新。
+    """Forward-Euler integration of a flow-matching velocity field between noise and actions.
+
+    # L0276 原文档中的说明或续行。此段讲沿估计速度场执行多次显式 Euler 更新。
+    The loop is ``x_t <- x_t + dt * v_t`` over a uniform schedule whose direction is set by
+    # L0277 原文档中的说明或续行。此段讲沿估计速度场执行多次显式 Euler 更新。
+    ``convention`` (see :class:`FlowConvention`), with an optional real-time-chunking (RTC)
+    # L0278 原文档中的说明或续行。此段讲沿估计速度场执行多次显式 Euler 更新。
+    guidance hook wrapping the velocity computation and debug tracking after each step.
+
+    # L0280 原文档中的说明或续行。此段讲沿估计速度场执行多次显式 Euler 更新。
+    RTC conventions: :class:`~lerobot.policies.rtc.modeling_rtc.RTCProcessor` is written
+    # L0281 原文档中的说明或续行。此段讲沿估计速度场执行多次显式 Euler 更新。
+    against ``NOISE_AT_ONE``. Under ``NOISE_AT_ZERO`` this function hands it ``1 - time`` and
+    # L0282 原文档中的说明或续行。此段讲沿估计速度场执行多次显式 Euler 更新。
+    negates the velocity both entering and leaving the processor, so the guided step is
+    # L0283 原文档中的说明或续行。此段讲沿估计速度场执行多次显式 Euler 更新。
+    correct in the caller's own convention. ``rtc_processor.track`` therefore always reports
+    # L0284 原文档中的说明或续行。此段讲沿估计速度场执行多次显式 Euler 更新。
+    ``time`` and ``v_t`` in the ``NOISE_AT_ONE`` convention, whatever the caller's, which
+    # L0285 原文档中的说明或续行。此段讲沿估计速度场执行多次显式 Euler 更新。
+    keeps the entries logged here consistent with those logged inside ``denoise_step``.
+
+    # L0287 以下列出调用参数及其含义。
+    Args:
+        # L0288 原文档对“denoise_fn”的说明。此段讲沿估计速度场执行多次显式 Euler 更新。
+        denoise_fn: Computes the velocity ``v_t`` from ``(x_t, time_tensor)`` where
+            # L0289 原文档中的说明或续行。此段讲沿估计速度场执行多次显式 Euler 更新。
+            ``time_tensor`` is a float32 tensor of shape ``(batch_size,)``. The returned
+            # L0290 原文档中的说明或续行。此段讲沿估计速度场执行多次显式 Euler 更新。
+            velocity must have the same shape and dtype as ``x_t``.
+        # L0291 原文档对“noise”（采样起点噪声）的说明。此段讲沿估计速度场执行多次显式 Euler 更新。
+        noise: Initial sample of shape ``(batch_size, ...)``: ``x_1`` under ``NOISE_AT_ONE``,
+            # L0292 原文档中的说明或续行。此段讲沿估计速度场执行多次显式 Euler 更新。
+            ``x_0`` under ``NOISE_AT_ZERO``.
+        # L0293 原文档对“num_steps”（每块动作生成的积分步数）的说明。此段讲沿估计速度场执行多次显式 Euler 更新。
+        num_steps: Number of Euler steps. Required unless ``time_grid`` is given.
+        # L0294 原文档对“convention”的说明。此段讲沿估计速度场执行多次显式 Euler 更新。
+        convention: Which end of the schedule holds the noise.
+        # L0295 原文档对“step_aware”的说明。此段讲沿估计速度场执行多次显式 Euler 更新。
+        step_aware: Call ``denoise_fn`` as ``denoise_fn(x_t, time_tensor, step)`` with the
+            # L0296 原文档中的说明或续行。此段讲沿估计速度场执行多次显式 Euler 更新。
+            integer index of the current Euler step. Policies whose network input is a discrete
+            # L0297 原文档中的说明或续行。此段讲沿估计速度场执行多次显式 Euler 更新。
+            function of that index (groot's timestep buckets, evo1's positional-encoding lookup)
+            # L0298 原文档中的说明或续行。此段讲沿估计速度场执行多次显式 Euler 更新。
+            take it from here; recovering it from ``time_tensor`` would both round-trip through
+            # L0299 原文档中的说明或续行。此段讲沿估计速度场执行多次显式 Euler 更新。
+            the host once per step and risk landing in a different bucket.
+        # L0300 原文档对“time_grid”的说明。此段讲沿估计速度场执行多次显式 Euler 更新。
+        time_grid: Optional explicit schedule of ``num_steps + 1`` sample times, replacing the
+            # L0301 原文档中的说明或续行。此段讲沿估计速度场执行多次显式 Euler 更新。
+            uniform one. Step ``k`` evaluates the velocity at ``time_grid[k]`` and advances by
+            # L0302 原文档中的说明或续行。此段讲沿估计速度场执行多次显式 Euler 更新。
+            ``time_grid[k + 1] - time_grid[k]``, so non-uniform schedules are supported.
+        # L0303 原文档对“velocity_scale”的说明。此段讲沿估计速度场执行多次显式 Euler 更新。
+        velocity_scale: Optional per-element weighting of the update, applied as
+            # L0304 原文档中的说明或续行。此段讲沿估计速度场执行多次显式 Euler 更新。
+            ``x_t + (dt * v_t) * velocity_scale``. Used to freeze or ramp part of the chunk.
+        # L0305 原文档对“rtc_processor”的说明。此段讲沿估计速度场执行多次显式 Euler 更新。
+        rtc_processor: Optional RTC processor. Debug tracking fires whenever it is set and
+            # L0306 原文档中的说明或续行。此段讲沿估计速度场执行多次显式 Euler 更新。
+            has debugging enabled, even if RTC guidance itself is disabled (this mirrors
+            # L0307 原文档中的说明或续行。此段讲沿估计速度场执行多次显式 Euler 更新。
+            the historical per-policy loops).
+        # L0308 原文档对“rtc_enabled”的说明。此段讲沿估计速度场执行多次显式 Euler 更新。
+        rtc_enabled: Whether to route the velocity computation through
+            # L0309 原文档中的说明或续行。此段讲沿估计速度场执行多次显式 Euler 更新。
+            ``rtc_processor.denoise_step`` (requires ``rtc_processor``).
+        # L0310 原文档对“inference_delay”的说明。此段讲沿估计速度场执行多次显式 Euler 更新。
+        inference_delay: RTC guidance parameter, forwarded verbatim.
+        # L0311 原文档对“prev_chunk_left_over”的说明。此段讲沿估计速度场执行多次显式 Euler 更新。
+        prev_chunk_left_over: RTC guidance parameter, forwarded verbatim.
+        # L0312 原文档对“execution_horizon”的说明。此段讲沿估计速度场执行多次显式 Euler 更新。
+        execution_horizon: RTC guidance parameter, forwarded verbatim.
+        # L0313 原文档对“hard_prefix”的说明。此段讲沿估计速度场执行多次显式 Euler 更新。
+        hard_prefix: Optional clean action prefix to clamp throughout denoising.
+        # L0314 原文档对“hard_prefix_mask”的说明。此段讲沿估计速度场执行多次显式 Euler 更新。
+        hard_prefix_mask: Boolean mask selecting the values clamped from ``hard_prefix``.
+        # L0315 原文档对“precompute_times”的说明。此段讲沿估计速度场执行多次显式 Euler 更新。
+        precompute_times: Create the float32 timestep schedule on the target device once,
+            # L0316 原文档中的说明或续行。此段讲沿估计速度场执行多次显式 Euler 更新。
+            avoiding a scalar tensor allocation/host transfer in each denoising step.
+            # L0317 原文档中的说明或续行。此段讲沿估计速度场执行多次显式 Euler 更新。
+            Uses the same Python scalar arithmetic as the historical loop.
+    # L0318 文档字符串的边界。
+    """
+    # L0319 用方括号按键或索引读取 noise.shape给 “bsize”（批大小） 赋值。
+    bsize = noise.shape[0]
+    # L0320 读取属性 noise.device给 “device”（运算设备） 赋值。
+    device = noise.device
+    # L0321 条件 not isinstance(convention, FlowConvention) 成立时进入下方分支。
+    if not isinstance(convention, FlowConvention):
+        # L0322 抛出 TypeError，中断当前路径并交给上层的异常处理。
+        raise TypeError(f"convention must be a FlowConvention, got {convention!r}")
+    # L0323 这里判断采样时间的方向。SmolVLA 使用默认的噪声在 t=1 约定。
+    noise_at_one = convention is FlowConvention.NOISE_AT_ONE
+
+    # L0325 条件 time_grid is not None 成立时进入下方分支。
+    if time_grid is not None:
+        # L0326 条件 time_grid.ndim != 1 or time_grid.shape[0] < 2 成立时进入下方分支。
+        if time_grid.ndim != 1 or time_grid.shape[0] < 2:
+            # L0327 抛出 ValueError，中断当前路径并交给上层的异常处理。
+            raise ValueError(f"time_grid must be 1-D with at least 2 entries, got {tuple(time_grid.shape)}")
+        # L0328 条件 num_steps is not None and num_steps != time_grid.shape[0] - 1 成立时进入下方分支。
+        if num_steps is not None and num_steps != time_grid.shape[0] - 1:
+            # L0329 抛出 ValueError，中断当前路径并交给上层的异常处理。
+            raise ValueError(
+                # L0330 f 字符串片段，花括号中的表达式会被求值并插入文本。
+                f"num_steps={num_steps} conflicts with a time_grid of {time_grid.shape[0]} entries"
+            # L0331 闭合上方尚未结束的括号。
+            )
+        # L0332 计算右侧表达式 time_grid.shape[0] - 1给 “num_steps”（每块动作生成的积分步数） 赋值。
+        num_steps = time_grid.shape[0] - 1
+    # L0333 前面的分支均未命中时，再判断 num_steps is None。
+    elif num_steps is None:
+        # L0334 抛出 ValueError，中断当前路径并交给上层的异常处理。
+        raise ValueError("euler_integrate requires either num_steps or time_grid")
+
+    # L0336 原作者的注释。此处在讲沿估计速度场执行多次显式 Euler 更新。
+    # Clean tokens sit at the far end of the schedule from the noise.
+    # L0337 在 SmolVLA 使用的时间约定下，干净动作终点位于 t=0。
+    clean_time = 0.0 if noise_at_one else 1.0
+    # L0338 将时间跨度均分成 num_steps 段。原评测每步时间增量约为 -0.1。
+    uniform_dt = (-1.0 if noise_at_one else 1.0) / num_steps
+
+    # L0340 定义函数 velocity。
+    def velocity(x_t: Tensor, time_tensor: Tensor, step: int) -> Tensor:
+        # L0341 用条件表达式在 if 前与 else 后的两个值之间选择作为当前调用的返回值。
+        return denoise_fn(x_t, time_tensor, step) if step_aware else denoise_fn(x_t, time_tensor)
+
+    # L0343 用条件表达式在 if 前与 else 后的两个值之间选择给 “guidance” 赋值。
+    guidance = rtc_processor if rtc_enabled else None
+    # L0344 条件 rtc_enabled and guidance is None 成立时进入下方分支。
+    if rtc_enabled and guidance is None:
+        # L0345 抛出 ValueError，中断当前路径并交给上层的异常处理。
+        raise ValueError("rtc_processor is required when rtc_enabled is True")
+
+    # L0347 定义函数 uniform_time。
+    def uniform_time(step: int) -> float:
+        # L0348 根据循环下标计算本次速度评估的时间，SmolVLA 从 1 开始。
+        return (1.0 + step * uniform_dt) if noise_at_one else step * uniform_dt
+
+    # L0350 用条件表达式在 if 前与 else 后的两个值之间选择给 “times” 赋值。
+    times = (
+        # L0351 延续上面的语句，torch.tensor([uniform_time(step) for step in range(num_steps)], dtype=torch.float32, device=device)。本段处理沿估计速度场执行多次显式 Euler 更新。
+        torch.tensor([uniform_time(step) for step in range(num_steps)], dtype=torch.float32, device=device)
+        # L0352 条件 precompute_times and time_grid is None 成立时进入下方分支。
+        if precompute_times and time_grid is None
+        # L0353 补充上方跨行表达式的分支值或条件。
+        else None
+    # L0354 闭合上方尚未结束的括号。
+    )
+    # L0355 将初始噪声作为第一个动作块估计。
+    x_t = noise
+    # L0356 执行配置指定的积分轮数。每轮都处理整个动作块。
+    for step in range(num_steps):
+        # L0357 条件 time_grid is None 成立时进入下方分支。
+        if time_grid is None:
+            # L0358 引用已有的值 uniform_dt给 “dt” 赋值。
+            dt = uniform_dt
+            # L0359 用条件表达式在 if 前与 else 后的两个值之间选择给 “time_tensor” 赋值。
+            time_tensor = (
+                # L0360 延续上面的语句，times[step].expand(bsize)。本段处理沿估计速度场执行多次显式 Euler 更新。
+                times[step].expand(bsize)
+                # L0361 条件 times is not None 成立时进入下方分支。
+                if times is not None
+                # L0362 创建形状 [B] 的 float32 时间 Tensor，device 与动作噪声一致。
+                else torch.full((bsize,), uniform_time(step), dtype=torch.float32, device=device)
+            # L0363 闭合上方尚未结束的括号。
+            )
+        # L0364 进入对应的另一条分支，注意用缩进找到配对的判断或异常块。
+        else:
+            # L0365 原作者的注释。此处在讲沿估计速度场执行多次显式 Euler 更新。
+            # Slice the grid rather than reading it back: `float(time_grid[step])` would
+            # L0366 原作者的注释。此处在讲沿估计速度场执行多次显式 Euler 更新。
+            # synchronise with the accelerator once per step.
+            # L0367 计算右侧表达式 time_grid[step + 1] - time_grid[step]给 “dt” 赋值。
+            dt = time_grid[step + 1] - time_grid[step]
+            # L0368 调用 expand，用它的结果给 “time_tensor” 赋值。
+            time_tensor = time_grid[step].to(dtype=torch.float32, device=device).expand(bsize)
+
+        # L0370 条件 hard_prefix is not None 成立时进入下方分支。
+        if hard_prefix is not None:
+            # L0371 条件 hard_prefix_mask is None 成立时进入下方分支。
+            if hard_prefix_mask is None:
+                # L0372 抛出 ValueError，中断当前路径并交给上层的异常处理。
+                raise ValueError("hard_prefix_mask is required when hard_prefix is provided")
+            # L0373 调用 torch.where，用它的结果给 “x_t”（采样时间 t 的当前动作块估计） 赋值。
+            x_t = torch.where(hard_prefix_mask, hard_prefix, x_t)
+            # L0374 调用 clone，用它的结果给 “time_tensor” 赋值。
+            time_tensor = time_tensor[:, None].expand(bsize, x_t.shape[1]).clone()
+            # L0375 引用已有的值 clean_time给 “time_tensor[hard_prefix_mask[..., 0]]” 赋值。
+            time_tensor[hard_prefix_mask[..., 0]] = clean_time
+
+        # L0377 定义函数 denoise_step_partial_call。
+        def denoise_step_partial_call(
+            # L0378 为“input_x_t”提供这一项的值，注意它所在的参数表或外层表达式。
+            input_x_t: Tensor, current_timestep: Tensor = time_tensor, current_step: int = step
+        # L0379 结束参数表。若箭头后有类型，它标注预期返回值，缩进块是函数体。
+        ) -> Tensor:
+            # L0380 调用 velocity，用它的结果作为当前调用的返回值。
+            return velocity(input_x_t, current_timestep, current_step)
+
+        # L0382 定义函数 flipped_denoise_step_partial_call。
+        def flipped_denoise_step_partial_call(
+            # L0383 为“input_x_t”提供这一项的值，注意它所在的参数表或外层表达式。
+            input_x_t: Tensor, current_timestep: Tensor = time_tensor, current_step: int = step
+        # L0384 结束参数表。若箭头后有类型，它标注预期返回值，缩进块是函数体。
+        ) -> Tensor:
+            # L0385 计算此行的右侧表达式作为当前调用的返回值。
+            return -velocity(input_x_t, current_timestep, current_step)
+
+        # L0387 组合多个布尔判断，按 Python 的短路规则求值给 “needs_rtc_time” 赋值。
+        needs_rtc_time = rtc_enabled or (rtc_processor is not None and rtc_processor.is_debug_enabled())
+        # L0388 条件 needs_rtc_time 成立时进入下方分支。
+        if needs_rtc_time:
+            # L0389 原作者的注释。此处在讲沿估计速度场执行多次显式 Euler 更新。
+            # RTCProcessor takes a plain float in the NOISE_AT_ONE convention. On the explicit-grid
+            # L0390 原作者的注释。此处在讲沿估计速度场执行多次显式 Euler 更新。
+            # path this is the one place the schedule has to come back to the host.
+            # L0391 用条件表达式在 if 前与 else 后的两个值之间选择给 “host_time” 赋值。
+            host_time = uniform_time(step) if time_grid is None else float(time_grid[step])
+            # L0392 用条件表达式在 if 前与 else 后的两个值之间选择给 “rtc_time” 赋值。
+            rtc_time = host_time if noise_at_one else 1.0 - host_time
+
+        # L0394 条件 guidance is not None 成立时进入下方分支。
+        if guidance is not None:
+            # L0395 调用 guidance.denoise_step，用它的结果给 “v_t”（当前速度场输出） 赋值。
+            v_t = guidance.denoise_step(
+                # L0396 为“x_t”（采样时间 t 的当前动作块估计）提供这一项的值，注意它所在的参数表或外层表达式。
+                x_t=x_t,
+                # L0397 为“prev_chunk_left_over”提供这一项的值，注意它所在的参数表或外层表达式。
+                prev_chunk_left_over=prev_chunk_left_over,
+                # L0398 为“inference_delay”提供这一项的值，注意它所在的参数表或外层表达式。
+                inference_delay=inference_delay,
+                # L0399 为“time”提供这一项的值，注意它所在的参数表或外层表达式。
+                time=rtc_time,
+                # L0400 为“original_denoise_step_partial”提供这一项的值，注意它所在的参数表或外层表达式。
+                original_denoise_step_partial=(
+                    # L0401 延续上面的语句，denoise_step_partial_call if noise_at_one else flipped_denoise_step_partial_call。本段处理沿估计速度场执行多次显式 Euler 更新。
+                    denoise_step_partial_call if noise_at_one else flipped_denoise_step_partial_call
+                # L0402 闭合上方尚未结束的括号。末尾逗号可用于分隔外层的元素。
+                ),
+                # L0403 为“execution_horizon”提供这一项的值，注意它所在的参数表或外层表达式。
+                execution_horizon=execution_horizon,
+            # L0404 闭合上方尚未结束的括号。
+            )
+            # L0405 条件 not noise_at_one 成立时进入下方分支。
+            if not noise_at_one:
+                # L0406 计算此行的右侧表达式给 “v_t”（当前速度场输出） 赋值。
+                v_t = -v_t
+        # L0407 进入对应的另一条分支，注意用缩进找到配对的判断或异常块。
+        else:
+            # L0408 标准 SmolVLA 评测在这里调用模型计算速度，形状与当前动作块对齐。
+            v_t = denoise_step_partial_call(x_t)
+
+        # L0410 速度乘小时间增量，得到沿速度方向的一次动作估计变化。
+        update = dt * v_t
+        # L0411 条件 velocity_scale is not None 成立时进入下方分支。
+        if velocity_scale is not None:
+            # L0412 计算右侧表达式 update * velocity_scale给 “update” 赋值。
+            update = update * velocity_scale
+        # L0413 将变化量加到当前估计上。向量或动作块的各个元素分别相加。
+        x_t = x_t + update
+
+        # L0415 条件 hard_prefix is not None 成立时进入下方分支。
+        if hard_prefix is not None:
+            # L0416 调用 torch.where，用它的结果给 “x_t”（采样时间 t 的当前动作块估计） 赋值。
+            x_t = torch.where(hard_prefix_mask, hard_prefix, x_t)
+
+        # L0418 条件 rtc_processor is not None and rtc_processor.is_debug_enabled() 成立时进入下方分支。
+        if rtc_processor is not None and rtc_processor.is_debug_enabled():
+            # L0419 调用 rtc_processor.track 执行操作。
+            rtc_processor.track(time=rtc_time, x_t=x_t, v_t=v_t if noise_at_one else -v_t)
+
+    # L0421 返回最后一轮的动作块，后续由策略裁去填充的动作分量。
+    return x_t

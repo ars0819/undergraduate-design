@@ -1,0 +1,103 @@
+
+=== Table 1 (id=S5.T1) ===
+CAPTION: Table 1: Main Results on RoboCasa and LIBERO Benchmarks. We report the success rate (%) for various subsets and the overall average. Our AAC achieves the best or competitive results across both benchmarks. Bolded entries indicate the highest success rates.
+   | RoboCasa | LIBERO
+  Method | Relo. | Cont. | Rot. | Button | Avg. | Spatial | Long | Object | Goal | Avg.
+  GR00T (Default hh=16) | 42.1 | 80.3 | 57.6 | 80.3 | 59.7 | 93.6 | 88.8 | 97.2 | 96.8 | 94.1
+  GR00T (hh=2) | 29.6 | 57.0 | 59.4 | 64.7 | 47.0 | 93.6 | 81.8 | 93.6 | 91.6 | 90.2
+  GR00T (hh=4) | 37.9 | 71.3 | 61.2 | 78.7 | 56.2 | 94.0 | 85.8 | 95.4 | 95.2 | 92.6
+  GR00T (hh=8) | 42.8 | 80.3 | 62.6 | 81.7 | 61.2 | 92.0 | 93.4 | 97.8 | 95.4 | 94.7
+  GR00T (hh=12) | 42.9 | 79.5 | 60.0 | 79.3 | 60.2 | 93.0 | 91.0 | 97.6 | 95.2 | 94.2
+  GR00T+AAC (Ours) | 44.4 | 82.2 | 61.4 | 81.3 | 62.0 | 94.4 | 92.8 | 98.6 | 94.2 | 95.0
+
+=== Table 2 (id=S5.T2) ===
+CAPTION: Table 2: Success rates (%) with π0.5\pi_{0.5} backbone on LIBERO.
+  Method | Spatial | Long | Object | Goal | Avg.
+  π0.5\pi_{0.5} | 98.5 | 92.5 | 98.7 | 98.1 | 97.0
+  π0.5\pi_{0.5}+AAC (Ours) | 99.1 | 95.2 | 99.2 | 98.0 | 97.9
+
+=== Table 3 (id=S5.T3) ===
+CAPTION: Table 3: Success rates (%) on LIBERO-Pro [50].
+  Perturbation level | ×\times0.2 | ×\times0.3 | ×\times0.4 | Avg.
+  GR00T | 11.3 | 0.4 | 0.0 | 3.9
+  GR00T+AAC (Ours) | 17.9 | 0.9 | 0.0 | 6.3
+  π0.5\pi_{0.5} | 53.2 | 29.9 | 9.5 | 30.9
+  π0.5\pi_{0.5}+AAC (Ours) | 57.4 | 35.3 | 11.8 | 34.8
+
+=== Table 4 (id=S5.T4) ===
+CAPTION: Table 4: Success rates (%) on LIBERO and inference-time under different numbers of samples for estimating action entropy.
+  #Samples | 1 | 5 | 10 | 20 | 30 | 40
+  Succ. (%) | 94.1 | 94.7 | 94.4 | 95.0 | 95.0 | 95.5
+  Time (ms) | 83.0 | 83.5 | 84.3 | 106.0 | 136.5 | 157.0
+
+=== Table 5 (id=S5.T5) ===
+CAPTION: Table 5: Success rates (%) on real-world applications.
+  Task | Banana | Button | Drawer | Avg.
+  GR00T | 70.0 | 65.0 | 65.0 | 67.0
+  GR00T+AAC | 90.0 | 75.0 | 80.0 | 82.0
+
+=== Table 6 (id=A2.T6) ===
+CAPTION: Table 6: Success rates (%) on RoboCasa.
+  Task Group | Task Name | GR00T | GR00T + AAC
+  Relocation | Counter to Cab | 57.0 | 59.0
+  Counter to Stove | 41.0 | 40.0
+  Sink to Counter | 46.0 | 52.0
+  Stove to Counter | 60.0 | 63.0
+  Counter to Sink | 26.0 | 28.0
+  Counter to Microwave | 33.0 | 30.0
+  Cab to Counter | 26.0 | 25.0
+  Microwave to Counter | 27.0 | 36.0
+  Coffee Setup Mug | 38.0 | 39.0
+  Coffee Serve Mug | 67.0 | 72.0
+  Container | Open Single Door | 62.0 | 73.0
+  Close Single Door | 94.0 | 92.0
+  Close Double Door | 56.0 | 62.0
+  Open Double Door | 89.0 | 88.0
+  Open Drawer | 81.0 | 80.0
+  Close Drawer | 100.0 | 98.0
+  Rotation | Turn Sink Spout | 69.0 | 66.0
+  Turn on Sink facet | 85.0 | 91.0
+  Turn off Sink Facet | 74.0 | 80.0
+  Turn on Stove | 39.0 | 49.0
+  Turn off Stove | 21.0 | 21.0
+  Button | Coffee Press Button | 94.0 | 93.0
+  Turn on Microwave | 66.0 | 68.0
+  Turn off Microwave | 81.0 | 83.0
+   | Relocation Average | 42.1 | 44.4
+   | Container Average | 80.3 | 82.2
+   | Rotation Average | 57.6 | 61.4
+   | Button Average | 80.3 | 81.3
+   | 24 Tasks Average | 59.7 | 62.0
+
+=== Table 7 (id=A2.T7) ===
+CAPTION: Table 7: Success rates (%) with Different Chunk Sizes.
+  Task Group | Task Name | Fixed-2 | Fixed-4 | Fixed-8 | Fixed-12 | Fixed-16
+  Relocation | Counter to Cab | 51.0 | 68.0 | 61.0 | 57.0 | 57.0
+  Counter to Stove | 31.0 | 40.0 | 46.0 | 45.0 | 41.0
+  Sink to Counter | 35.0 | 44.0 | 56.0 | 50.0 | 46.0
+  Stove to Counter | 59.0 | 62.0 | 69.0 | 64.0 | 60.0
+  Counter to Sink | 6.0 | 10.0 | 15.0 | 19.0 | 26.0
+  Counter to Microwave | 7.0 | 12.0 | 29.0 | 23.0 | 33.0
+  Cab to Counter | 18.0 | 18.0 | 23.0 | 23.0 | 26.0
+  Microwave to Counter | 27.0 | 42.0 | 28.0 | 36.0 | 27.0
+   | Coffee Setup Mug | 31.0 | 39.0 | 40.0 | 46.0 | 38.0
+   | Coffee Serve Mug | 31.0 | 44.0 | 61.0 | 66.0 | 67.0
+  Container | Open Single Door | 15.0 | 41.0 | 61.0 | 62.0 | 62.0
+  Close Single Door | 84.0 | 89.0 | 87.0 | 95.0 | 94.0
+  Close Double Door | 53.0 | 62.0 | 73.0 | 58.0 | 56.0
+  Open Double Door | 44.0 | 73.0 | 81.0 | 84.0 | 89.0
+  Open Drawer | 51.0 | 64.0 | 81.0 | 79.0 | 81.0
+  Close Drawer | 95.0 | 99.0 | 99.0 | 99.0 | 100.0
+  Rotation | Turn Sink Spout | 70.0 | 69.0 | 69.0 | 67.0 | 69.0
+  Turn on Sink facet | 84.0 | 87.0 | 85.0 | 83.0 | 85.0
+  Turn off Sink Facet | 82.0 | 78.0 | 85.0 | 80.0 | 74.0
+  Turn on Stove | 42.0 | 52.0 | 52.0 | 47.0 | 39.0
+  Turn off Stove | 19.0 | 20.0 | 22.0 | 23.0 | 21.0
+  Button | Coffee Press Button | 76.0 | 89.0 | 98.0 | 98.0 | 94.0
+  Turn on Microwave | 47.0 | 51.0 | 61.0 | 60.0 | 66.0
+  Turn off Microwave | 71.0 | 96.0 | 86.0 | 80.0 | 81.0
+   | Relocation Average | 29.6 | 37.9 | 42.8 | 42.9 | 42.1
+   | Container Average | 57.0 | 71.3 | 80.3 | 79.5 | 80.3
+   | Rotation Average | 59.4 | 61.2 | 62.6 | 60.0 | 57.6
+   | Button Average | 64.7 | 78.7 | 81.7 | 79.3 | 80.3
+   | 24 Tasks Average | 47.0 | 56.2 | 61.2 | 60.2 | 59.7

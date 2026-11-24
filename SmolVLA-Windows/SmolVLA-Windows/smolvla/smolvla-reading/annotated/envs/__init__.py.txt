@@ -1,0 +1,95 @@
+# 原文件 lerobot/src/lerobot/envs/__init__.py
+# 原行范围 1–47
+# L 后是官方源码或本机文件的原行号。每条中文注释对应紧随其后的原文。
+# 这是静态阅读副本。请在编辑器中阅读。空行保留，节选之间标出跳过的范围。
+# L0001 原版权或开源许可声明。
+# Copyright 2024 The HuggingFace Inc. team. All rights reserved.
+# L0002 原作者对相邻代码的说明。
+#
+# L0003 原版权或开源许可声明。
+# Licensed under the Apache License, Version 2.0 (the "License");
+# L0004 原版权或开源许可声明。
+# you may not use this file except in compliance with the License.
+# L0005 原版权或开源许可声明。
+# You may obtain a copy of the License at
+# L0006 原作者对相邻代码的说明。
+#
+# L0007 原版权或开源许可声明。
+#     http://www.apache.org/licenses/LICENSE-2.0
+# L0008 原作者对相邻代码的说明。
+#
+# L0009 原作者对相邻代码的说明。
+# Unless required by applicable law or agreed to in writing, software
+# L0010 原版权或开源许可声明。
+# distributed under the License is distributed on an "AS IS" BASIS,
+# L0011 原版权或开源许可声明。
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# L0012 原版权或开源许可声明。
+# See the License for the specific language governing permissions and
+# L0013 原版权或开源许可声明。
+# limitations under the License.
+
+# L0015 原作者对相邻代码的说明。
+# NOTE: gymnasium is currently a core dependency but is a candidate for moving to an
+# L0016 原作者对相邻代码的说明。
+# optional extra in the future. When that transition happens, uncomment the guard below
+# L0017 原作者对相邻代码的说明。
+# and update the extra name to the one that will contain gymnasium.
+# L0018 原作者对相邻代码的说明。
+# from lerobot.utils.import_utils import require_package
+# L0019 原作者对相邻代码的说明。
+# require_package("gymnasium", extra="<update_extra>", import_name="gymnasium")
+
+# L0021 从模块 .configs 导入 AlohaEnvConfig、EnvClientConfig、EnvConfig、HILSerlRobotEnvConfig、HubEnvConfig、PushtEnvConfig。
+from .configs import (
+    # L0022 “AlohaEnvConfig”是当前括号中的一项，逗号将它与下一项分开。
+    AlohaEnvConfig,
+    # L0023 “EnvClientConfig”是当前括号中的一项，逗号将它与下一项分开。
+    EnvClientConfig,
+    # L0024 “EnvConfig”是当前括号中的一项，逗号将它与下一项分开。
+    EnvConfig,
+    # L0025 “HILSerlRobotEnvConfig”是当前括号中的一项，逗号将它与下一项分开。
+    HILSerlRobotEnvConfig,
+    # L0026 “HubEnvConfig”是当前括号中的一项，逗号将它与下一项分开。
+    HubEnvConfig,
+    # L0027 “PushtEnvConfig”是当前括号中的一项，逗号将它与下一项分开。
+    PushtEnvConfig,
+# L0028 闭合上方尚未结束的括号。
+)
+# L0029 从同包内的 factory.py 导入环境工厂，并使这些名字可以从 lerobot.envs 获取。
+from .factory import make_env, make_env_config, make_env_pre_post_processors, make_task_env
+# L0030 把同包内 utils.py 里的观测和环境工具放到 lerobot.envs 包的命名空间。
+from .utils import check_env_attributes_and_types, close_envs, env_to_policy_features, preprocess_observation
+
+# L0032 __all__ 列出包公开的名字，主要用于控制 from package import *。上面的导入语句把对象绑定到包。
+__all__ = [
+    # L0033 字符串字面量，供上方的调用、容器或错误消息使用。
+    "AlohaEnvConfig",
+    # L0034 字符串字面量，供上方的调用、容器或错误消息使用。
+    "EnvClientConfig",
+    # L0035 字符串字面量，供上方的调用、容器或错误消息使用。
+    "EnvConfig",
+    # L0036 字符串字面量，供上方的调用、容器或错误消息使用。
+    "HILSerlRobotEnvConfig",
+    # L0037 字符串字面量，供上方的调用、容器或错误消息使用。
+    "HubEnvConfig",
+    # L0038 字符串字面量，供上方的调用、容器或错误消息使用。
+    "PushtEnvConfig",
+    # L0039 字符串字面量，供上方的调用、容器或错误消息使用。
+    "check_env_attributes_and_types",
+    # L0040 字符串字面量，供上方的调用、容器或错误消息使用。
+    "close_envs",
+    # L0041 字符串字面量，供上方的调用、容器或错误消息使用。
+    "env_to_policy_features",
+    # L0042 字符串字面量，供上方的调用、容器或错误消息使用。
+    "make_env",
+    # L0043 字符串字面量，供上方的调用、容器或错误消息使用。
+    "make_env_config",
+    # L0044 字符串字面量，供上方的调用、容器或错误消息使用。
+    "make_env_pre_post_processors",
+    # L0045 字符串字面量，供上方的调用、容器或错误消息使用。
+    "make_task_env",
+    # L0046 字符串字面量，供上方的调用、容器或错误消息使用。
+    "preprocess_observation",
+# L0047 闭合上方尚未结束的括号。
+]

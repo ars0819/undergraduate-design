@@ -1,0 +1,89 @@
+[
+  {
+    "name": "literature_dedup",
+    "script": "literature-review/scripts/search_databases.py",
+    "arguments": [
+      "D:\\Desktop\\bishe\\本科毕设_轻量化高效部署_V2\\证据\\核心书目规范化.json",
+      "--deduplicate",
+      "--format",
+      "json",
+      "--output",
+      "D:\\Desktop\\bishe\\本科毕设_轻量化高效部署_V2\\证据\\核心书目去重.json",
+      "--summary"
+    ],
+    "exit_code": 0,
+    "output": "literature_dedup.txt"
+  },
+  {
+    "name": "hypothesis_lint",
+    "script": "hypothesis-generation/scripts/lint_causal_claims.py",
+    "arguments": [
+      "D:\\Desktop\\bishe\\本科毕设_轻量化高效部署_V2\\02_实验基线与复现规划_V1.md"
+    ],
+    "exit_code": 0,
+    "output": "hypothesis_lint.txt"
+  },
+  {
+    "name": "writing_refs",
+    "script": "scientific-writing/scripts/check_references.py",
+    "arguments": [
+      "D:\\Desktop\\bishe\\本科毕设_轻量化高效部署_V2\\证据\\source_manifest.json"
+    ],
+    "exit_code": 0,
+    "output": "writing_refs.txt"
+  },
+  {
+    "name": "writing_01",
+    "script": "scientific-writing/scripts/lint_manuscript.py",
+    "arguments": [
+      "D:\\Desktop\\bishe\\本科毕设_轻量化高效部署_V2\\01_本科毕设任务书_V2_导师讨论稿.md"
+    ],
+    "exit_code": 0,
+    "output": "writing_01.txt"
+  },
+  {
+    "name": "writing_02",
+    "script": "scientific-writing/scripts/lint_manuscript.py",
+    "arguments": [
+      "D:\\Desktop\\bishe\\本科毕设_轻量化高效部署_V2\\02_实验基线与复现规划_V1.md"
+    ],
+    "exit_code": 0,
+    "output": "writing_02.txt"
+  },
+  {
+    "name": "writing_03",
+    "script": "scientific-writing/scripts/lint_manuscript.py",
+    "arguments": [
+      "D:\\Desktop\\bishe\\本科毕设_轻量化高效部署_V2\\03_高效部署相关文献矩阵.md"
+    ],
+    "exit_code": 0,
+    "output": "writing_03.txt"
+  },
+  {
+    "name": "writing_04",
+    "script": "scientific-writing/scripts/lint_manuscript.py",
+    "arguments": [
+      "D:\\Desktop\\bishe\\本科毕设_轻量化高效部署_V2\\04_导师待确认问题.md"
+    ],
+    "exit_code": 0,
+    "output": "writing_04.txt"
+  },
+  {
+    "name": "writing_05",
+    "script": "scientific-writing/scripts/lint_manuscript.py",
+    "arguments": [
+      "D:\\Desktop\\bishe\\本科毕设_轻量化高效部署_V2\\05_毕业要求指标点对应审查.md"
+    ],
+    "exit_code": 0,
+    "output": "writing_05.txt"
+  },
+  {
+    "name": "writing_06",
+    "script": "scientific-writing/scripts/lint_manuscript.py",
+    "arguments": [
+      "D:\\Desktop\\bishe\\本科毕设_轻量化高效部署_V2\\06_两周实际执行任务清单.md"
+    ],
+    "exit_code": 0,
+    "output": "writing_06.txt"
+  }
+]

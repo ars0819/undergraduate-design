@@ -1,0 +1,245 @@
+π₀.₅ (Pi05) Policy · Hugging Face
+Hugging Face
+Models
+Datasets
+Spaces
+Buckets
+Docs
+Enterprise
+Pricing
+Website
+Tasks
+HuggingChat
+Collections
+Languages
+Organizations
+Community
+Blog
+Posts
+Daily Papers
+Hardware
+Learn
+Discord
+Forum
+GitHub
+Solutions
+Team & Enterprise
+Hugging Face PRO
+Enterprise Support
+Inference Providers
+Inference Endpoints
+Storage Buckets
+Log In
+Sign Up
+LeRobot documentation
+π₀.₅ (Pi05) Policy
+LeRobot
+🏡 View all docsAWS Trainium & InferentiaAccelerateBitsandbytesCLIChat UIDataset viewerDatasetsDeploying on AWSDiffusersGoogle CloudGoogle TPUsGradioHubHub Python LibraryHuggingface.jsInference Endpoints (dedicated)Inference ProvidersKernelsLeRobotLeaderboardsLightevalMicrosoft AzureOpenEnvOptimumPEFTReachy MiniSafetensorsSentence TransformersTRLTasksText Embeddings InferenceTokenizersTrackioTransformersTransformers.jsXetsmolagentstimm
+Search documentation
+mainv0.6.1v0.5.1v0.4.4 EN
+Get started
+LeRobotInstallationCheat sheet
+Tutorials
+Imitation Learning for RobotsLeLab - Lerobot GUIAdding a PolicyBring Your Own HardwareTrain a Robot with RLTrain RL in SimulationMulti GPU trainingHuman In the Loop Data CollectionTraining with PEFT (e.g., LoRA)Using Rename Map and Empty Cameras
+Compute & Hardware
+Compute Hardware GuidePyTorch accelerators
+Datasets
+Using LeRobotDatasetPorting Large DatasetsUsing the Dataset ToolsLanguage Columns and RecipesToolsAnnotation PipelineVideo encoding parametersStreaming Video Encoding
+Policies
+ACTSmolVLAπ₀ (Pi0)π₀-FAST (Pi0Fast)π₀.₅ (Pi05)MolmoAct2VLA-JEPAEO-1LingBot-VAFastWAMEVO1NVIDIA GR00TX-VLAMultitask DiT PolicyWALL-OSS
+Reward Models
+SARMROBOMETERTOPReward
+Inference
+Policy Deployment (lerobot-rollout)Use Async InferenceReal-Time Chunking (RTC)
+Simulation
+Environments from the HubControl & Train Robots in Sim (LeIsaac)
+Benchmarks
+Adding a New BenchmarkLIBEROLIBERO-plusMeta-WorldRoboTwin 2.0RoboCasa365RoboCerebraRoboMMENVIDIA IsaacLab Arena EnvironmentsVLABench
+Robot Processors
+Introduction to Robot ProcessorsDebug your processor pipelineImplement your own processorProcessors for Robots and TeleoperatorsEnvironment ProcessorsAction Representations
+Robots
+SO-101SO-100Koch v1.1LeKiwiHope JrReachy 2Unitree G1Earth Rover MiniOMXOpenArmreBot B601-DMThird-Party Robots & Teleoperators
+Teleoperators
+PhoneIsaac Teleop
+Sensors
+CamerasThird-Party Cameras & Sensors
+Resources
+NotebooksUpdating Feetech FirmwareDamiao Motors and CAN Bus
+About
+Contribute to LeRobotBackward compatibility
+Join the Hugging Face community
+and get access to the augmented documentation experience
+Collaborate on models, datasets and Spaces
+Faster examples with accelerated inference
+Switch between documentation themes
+Sign Up
+to get started
+Copy page
+π₀.₅ (Pi05) Policy
+π₀.₅ is a Vision-Language-Action model with open-world generalization, from Physical Intelligence. The LeRobot implementation is adapted from their open source OpenPI repository.
+Model Overview
+π₀.₅ represents a significant evolution from π₀, developed by Physical Intelligence to address a big challenge in robotics: open-world generalization. While robots can perform impressive tasks in controlled environments, π₀.₅ is designed to generalize to entirely new environments and situations that were never seen during training.
+The Generalization Challenge
+As Physical Intelligence explains, the fundamental challenge isn’t performing tasks of agility or dexterity, but generalization, the ability to correctly perform tasks in new settings with new objects. Consider a robot cleaning different homes: each home has different objects in different places. Generalization must occur at multiple levels:
+Physical Level: Understanding how to pick up a spoon (by the handle) or plate (by the edge), even with unseen objects in cluttered environments
+Semantic Level: Understanding task semantics, where to put clothes and shoes (laundry hamper, not on the bed), and what tools are appropriate for cleaning spills
+Environmental Level: Adapting to “messy” real-world environments like homes, grocery stores, offices, and hospitals
+Co-Training on Heterogeneous Data
+The breakthrough innovation in π₀.₅ is co-training on heterogeneous data sources. The model learns from:
+Multimodal Web Data: Image captioning, visual question answering, object detection
+Verbal Instructions: Humans coaching robots through complex tasks step-by-step
+Subtask Commands: High-level semantic behavior labels (e.g., “pick up the pillow” for an unmade bed)
+Cross-Embodiment Robot Data: Data from various robot platforms with different capabilities
+Multi-Environment Data: Static robots deployed across many different homes
+Mobile Manipulation Data: ~400 hours of mobile robot demonstrations
+This diverse training mixture creates a “curriculum” that enables generalization across physical, visual, and semantic levels simultaneously.
+Installation Requirements
+Install LeRobot by following our Installation Guide.
+Install Pi0.5 dependencies by running:
+Copied
+pip install -e ".[pi]"
+If you installed LeRobot from PyPI:
+Copied
+pip install 'lerobot[pi]'
+Usage
+To use π₀.₅ in your LeRobot configuration, specify the policy type as:
+Copied
+policy.type=pi05
+Training
+Quickstart on LIBERO
+Finetune the LIBERO base model on lerobot/libero, a ~1.9 GB video-encoded copy of the demonstrations behind the results below.
+It carries the keys π₀.₅ reads, which are also the ones the LIBERO environment produces at evaluation time:
+FeatureShape in the datasetHow π₀.₅ consumes it
+observation.images.image256×256×3, agentviewresized to 224×224
+observation.images.image2256×256×3, wristresized to 224×224
+observation.state8discretized into 256 bins and written into the prompt
+action7padded to 32 internally; the loss uses the first 7 dims
+No --rename_map is needed here — the keys already match; see Rename Map and Empty Cameras if yours differ.
+π₀.₅ uses the gated
+[google/paligemma-3b-pt-224](https://huggingface.co/google/paligemma-3b-pt-224)
+tokenizer — accept its license on the Hub and log in with `hf auth login`
+before training.
+Sized for a single 80 GB GPU:
+Copied
+lerobot-train \
+--dataset.repo_id=lerobot/libero \
+--policy.type=pi05 \
+--policy.pretrained_path=lerobot/pi05_libero_base \
+--policy.normalization_mapping='{"ACTION": "MEAN_STD", "STATE": "MEAN_STD", "VISUAL": "IDENTITY"}' \
+--policy.n_action_steps=10 \
+--policy.empty_cameras=1 \
+--policy.freeze_vision_encoder=false \
+--policy.train_expert_only=false \
+--policy.gradient_checkpointing=true \
+--policy.dtype=bfloat16 \
+--policy.device=cuda \
+--policy.push_to_hub=false \
+--output_dir=./outputs/pi05_libero \
+--job_name=pi05_libero \
+--batch_size=64 \
+--num_workers=8 \
+--steps=30000 \
+--save_freq=5000 \
+--seed=1000
+Mean/std normalization, not π₀.₅’s quantile default — matching pi05_libero_finetuned_v044, the checkpoint the results below were measured on.
+--policy.n_action_steps=10 and --policy.empty_cameras=1 are explicit because --policy.pretrained_path loads weights only — lerobot/pi05_libero_base stores both, and they would otherwise fall back to 50 and 0 (see Loading a checkpoint).
+Then evaluate a checkpoint with lerobot-eval and compare against the reference success rates — see LIBERO.
+Quantile statistics
+π₀.₅ normalizes STATE and ACTION with quantiles, so your dataset’s meta/stats.json needs q01 and q99. Older datasets carry only min/max/mean/std and fail on the first batch:
+Copied
+ValueError: QUANTILES normalization mode requires q01 and q99 stats
+Recompute them:
+Copied
+lerobot-edit-dataset \
+--repo_id your_dataset \
+--new_repo_id your_dataset \
+--operation.type recompute_stats \
+--operation.overwrite true
+The result lands in $HF_LEROBOT_HOME/your_dataset, not the cache --dataset.repo_id reads — so train with --dataset.root=$HF_LEROBOT_HOME/your_dataset, or add --push_to_hub true above.
+Or keep the dataset as-is and pass --policy.normalization_mapping='{"ACTION": "MEAN_STD", "STATE": "MEAN_STD", "VISUAL": "IDENTITY"}'.
+Training Command Example
+The same finetune with the VLM frozen: less memory, at some cost in success rate. Swap --dataset.repo_id for your own dataset.
+Copied
+lerobot-train \
+--dataset.repo_id=lerobot/libero \
+--policy.type=pi05 \
+--policy.pretrained_path=lerobot/pi05_libero_base \
+--policy.normalization_mapping='{"ACTION": "MEAN_STD", "STATE": "MEAN_STD", "VISUAL": "IDENTITY"}' \
+--policy.n_action_steps=10 \
+--policy.empty_cameras=1 \
+--policy.freeze_vision_encoder=true \
+--policy.train_expert_only=true \
+--policy.gradient_checkpointing=true \
+--policy.dtype=bfloat16 \
+--policy.device=cuda \
+--policy.push_to_hub=false \
+--output_dir=./outputs/pi05_libero_expert \
+--job_name=pi05_libero_expert \
+--batch_size=64 \
+--num_workers=8 \
+--steps=30000 \
+--save_freq=5000 \
+--seed=1000
+Key Training Parameters
+--policy.compile_model=true: Enables model compilation for faster training
+--policy.gradient_checkpointing=true: Reduces memory usage significantly during training
+--policy.dtype=bfloat16: Use mixed precision training for efficiency
+--batch_size=64: Batch size for training, adapt this based on your GPU memory
+--policy.pretrained_path=lerobot/pi05_base: The base π₀.₅ model you want to finetune, options are:
+lerobot/pi05_base
+lerobot/pi05_libero_base (specifically trained on the Libero dataset)
+Loading a checkpoint
+The two forms are not interchangeable:
+--policy.path--policy.pretrained_path
+Loadsweights and the checkpoint’s config.jsonweights only
+Feature namesfrom the checkpointfrom your dataset
+Stored settings, e.g. n_action_stepsinheritedreset to the defaults
+--policy.typemust be omittedrequired
+--rename_mapneeded when your camera keys differnever — the keys come from your data
+Passing a --rename_map alongside --policy.pretrained_path renames the batch away from those names, and the first batch fails with All image features are missing from the batch.
+Training Parameters Explained
+ParameterDefaultDescription
+freeze_vision_encoderfalseDo not freeze the vision encoder
+train_expert_onlyfalseDo not freeze the VLM, train all parameters
+💡 Tip: Setting train_expert_only=true freezes the VLM and trains only the action expert and projections, allowing finetuning with reduced memory usage.
+Relative Actions
+By default, π₀.₅ predicts absolute actions. You can enable relative actions so the model predicts offsets relative to the current robot state. This can improve training stability for certain setups.
+To use relative actions, first recompute your dataset stats in relative space via the CLI:
+Copied
+lerobot-edit-dataset \
+--repo_id your_dataset \
+--operation.type recompute_stats \
+--operation.relative_action true \
+--operation.chunk_size 50 \
+--operation.relative_exclude_joints "['gripper']" \
+--push_to_hub true
+Or equivalently in Python:
+Copied
+from lerobot.datasets import LeRobotDataset, recompute_stats
+dataset = LeRobotDataset("your_dataset")
+recompute_stats(dataset, relative_action=True, chunk_size=50, relative_exclude_joints=["gripper"])
+dataset.push_to_hub()
+The chunk_size should match your policy’s chunk_size (default 50 for π₀.₅). relative_exclude_joints lists joint names that should remain in absolute space (e.g. gripper commands). Use --push_to_hub true to upload the updated stats to the Hub.
+Then train with relative actions enabled:
+Copied
+lerobot-train \
+--dataset.repo_id=your_dataset \
+--policy.type=pi05 \
+--policy.use_relative_actions=true \
+--policy.relative_exclude_joints='["gripper"]' \
+...
+Performance Results
+Libero Benchmark Results
+π₀.₅ has demonstrated strong performance on the Libero benchmark suite. To compare and test its LeRobot implementation, we finetuned the libero base model for an additional 6k steps on the Libero dataset and compared the results to the OpenPI reference results.
+BenchmarkLeRobot ImplementationOpenPI Reference
+Libero Spatial97.0%98.8%
+Libero Object99.0%98.2%
+Libero Goal98.0%98.0%
+Libero 1096.0%92.4%
+Average97.5%96.85%
+These results demonstrate π₀.₅’s strong generalization capabilities across diverse robotic manipulation tasks. To reproduce these results, you can follow the instructions in the Libero section.
+License
+This model follows the Apache 2.0 License, consistent with the original OpenPI repository.
+Update on GitHub
+←π₀-FAST (Pi0Fast) MolmoAct2→
+π₀.₅ (Pi05) PolicyModel OverviewThe Generalization ChallengeCo-Training on Heterogeneous DataInstallation RequirementsUsageTrainingQuickstart on LIBEROQuantile statisticsTraining Command ExampleKey Training ParametersLoading a checkpointTraining Parameters ExplainedRelative ActionsPerformance ResultsLibero Benchmark ResultsLicense

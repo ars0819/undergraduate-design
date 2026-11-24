@@ -1,0 +1,19 @@
+{
+  "valid": true,
+  "errors": [],
+  "warnings": [],
+  "statistics": {
+    "participants": 1,
+    "ideas": 3,
+    "assumptions": 3,
+    "ai_assisted_or_mixed_ideas": 3,
+    "errors": 0,
+    "warnings": 0
+  },
+  "limitations": [
+    "Checks cover session identity, ideas, assumptions, clusters, and decision references. Literature-check, adversarial-review, gate, workflow, and governance records are not schema-validated.",
+    "Validation is structural and deterministic; it does not verify claims, citations, novelty, feasibility, or scientific validity.",
+    "Exact normalized-text duplicate warnings do not assert semantic equivalence.",
+    "A valid register is not ethics, biosafety, regulatory, clinical, or institutional approval."
+  ]
+}

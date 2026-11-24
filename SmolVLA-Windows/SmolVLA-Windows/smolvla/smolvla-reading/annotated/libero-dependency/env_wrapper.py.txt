@@ -1,0 +1,236 @@
+# 原文件 <CONDA_PREFIX>/lib/python3.12/site-packages/libero/libero/envs/env_wrapper.py
+# 原行范围 12–120, 152–163
+# L 后是官方源码或本机文件的原行号。每条中文注释对应紧随其后的原文。
+# 这是静态阅读副本。请在编辑器中阅读。空行保留，节选之间标出跳过的范围。
+
+# …… 跳过原文第 1–11 行 ……
+# L0012 hf-libero 的控制包装类，创建并持有实际的任务仿真。
+class ControlEnv:
+    # L0013 定义方法 __init__。
+    def __init__(
+        # L0014 self 接收当前实例，调用 obj.method() 时由 Python 自动传入。
+        self,
+        # L0015 “bddl_file_name”是当前括号中的一项，逗号将它与下一项分开。
+        bddl_file_name,
+        # L0016 为“robots”提供这一项的值，注意它所在的参数表或外层表达式。
+        robots=["Panda"],
+        # L0017 为“controller”提供这一项的值，注意它所在的参数表或外层表达式。
+        controller="OSC_POSE",
+        # L0018 为“gripper_types”提供这一项的值，注意它所在的参数表或外层表达式。
+        gripper_types="default",
+        # L0019 为“initialization_noise”提供这一项的值，注意它所在的参数表或外层表达式。
+        initialization_noise=None,
+        # L0020 为“use_camera_obs”提供这一项的值，注意它所在的参数表或外层表达式。
+        use_camera_obs=True,
+        # L0021 为“has_renderer”提供这一项的值，注意它所在的参数表或外层表达式。
+        has_renderer=False,
+        # L0022 为“has_offscreen_renderer”提供这一项的值，注意它所在的参数表或外层表达式。
+        has_offscreen_renderer=True,
+        # L0023 为“render_camera”提供这一项的值，注意它所在的参数表或外层表达式。
+        render_camera="frontview",
+        # L0024 为“render_collision_mesh”提供这一项的值，注意它所在的参数表或外层表达式。
+        render_collision_mesh=False,
+        # L0025 为“render_visual_mesh”提供这一项的值，注意它所在的参数表或外层表达式。
+        render_visual_mesh=True,
+        # L0026 为“render_gpu_device_id”提供这一项的值，注意它所在的参数表或外层表达式。
+        render_gpu_device_id=-1,
+        # L0027 为“control_freq”提供这一项的值，注意它所在的参数表或外层表达式。
+        control_freq=20,
+        # L0028 为“horizon”提供这一项的值，注意它所在的参数表或外层表达式。
+        horizon=1000,
+        # L0029 为“ignore_done”提供这一项的值，注意它所在的参数表或外层表达式。
+        ignore_done=False,
+        # L0030 为“hard_reset”提供这一项的值，注意它所在的参数表或外层表达式。
+        hard_reset=True,
+        # L0031 为“camera_names”提供这一项的值，注意它所在的参数表或外层表达式。
+        camera_names=[
+            # L0032 字符串字面量，供上方的调用、容器或错误消息使用。
+            "agentview",
+            # L0033 字符串字面量，供上方的调用、容器或错误消息使用。
+            "robot0_eye_in_hand",
+        # L0034 闭合上方尚未结束的括号。末尾逗号可用于分隔外层的元素。
+        ],
+        # L0035 为“camera_heights”提供这一项的值，注意它所在的参数表或外层表达式。
+        camera_heights=128,
+        # L0036 为“camera_widths”提供这一项的值，注意它所在的参数表或外层表达式。
+        camera_widths=128,
+        # L0037 为“camera_depths”提供这一项的值，注意它所在的参数表或外层表达式。
+        camera_depths=False,
+        # L0038 为“camera_segmentations”提供这一项的值，注意它所在的参数表或外层表达式。
+        camera_segmentations=None,
+        # L0039 为“renderer”提供这一项的值，注意它所在的参数表或外层表达式。
+        renderer="mujoco",
+        # L0040 为“renderer_config”提供这一项的值，注意它所在的参数表或外层表达式。
+        renderer_config=None,
+        # L0041 星号展开可迭代对象或关键字字典。若在函数签名中则收集额外参数。
+        **kwargs,
+    # L0042 闭合上方尚未结束的括号。
+    ):
+        # L0043 检查此条件，条件不成立时抛出 AssertionError。
+        assert os.path.exists(
+            # L0044 延续上面的语句，bddl_file_name。
+            bddl_file_name
+        # L0045 延续上面的语句，), f"[error] {bddl_file_name} does not exist!"。
+        ), f"[error] {bddl_file_name} does not exist!"
+
+        # L0047 由 robosuite 加载选定机械臂控制器的配置。
+        controller_configs = suite.load_controller_config(default_controller=controller)
+
+        # L0049 调用 BDDLUtils.get_problem_info，用它的结果给 “problem_info” 赋值。
+        problem_info = BDDLUtils.get_problem_info(bddl_file_name)
+        # L0050 原作者对相邻代码的说明。
+        # Check if we're using a multi-armed environment and use env_configuration argument if so
+
+        # L0052 原作者对相邻代码的说明。
+        # Create environment
+        # L0053 用方括号按键或索引读取 problem_info给 “self.problem_name” 赋值。
+        self.problem_name = problem_info["problem_name"]
+        # L0054 用方括号按键或索引读取 problem_info给 “self.domain_name” 赋值。
+        self.domain_name = problem_info["domain_name"]
+        # L0055 用方括号按键或索引读取 problem_info给 “self.language_instruction” 赋值。
+        self.language_instruction = problem_info["language_instruction"]
+        # L0056 调用 此行左侧的可调用对象，用它的结果给 “self.env” 赋值。
+        self.env = TASK_MAPPING[self.problem_name](
+            # L0057 “bddl_file_name”是当前括号中的一项，逗号将它与下一项分开。
+            bddl_file_name,
+            # L0058 为“robots”提供这一项的值，注意它所在的参数表或外层表达式。
+            robots=robots,
+            # L0059 为“controller_configs”提供这一项的值，注意它所在的参数表或外层表达式。
+            controller_configs=controller_configs,
+            # L0060 为“gripper_types”提供这一项的值，注意它所在的参数表或外层表达式。
+            gripper_types=gripper_types,
+            # L0061 为“initialization_noise”提供这一项的值，注意它所在的参数表或外层表达式。
+            initialization_noise=initialization_noise,
+            # L0062 为“use_camera_obs”提供这一项的值，注意它所在的参数表或外层表达式。
+            use_camera_obs=use_camera_obs,
+            # L0063 为“has_renderer”提供这一项的值，注意它所在的参数表或外层表达式。
+            has_renderer=has_renderer,
+            # L0064 为“has_offscreen_renderer”提供这一项的值，注意它所在的参数表或外层表达式。
+            has_offscreen_renderer=has_offscreen_renderer,
+            # L0065 为“render_camera”提供这一项的值，注意它所在的参数表或外层表达式。
+            render_camera=render_camera,
+            # L0066 为“render_collision_mesh”提供这一项的值，注意它所在的参数表或外层表达式。
+            render_collision_mesh=render_collision_mesh,
+            # L0067 为“render_visual_mesh”提供这一项的值，注意它所在的参数表或外层表达式。
+            render_visual_mesh=render_visual_mesh,
+            # L0068 为“render_gpu_device_id”提供这一项的值，注意它所在的参数表或外层表达式。
+            render_gpu_device_id=render_gpu_device_id,
+            # L0069 为“control_freq”提供这一项的值，注意它所在的参数表或外层表达式。
+            control_freq=control_freq,
+            # L0070 为“horizon”提供这一项的值，注意它所在的参数表或外层表达式。
+            horizon=horizon,
+            # L0071 为“ignore_done”提供这一项的值，注意它所在的参数表或外层表达式。
+            ignore_done=ignore_done,
+            # L0072 为“hard_reset”提供这一项的值，注意它所在的参数表或外层表达式。
+            hard_reset=hard_reset,
+            # L0073 为“camera_names”提供这一项的值，注意它所在的参数表或外层表达式。
+            camera_names=camera_names,
+            # L0074 为“camera_heights”提供这一项的值，注意它所在的参数表或外层表达式。
+            camera_heights=camera_heights,
+            # L0075 为“camera_widths”提供这一项的值，注意它所在的参数表或外层表达式。
+            camera_widths=camera_widths,
+            # L0076 为“camera_depths”提供这一项的值，注意它所在的参数表或外层表达式。
+            camera_depths=camera_depths,
+            # L0077 为“camera_segmentations”提供这一项的值，注意它所在的参数表或外层表达式。
+            camera_segmentations=camera_segmentations,
+            # L0078 为“renderer”提供这一项的值，注意它所在的参数表或外层表达式。
+            renderer=renderer,
+            # L0079 为“renderer_config”提供这一项的值，注意它所在的参数表或外层表达式。
+            renderer_config=renderer_config,
+            # L0080 星号展开可迭代对象或关键字字典。若在函数签名中则收集额外参数。
+            **kwargs,
+        # L0081 闭合上方尚未结束的括号。
+        )
+
+    # L0083 属性装饰器。调用方用 obj.name 的形式访问这个方法的结果。
+    @property
+    # L0084 定义方法 obj_of_interest。
+    def obj_of_interest(self):
+        # L0085 读取属性 self.env.obj_of_interest作为当前调用的返回值。
+        return self.env.obj_of_interest
+
+    # L0087 给底层任务仿真递交一个动作。
+    def step(self, action):
+        # L0088 继续调用实际任务环境的 step，返回底层结果给 LeRobot。
+        return self.env.step(action)
+
+    # L0090 重置底层仿真。
+    def reset(self):
+        # L0091 使用布尔值 False给 “success” 赋值。
+        success = False
+        # L0092 持续执行下面的循环体，每轮开始都重新检查条件。
+        while not success:
+            # L0093 开始执行可能抛出异常的代码，后续 except 或 finally 提供处理。
+            try:
+                # L0094 请求仿真重置并读取初始返回。
+                ret = self.env.reset()
+                # L0095 使用布尔值 True给 “success” 赋值。
+                success = True
+            # L0096 捕获这里列出的异常类型，然后执行下方的处理逻辑。
+            except RandomizationError:
+                # L0097 空语句，占住当前代码块的位置。
+                pass
+            # L0098 离开 try 时执行这里的清理，即使前面的路径发生异常。
+            finally:
+                # L0099 跳过这一轮剩余操作，进入下一轮循环。
+                continue
+
+        # L0101 引用已有的值 ret作为当前调用的返回值。
+        return ret
+
+    # L0103 定义方法 check_success。
+    def check_success(self):
+        # L0104 调用 self.env._check_success，用它的结果作为当前调用的返回值。
+        return self.env._check_success()
+
+    # L0106 属性装饰器。调用方用 obj.name 的形式访问这个方法的结果。
+    @property
+    # L0107 定义方法 _visualizations。
+    def _visualizations(self):
+        # L0108 读取属性 self.env._visualizations作为当前调用的返回值。
+        return self.env._visualizations
+
+    # L0110 属性装饰器。调用方用 obj.name 的形式访问这个方法的结果。
+    @property
+    # L0111 定义方法 robots。
+    def robots(self):
+        # L0112 读取属性 self.env.robots作为当前调用的返回值。
+        return self.env.robots
+
+    # L0114 属性装饰器。调用方用 obj.name 的形式访问这个方法的结果。
+    @property
+    # L0115 定义方法 sim。
+    def sim(self):
+        # L0116 读取属性 self.env.sim作为当前调用的返回值。
+        return self.env.sim
+
+    # L0118 定义方法 get_sim_state。
+    def get_sim_state(self):
+        # L0119 调用 flatten，用它的结果作为当前调用的返回值。
+        return self.env.sim.get_state().flatten()
+
+
+# …… 跳过原文第 121–151 行 ……
+# L0152 离屏渲染类继承 ControlEnv。LeRobot 使用的 step 方法定义在父类。
+class OffScreenRenderEnv(ControlEnv):
+    # L0153 文档字符串的边界。
+    """
+    # L0154 原文档中的说明或续行。
+    For visualization and evaluation.
+    # L0155 文档字符串的边界。
+    """
+
+    # L0157 定义方法 __init__。
+    def __init__(self, **kwargs):
+        # L0158 原作者对相邻代码的说明。
+        # This shouldn't be customized
+        # L0159 关闭交互式渲染窗口。
+        kwargs["has_renderer"] = False
+        # L0160 启用离屏渲染，评测仍可以得到相机像素。
+        kwargs["has_offscreen_renderer"] = True
+        # L0161 用配置调用父类初始化，实际任务环境在父类构造。
+        super().__init__(**kwargs)
+
+
+
+# …… 跳过原文第 164–278 行 ……

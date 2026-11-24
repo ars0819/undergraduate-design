@@ -1,0 +1,18 @@
+
+STDERR:
+{
+  "total_results": 11,
+  "sources": {
+    "arXiv": 11
+  },
+  "year_distribution": {
+    "2025": 3,
+    "2024": 2,
+    "2023": 2,
+    "2022": 1,
+    "2026": 3
+  },
+  "avg_citations": 0,
+  "total_citations": 0
+}
+[OK] Results saved to: D:\Desktop\bishe\本科毕设_轻量化高效部署_V2\证据\核心书目去重.json

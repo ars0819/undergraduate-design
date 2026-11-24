@@ -1,0 +1,17 @@
+TOTAL TABLES: 8
+T  1 rows= 11 cols= 8 :: Table 1: The success rate (%) of BitVLA and the baselines on LIBERO simulation environment.
+        hdr: Models | Size | Memory Usage↓\downarrow | Spatial | Object | Goal
+T  2 rows=  8 cols= 7 :: Table 2: The success rate (%) of BitVLA and OpenVLA, OpenVLA-OFT with post-training quantization on LIBERO simulation environment.
+        hdr: Models | Memory Usage↓\downarrow | Spatial | Object | Goal | Long
+T  3 rows=  3 cols= 7 :: Table 3: The zero-shot accuracy of BitVLA with full-precision and 1.58-bit vision encoder (VE) on visual question answering tasks.
+        hdr: Models | MMMU (val) | SeedBench (image) | SeedBench2+ (test) | MMStar (test) | AI2D (test)
+T  4 rows=  4 cols= 8 :: Table 4: The ablations on data size and representation alignment loss of distillation-aware training for visual question answering tasks.
+        hdr: Training Tokens (Stage III) | ℒa​u​x\mathcal{L}_{aux} | MMMU (val) | SeedBench (image) | SeedBench2+ (test) | MMStar (test)
+T  5 rows=  4 cols= 7 :: Table 5: The ablations on data size and representation alignment loss of distillation-aware training on LIBERO benchmark suites.
+        hdr: Training Tokens (Stage III) | ℒa​u​x\mathcal{L}_{aux} | Spatial | Object | Goal | Long
+T  6 rows= 14 cols= 4 :: Table 6: Hyper-parameters for the training of BitVLA.
+        hdr: Hyper-parameter | Stage I | Stage II | Stage III
+T  7 rows= 11 cols= 5 :: Table 7: Hyper-parameters for the fine-tuning of BitVLA on LIBERO dataset.
+        hdr: Hyper-parameter | Spatial | Object | Goal | Long
+T  8 rows= 41 cols= 2 :: Table 8: Task description in LIBERO benchmark task suites.
+        hdr: Task suite | Task description

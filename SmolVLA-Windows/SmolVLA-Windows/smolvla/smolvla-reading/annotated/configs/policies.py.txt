@@ -1,0 +1,465 @@
+# 原文件 lerobot/src/lerobot/configs/policies.py
+# 原行范围 1–248
+# L 后是官方源码或本机文件的原行号。每条中文注释对应紧随其后的原文。
+# 这是静态阅读副本。请在编辑器中阅读。空行保留，节选之间标出跳过的范围。
+# L0001 原版权或开源许可声明。
+# Copyright 2024 The HuggingFace Inc. team. All rights reserved.
+# L0002 原作者对相邻代码的说明。
+#
+# L0003 原版权或开源许可声明。
+# Licensed under the Apache License, Version 2.0 (the "License");
+# L0004 原版权或开源许可声明。
+# you may not use this file except in compliance with the License.
+# L0005 原版权或开源许可声明。
+# You may obtain a copy of the License at
+# L0006 原作者对相邻代码的说明。
+#
+# L0007 原版权或开源许可声明。
+#     http://www.apache.org/licenses/LICENSE-2.0
+# L0008 原作者对相邻代码的说明。
+#
+# L0009 原作者对相邻代码的说明。
+# Unless required by applicable law or agreed to in writing, software
+# L0010 原版权或开源许可声明。
+# distributed under the License is distributed on an "AS IS" BASIS,
+# L0011 原版权或开源许可声明。
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# L0012 原版权或开源许可声明。
+# See the License for the specific language governing permissions and
+# L0013 原版权或开源许可声明。
+# limitations under the License.
+# L0014 导入模块 abc。
+import abc
+# L0015 导入模块 builtins。
+import builtins
+# L0016 导入模块 json。
+import json
+# L0017 导入模块 os。
+import os
+# L0018 导入模块 tempfile。
+import tempfile
+# L0019 从模块 dataclasses 导入 dataclass、field。
+from dataclasses import dataclass, field
+# L0020 从模块 logging 导入 getLogger。
+from logging import getLogger
+# L0021 从模块 pathlib 导入 Path。
+from pathlib import Path
+# L0022 从模块 typing 导入 Any、TypeVar。
+from typing import Any, TypeVar
+
+# L0024 导入模块 draccus。
+import draccus
+# L0025 导入模块 torch。
+import torch
+# L0026 从模块 huggingface_hub 导入 hf_hub_download。
+from huggingface_hub import hf_hub_download
+# L0027 从模块 huggingface_hub.constants 导入 CONFIG_NAME。
+from huggingface_hub.constants import CONFIG_NAME
+# L0028 从模块 huggingface_hub.errors 导入 HfHubHTTPError。
+from huggingface_hub.errors import HfHubHTTPError
+
+# L0030 从模块 lerobot.optim 导入 LRSchedulerConfig、OptimizerConfig。
+from lerobot.optim import LRSchedulerConfig, OptimizerConfig
+# L0031 从模块 lerobot.utils.constants 导入 ACTION、OBS_STATE。
+from lerobot.utils.constants import ACTION, OBS_STATE
+# L0032 从模块 lerobot.utils.device_utils 导入 auto_select_torch_device、is_amp_available、is_torch_device_available。
+from lerobot.utils.device_utils import auto_select_torch_device, is_amp_available, is_torch_device_available
+# L0033 从模块 lerobot.utils.hub 导入 HubMixin。
+from lerobot.utils.hub import HubMixin
+
+# L0035 从模块 .types 导入 FeatureType、PolicyFeature。
+from .types import FeatureType, PolicyFeature
+
+# L0037 调用 TypeVar，用它的结果给 “T” 赋值。
+T = TypeVar("T", bound="PreTrainedConfig")
+# L0038 调用 getLogger，用它的结果给 “logger” 赋值。
+logger = getLogger(__name__)
+
+
+# L0041 数据类装饰器。Python 根据字段生成初始化等方法。
+@dataclass
+# L0042 通用策略配置基类，继承配置类型注册机制、Hub 接口和抽象基类接口。
+class PreTrainedConfig(draccus.ChoiceRegistry, HubMixin, abc.ABC):
+    # L0043 文档字符串的边界。
+    """
+    # L0044 原文档中的说明或续行。
+    Base configuration class for policy models.
+
+    # L0046 以下列出调用参数及其含义。
+    Args:
+        # L0047 原文档对“n_obs_steps”的说明。
+        n_obs_steps: Number of environment steps worth of observations to pass to the policy (takes the
+            # L0048 原文档中的说明或续行。
+            current step and additional steps going back).
+        # L0049 原文档对“input_features”的说明。
+        input_features: A dictionary defining the PolicyFeature of the input data for the policy. The key represents
+            # L0050 原文档中的说明或续行。
+            the input data name, and the value is PolicyFeature, which consists of FeatureType and shape attributes.
+        # L0051 原文档对“output_features”的说明。
+        output_features: A dictionary defining the PolicyFeature of the output data for the policy. The key represents
+            # L0052 原文档中的说明或续行。
+            the output data name, and the value is PolicyFeature, which consists of FeatureType and shape attributes.
+        # L0053 原文档对“normalization_mapping”的说明。
+        normalization_mapping: A dictionary that maps from a str value of FeatureType (e.g., "STATE", "VISUAL") to
+            # L0054 原文档中的说明或续行。
+            a corresponding NormalizationMode (e.g., NormalizationMode.MIN_MAX)
+    # L0055 文档字符串的边界。
+    """
+
+    # L0057 声明“n_obs_steps”的类型为 int，使用字面值 1作为初始值。
+    n_obs_steps: int = 1
+
+    # L0059 原作者对相邻代码的说明。
+    # `input_features` can be set to None/null in order to infer those values from the dataset.
+    # L0060 声明“input_features”的类型为 dict[str, PolicyFeature] | None，调用 field，用它的结果作为初始值。
+    input_features: dict[str, PolicyFeature] | None = field(default_factory=dict)
+    # L0061 声明“output_features”的类型为 dict[str, PolicyFeature] | None，调用 field，用它的结果作为初始值。
+    output_features: dict[str, PolicyFeature] | None = field(default_factory=dict)
+
+    # L0063 声明“device”（运算设备）的类型为 str | None，设为空值 None作为初始值。
+    device: str | None = None  # e.g. "cuda", "cuda:0", "cpu", or "mps"
+    # L0064 原作者对相邻代码的说明。
+    # Parameter storage dtype. None uses PyTorch's default when constructing a policy.
+    # L0065 声明“dtype”（元素类型）的类型为 torch.dtype | None，设为空值 None作为初始值。
+    dtype: torch.dtype | None = None  # e.g. torch.float32, torch.bfloat16
+    # L0066 训练路径的说明。
+    # `use_amp` determines whether to use Automatic Mixed Precision (AMP) for training and evaluation. With AMP,
+    # L0067 原作者对相邻代码的说明。
+    # automatic gradient scaling is used.
+    # L0068 声明“use_amp”的类型为 bool，使用布尔值 False作为初始值。
+    use_amp: bool = False
+
+    # L0070 训练路径的说明。
+    # Whether the policy employed PEFT for training.
+    # L0071 声明“use_peft”的类型为 bool，使用布尔值 False作为初始值。
+    use_peft: bool = False
+
+    # L0073 声明“push_to_hub”的类型为 bool，使用布尔值 True作为初始值。
+    push_to_hub: bool = True  # TODO: rename; shadows HubMixin.push_to_hub()
+    # L0074 声明“repo_id”（Hub 仓库标识）的类型为 str | None，设为空值 None作为初始值。
+    repo_id: str | None = None
+
+    # L0076 原作者对相邻代码的说明。
+    # Upload on private repository on the Hugging Face hub.
+    # L0077 声明“private”的类型为 bool | None，设为空值 None作为初始值。
+    private: bool | None = None
+    # L0078 原作者对相邻代码的说明。
+    # Add tags to your policy on the hub.
+    # L0079 声明“tags”的类型为 list[str] | None，设为空值 None作为初始值。
+    tags: list[str] | None = None
+    # L0080 原作者对相邻代码的说明。
+    # Add tags to your policy on the hub.
+    # L0081 声明“license”的类型为 str | None，设为空值 None作为初始值。
+    license: str | None = None
+    # L0082 原作者对相邻代码的说明。
+    # Either the repo ID of a model hosted on the Hub or a path to a directory containing weights
+    # L0083 原作者对相邻代码的说明。
+    # saved using `Policy.save_pretrained`. If not provided, the policy is initialized from scratch.
+    # L0084 声明“pretrained_path”的类型为 Path | None，设为空值 None作为初始值。
+    pretrained_path: Path | None = None
+    # L0085 原作者对相邻代码的说明。
+    # Optional Hub revision (commit hash, branch, or tag) to pin the pretrained model version.
+    # L0086 声明“pretrained_revision”的类型为 str | None，设为空值 None作为初始值。
+    pretrained_revision: str | None = None
+
+    # L0088 定义方法 __post_init__。
+    def __post_init__(self) -> None:
+        # L0089 条件 self.dtype is not None and not isinstance(self.dtype, torch.dtype) 成立时进入下方分支。
+        if self.dtype is not None and not isinstance(self.dtype, torch.dtype):
+            # L0090 抛出 ValueError，中断当前路径并交给上层的异常处理。
+            raise ValueError(f"config.dtype must be a torch.dtype or None, got {self.dtype!r}.")
+
+        # L0092 条件 not self.device or not is_torch_device_available(self.device) 成立时进入下方分支。
+        if not self.device or not is_torch_device_available(self.device):
+            # L0093 调用 auto_select_torch_device，用它的结果给 “auto_device” 赋值。
+            auto_device = auto_select_torch_device()
+            # L0094 调用 logger.warning 执行操作。
+            logger.warning(f"Device '{self.device}' is not available. Switching to '{auto_device}'.")
+            # L0095 读取属性 auto_device.type给 “self.device” 赋值。
+            self.device = auto_device.type
+
+        # L0097 原作者对相邻代码的说明。
+        # Automatically deactivate AMP if necessary
+        # L0098 条件 self.use_amp and not is_amp_available(self.device) 成立时进入下方分支。
+        if self.use_amp and not is_amp_available(self.device):
+            # L0099 调用 logger.warning 执行操作。
+            logger.warning(
+                # L0100 f 字符串片段，花括号中的表达式会被求值并插入文本。
+                f"Automatic Mixed Precision (amp) is not available on device '{self.device}'. Deactivating AMP."
+            # L0101 闭合上方尚未结束的括号。
+            )
+            # L0102 使用布尔值 False给 “self.use_amp” 赋值。
+            self.use_amp = False
+
+    # L0104 属性装饰器。调用方用 obj.name 的形式访问这个方法的结果。
+    @property
+    # L0105 定义方法 type。
+    def type(self) -> str:
+        # L0106 调用 self.get_choice_name，用它的结果给 “choice_name” 赋值。
+        choice_name = self.get_choice_name(self.__class__)
+        # L0107 条件 not isinstance(choice_name, str) 成立时进入下方分支。
+        if not isinstance(choice_name, str):
+            # L0108 抛出 TypeError，中断当前路径并交给上层的异常处理。
+            raise TypeError(f"Expected string from get_choice_name, got {type(choice_name)}")
+        # L0109 引用已有的值 choice_name作为当前调用的返回值。
+        return choice_name
+
+    # L0111 属性装饰器。调用方用 obj.name 的形式访问这个方法的结果。
+    @property
+    # L0112 应用装饰器 abc.abstractmethod，它会处理紧接着的函数或类。
+    @abc.abstractmethod
+    # L0113 定义方法 observation_delta_indices。
+    def observation_delta_indices(self) -> list[int] | None:
+        # L0114 抛出 NotImplementedError，中断当前路径并交给上层的异常处理。
+        raise NotImplementedError
+
+    # L0116 属性装饰器。调用方用 obj.name 的形式访问这个方法的结果。
+    @property
+    # L0117 应用装饰器 abc.abstractmethod，它会处理紧接着的函数或类。
+    @abc.abstractmethod
+    # L0118 定义方法 action_delta_indices。
+    def action_delta_indices(self) -> list[int] | None:
+        # L0119 抛出 NotImplementedError，中断当前路径并交给上层的异常处理。
+        raise NotImplementedError
+
+    # L0121 属性装饰器。调用方用 obj.name 的形式访问这个方法的结果。
+    @property
+    # L0122 应用装饰器 abc.abstractmethod，它会处理紧接着的函数或类。
+    @abc.abstractmethod
+    # L0123 定义方法 reward_delta_indices。
+    def reward_delta_indices(self) -> list[int] | None:
+        # L0124 抛出 NotImplementedError，中断当前路径并交给上层的异常处理。
+        raise NotImplementedError
+
+    # L0126 应用装饰器 abc.abstractmethod，它会处理紧接着的函数或类。
+    @abc.abstractmethod
+    # L0127 定义方法 get_optimizer_preset。
+    def get_optimizer_preset(self) -> OptimizerConfig:
+        # L0128 抛出 NotImplementedError，中断当前路径并交给上层的异常处理。
+        raise NotImplementedError
+
+    # L0130 应用装饰器 abc.abstractmethod，它会处理紧接着的函数或类。
+    @abc.abstractmethod
+    # L0131 定义方法 get_scheduler_preset。
+    def get_scheduler_preset(self) -> LRSchedulerConfig | None:
+        # L0132 抛出 NotImplementedError，中断当前路径并交给上层的异常处理。
+        raise NotImplementedError
+
+    # L0134 应用装饰器 abc.abstractmethod，它会处理紧接着的函数或类。
+    @abc.abstractmethod
+    # L0135 定义方法 validate_features。
+    def validate_features(self) -> None:
+        # L0136 抛出 NotImplementedError，中断当前路径并交给上层的异常处理。
+        raise NotImplementedError
+
+    # L0138 属性装饰器。调用方用 obj.name 的形式访问这个方法的结果。
+    @property
+    # L0139 定义方法 robot_state_feature。
+    def robot_state_feature(self) -> PolicyFeature | None:
+        # L0140 条件 not self.input_features 成立时进入下方分支。
+        if not self.input_features:
+            # L0141 设为空值 None作为当前调用的返回值。
+            return None
+        # L0142 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+        for ft_name, ft in self.input_features.items():
+            # L0143 条件 ft.type is FeatureType.STATE and ft_name == OBS_STATE 成立时进入下方分支。
+            if ft.type is FeatureType.STATE and ft_name == OBS_STATE:
+                # L0144 引用已有的值 ft作为当前调用的返回值。
+                return ft
+        # L0145 设为空值 None作为当前调用的返回值。
+        return None
+
+    # L0147 属性装饰器。调用方用 obj.name 的形式访问这个方法的结果。
+    @property
+    # L0148 定义方法 env_state_feature。
+    def env_state_feature(self) -> PolicyFeature | None:
+        # L0149 条件 not self.input_features 成立时进入下方分支。
+        if not self.input_features:
+            # L0150 设为空值 None作为当前调用的返回值。
+            return None
+        # L0151 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+        for _, ft in self.input_features.items():
+            # L0152 条件 ft.type is FeatureType.ENV 成立时进入下方分支。
+            if ft.type is FeatureType.ENV:
+                # L0153 引用已有的值 ft作为当前调用的返回值。
+                return ft
+        # L0154 设为空值 None作为当前调用的返回值。
+        return None
+
+    # L0156 属性装饰器。调用方用 obj.name 的形式访问这个方法的结果。
+    @property
+    # L0157 定义方法 image_features。
+    def image_features(self) -> dict[str, PolicyFeature]:
+        # L0158 条件 not self.input_features 成立时进入下方分支。
+        if not self.input_features:
+            # L0159 创建字典，用键查找对应的值作为当前调用的返回值。
+            return {}
+        # L0160 用字典推导式从可迭代对象逐项取值并构造结果作为当前调用的返回值。
+        return {key: ft for key, ft in self.input_features.items() if ft.type is FeatureType.VISUAL}
+
+    # L0162 属性装饰器。调用方用 obj.name 的形式访问这个方法的结果。
+    @property
+    # L0163 定义方法 action_feature。
+    def action_feature(self) -> PolicyFeature | None:
+        # L0164 条件 not self.output_features 成立时进入下方分支。
+        if not self.output_features:
+            # L0165 设为空值 None作为当前调用的返回值。
+            return None
+        # L0166 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+        for ft_name, ft in self.output_features.items():
+            # L0167 条件 ft.type is FeatureType.ACTION and ft_name == ACTION 成立时进入下方分支。
+            if ft.type is FeatureType.ACTION and ft_name == ACTION:
+                # L0168 引用已有的值 ft作为当前调用的返回值。
+                return ft
+        # L0169 设为空值 None作为当前调用的返回值。
+        return None
+
+    # L0171 定义方法 _save_pretrained。
+    def _save_pretrained(self, save_directory: Path) -> None:
+        # L0172 原作者对相邻代码的说明。
+        # Encode against the base class so draccus includes the choice "type" key,
+        # L0173 原作者对相邻代码的说明。
+        # which `from_pretrained` needs to resolve the concrete subclass.
+        # L0174 进入上下文管理器，缩进块结束时由它处理退出动作。
+        with open(save_directory / CONFIG_NAME, "w") as f:
+            # L0175 调用 json.dump 执行操作。
+            json.dump(draccus.encode(self, PreTrainedConfig), f, indent=4)
+
+    # L0177 类方法装饰器。调用时首个参数 cls 是类本身。
+    @classmethod
+    # L0178 定义方法 from_pretrained。作用是按 checkpoint 的 type 和覆盖参数恢复具体策略配置。
+    def from_pretrained(
+        # L0179 “cls”（当前类）是当前括号中的一项，逗号将它与下一项分开。
+        cls: builtins.type[T],
+        # L0180 “pretrained_name_or_path”是当前括号中的一项，逗号将它与下一项分开。
+        pretrained_name_or_path: str | Path,
+        # L0181 后续参数必须按名字传入。
+        *,
+        # L0182 为“force_download”提供这一项的值，注意它所在的参数表或外层表达式。
+        force_download: bool = False,
+        # L0183 为“resume_download”提供这一项的值，注意它所在的参数表或外层表达式。
+        resume_download: bool | None = None,
+        # L0184 为“proxies”提供这一项的值，注意它所在的参数表或外层表达式。
+        proxies: dict[Any, Any] | None = None,
+        # L0185 为“token”提供这一项的值，注意它所在的参数表或外层表达式。
+        token: str | bool | None = None,
+        # L0186 为“cache_dir”提供这一项的值，注意它所在的参数表或外层表达式。
+        cache_dir: str | Path | None = None,
+        # L0187 为“local_files_only”提供这一项的值，注意它所在的参数表或外层表达式。
+        local_files_only: bool = False,
+        # L0188 为“revision”（固定的 checkpoint 版本）提供这一项的值，注意它所在的参数表或外层表达式。
+        revision: str | None = None,
+        # L0189 星号展开可迭代对象或关键字字典。若在函数签名中则收集额外参数。
+        **policy_kwargs: Any,
+    # L0190 结束参数表。若箭头后有类型，它标注预期返回值，缩进块是函数体。
+    ) -> T:
+        # L0191 把路径或 Hub 标识统一转成字符串，供后续判断和读取使用。
+        model_id = str(pretrained_name_or_path)
+        # L0192 声明“config_file”的类型为 str | None，设为空值 None作为初始值。
+        config_file: str | None = None
+        # L0193 如果标识在本机就是目录，优先在这个目录找配置文件。
+        if Path(model_id).is_dir():
+            # L0194 条件 CONFIG_NAME in os.listdir(model_id) 成立时进入下方分支。
+            if CONFIG_NAME in os.listdir(model_id):
+                # L0195 调用 os.path.join，用它的结果给 “config_file” 赋值。
+                config_file = os.path.join(model_id, CONFIG_NAME)
+            # L0196 进入对应的另一条分支，注意用缩进找到配对的判断或异常块。
+            else:
+                # L0197 调用 logger.error 执行操作。
+                logger.error(f"{CONFIG_NAME} not found in {Path(model_id).resolve()}")
+        # L0198 进入对应的另一条分支，注意用缩进找到配对的判断或异常块。
+        else:
+            # L0199 开始执行可能抛出异常的代码，后续 except 或 finally 提供处理。
+            try:
+                # L0200 由 Hub 客户端按仓库和 revision 解析配置文件。原评测启用离线模式，复用本地缓存。
+                config_file = hf_hub_download(
+                    # L0201 为“repo_id”（Hub 仓库标识）提供这一项的值，注意它所在的参数表或外层表达式。
+                    repo_id=model_id,
+                    # L0202 为“filename”（文件名）提供这一项的值，注意它所在的参数表或外层表达式。
+                    filename=CONFIG_NAME,
+                    # L0203 为“revision”（固定的 checkpoint 版本）提供这一项的值，注意它所在的参数表或外层表达式。
+                    revision=revision,
+                    # L0204 为“cache_dir”提供这一项的值，注意它所在的参数表或外层表达式。
+                    cache_dir=cache_dir,
+                    # L0205 为“force_download”提供这一项的值，注意它所在的参数表或外层表达式。
+                    force_download=force_download,
+                    # L0206 为“token”提供这一项的值，注意它所在的参数表或外层表达式。
+                    token=token,
+                    # L0207 为“local_files_only”提供这一项的值，注意它所在的参数表或外层表达式。
+                    local_files_only=local_files_only,
+                # L0208 闭合上方尚未结束的括号。
+                )
+            # L0209 捕获这里列出的异常类型，然后执行下方的处理逻辑。
+            except HfHubHTTPError as e:
+                # L0210 抛出 FileNotFoundError，中断当前路径并交给上层的异常处理。
+                raise FileNotFoundError(
+                    # L0211 f 字符串片段，花括号中的表达式会被求值并插入文本。
+                    f"{CONFIG_NAME} not found on the HuggingFace Hub in {model_id}"
+                # L0212 延续上面的语句，) from e。本段处理按 checkpoint 的 type 和覆盖参数恢复具体策略配置。
+                ) from e
+
+        # L0214 条件 config_file is None 成立时进入下方分支。
+        if config_file is None:
+            # L0215 抛出 FileNotFoundError，中断当前路径并交给上层的异常处理。
+            raise FileNotFoundError(f"{CONFIG_NAME} not found in {model_id}")
+
+        # L0217 进入上下文管理器，缩进块结束时由它处理退出动作。
+        with open(config_file) as f:
+            # L0218 解析 JSON，得到普通字典，还需解析为具体配置类型。
+            config = json.load(f)
+
+        # L0220 原作者的注释。此处在讲按 checkpoint 的 type 和覆盖参数恢复具体策略配置。
+        # Resolve the concrete config subclass from the serialized "type" tag, then parse
+        # L0221 原作者的注释。此处在讲按 checkpoint 的 type 和覆盖参数恢复具体策略配置。
+        # the config (with CLI overrides) directly for that class. The "type" key is
+        # L0222 原作者的注释。此处在讲按 checkpoint 的 type 和覆盖参数恢复具体策略配置。
+        # stripped because draccus only consumes it when parsing the registry base class.
+        # L0223 取出并删除序列化的 type。本次值为 smolvla。
+        policy_type = config.pop("type", None)
+        # L0224 条件 policy_type is None 成立时进入下方分支。
+        if policy_type is None:
+            # L0225 抛出 ValueError，中断当前路径并交给上层的异常处理。
+            raise ValueError(f"Missing 'type' field in {CONFIG_NAME} of {model_id}")
+        # L0226 开始执行可能抛出异常的代码，后续 except 或 finally 提供处理。
+        try:
+            # L0227 按注册名找到配置类，本次得到 SmolVLAConfig。
+            config_cls = cls.get_choice_class(policy_type)
+        # L0228 捕获这里列出的异常类型，然后执行下方的处理逻辑。
+        except Exception as e:
+            # L0229 抛出 ValueError，中断当前路径并交给上层的异常处理。
+            raise ValueError(
+                # L0230 f 字符串片段，花括号中的表达式会被求值并插入文本。
+                f"Policy type '{policy_type}' (from {CONFIG_NAME} of {model_id}) is not registered. "
+                # L0231 f 字符串片段，花括号中的表达式会被求值并插入文本。
+                f"Available policy types: {cls.get_known_choices()}"
+            # L0232 延续上面的语句，) from e。本段处理按 checkpoint 的 type 和覆盖参数恢复具体策略配置。
+            ) from e
+
+        # L0234 进入上下文管理器，缩进块结束时由它处理退出动作。
+        with tempfile.NamedTemporaryFile("w+", delete=False, suffix=".json") as f:
+            # L0235 调用 json.dump 执行操作。
+            json.dump(config, f)
+            # L0236 读取属性 f.name给 “config_file” 赋值。
+            config_file = f.name
+
+        # L0238 调用 policy_kwargs.pop，用它的结果给 “cli_overrides” 赋值。
+        cli_overrides = policy_kwargs.pop("cli_overrides", [])
+        # L0239 进入上下文管理器，缩进块结束时由它处理退出动作。
+        with draccus.config_type("json"):
+            # L0240 按具体数据类解析配置值，用调用方传入的覆盖项更新它。
+            config = draccus.parse(config_cls, config_file, args=cli_overrides)
+
+        # L0242 原作者的注释。此处在讲按 checkpoint 的 type 和覆盖参数恢复具体策略配置。
+        # The serialized config.json does not carry the source path, so parsing
+        # L0243 原作者的注释。此处在讲按 checkpoint 的 type 和覆盖参数恢复具体策略配置。
+        # yields pretrained_path=None. Backfill it: downstream code (e.g.
+        # L0244 原作者的注释。此处在讲按 checkpoint 的 type 和覆盖参数恢复具体策略配置。
+        # make_policy / make_pre_post_processors) silently builds an untrained
+        # L0245 原作者的注释。此处在讲按 checkpoint 的 type 和覆盖参数恢复具体策略配置。
+        # processor pipeline without it, instead of loading the pretrained stats.
+        # L0246 把权重文件所在的目录或 Hub 标识一起记到配置实例。
+        config.pretrained_path = Path(model_id)
+        # L0247 记录固定的模型版本，后续加载权重和处理器时使用。
+        config.pretrained_revision = revision
+        # L0248 引用已有的值 config作为当前调用的返回值。
+        return config

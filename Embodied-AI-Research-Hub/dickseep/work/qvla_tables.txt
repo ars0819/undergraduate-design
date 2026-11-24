@@ -1,0 +1,17 @@
+TOTAL TABLES: 8
+T  1 rows= 15 cols=11 :: Table 1: Performances under various weight-activation quantization settings. W4A4/W8A8 refers to the quantization of weights (W) and activations (A) t
+        hdr: Model | Setting | Method | Spatial | Object | Goal
+T  2 rows= 11 cols=10 :: Table 2: Performances under various weight-only quantization settings. Weight-only quantization primarily targets the reduction of memory, typically o
+        hdr: Model | Setting | Method | Spatial | Object | Goal
+T  4 rows=  7 cols=10 :: Table 4: The influence of pruning (0-bit quantization) and uniform-bit quantization under an overall INT8 budget. The row ④ with “prune” and without “
+        hdr: # | Weight Type | Quantization Method | Spatial | Object | Goal
+T  5 rows=  4 cols= 7 :: Table 5: Real-world success rate comparison with AutoQVLA.
+        hdr: Method | Setting | One-Arm Task | Dual-Arm Task | Average | SpeedUp ↑\uparrow
+T  6 rows=  6 cols= 7 :: Table 6: Performance results of OpenVLA with different gates ratios under the INT8 budget. We compare the performance across various gate ratios based
+        hdr: Budget | Gates Ratio | LIBERO-Spatial | LIBERO-Object | LIBERO-Goal | LIBERO-Long
+T  7 rows=  9 cols= 9 :: Table 7: Performance comparison on the UniVLA-7B model under various quantization settings.
+        hdr: Model | Setting | Method | Spatial | Object | Goal
+T  8 rows=  5 cols= 7 :: Table 8: Performance evaluation on the CALVIN benchmark: Task Success Rate by Sequence Length. The compressed models are evaluated under the W8A16 set
+        hdr: Method | Task completed in a row (%) | Avg. len ↑\uparrow
+T  9 rows=  5 cols= 6 :: Table 9: Ablation Study on Calibration Set Size. Evaluation on OpenVLA-OFT (W8A16) across LIBERO tasks.
+        hdr: Calibration Set Size | Spatial | Object | Goal | Long | Avg.

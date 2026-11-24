@@ -1,0 +1,43 @@
+{
+  "purpose": "协议探针：同一 seed/任务/权重，仅改 n_action_steps，验证执行协议对结果的影响",
+  "probes": [
+    {
+      "n_action_steps": 50,
+      "success": true,
+      "steps": 79,
+      "eval_s": 4.550060749053955,
+      "video": "outputs/spatial-task0-rerun/videos/libero_spatial_0/eval_episode_0.mp4",
+      "video_sha256": "128d27a018a624d11e12654174cc515efe3f7898d3d3083b67c90635f21f31d0"
+    },
+    {
+      "n_action_steps": 1,
+      "success": false,
+      "steps": 280,
+      "eval_s": 33.91394877433777,
+      "video": "outputs/probe-n1/videos/libero_spatial_0/eval_episode_0.mp4",
+      "video_frames": 280,
+      "video_bytes": 244218,
+      "note": "跑满 280 步上限仍未成功；末帧显示机械臂悬停在碗上方、目标盘子为空"
+    }
+  ],
+  "settings": {
+    "task": "libero_spatial task 0",
+    "seed": 1000,
+    "init_states": true,
+    "hard_reset": true,
+    "num_steps": 10,
+    "policy": "lerobot/smolvla_libero@a24f1f38"
+  },
+  "interpretation": [
+    "n=1 单例，只能说明该 checkpoint 在此任务/seed 下对执行协议极敏感，不能当作成功率结论。",
+    "官方 checkpoint 的 config 默认 n_action_steps=50；论文 §4.3 的仿真协议是每执行 1 个动作重新观测。两者不可混用。",
+    "假设（未验证）：每步重规划会重新采样 flow-matching 噪声，可能造成高频抖动；固定噪声或用 RTC 可能改善。",
+    "论文 Table 13 的结论（执行 1~10 步更好）来自其自有 from-scratch 训练；与官方 release checkpoint 的行为不必然一致。"
+  ],
+  "full_suite_estimate": "单回合 n_action_steps=1 墙钟约 43 s（rollout 33.9 s + 启动/加载约 9 s）；LIBERO-Spatial 10 任务 × 10 回合 ≈ 100 回合 ≈ 1 小时量级",
+  "logs": {
+    "n_action_steps_50": "logs/eval-rerun.log",
+    "n_action_steps_1": "logs/eval-n1-probe.log"
+  },
+  "frames": "/home/lxy/桌面/embodied/figures/repro/probe-n1/"
+}

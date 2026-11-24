@@ -1,0 +1,818 @@
+From Inference Efficiency to Embodied Efficiency:Revisiting Efficiency Metrics for Vision-Language-Action Models
+Skip to main content
+Report GitHub Issue
+×
+Title:
+Content selection saved. Describe the issue below:
+Description:
+Submit without GitHub
+Submit in GitHub
+Why HTML?
+Report Issue
+Back to Abstract
+Download PDF
+Contents
+Reading mode
+Colour theme
+Abstract
+I Introduction
+II Related Work
+II-A VLA for Robotic Control
+II-B Efficient VLA
+III Preliminaries
+III-A From Model Inference to Robotic Actuation
+III-B Evaluation Metrics for Embodied Efficiency
+IV Inference Efficiency vs. Embodied Efficiency
+IV-A Experiments on Model Compression
+IV-B Experiments on Token Compression
+IV-C Experiments on Action Compression
+V Evaluating Adaptation Strategies in Terms of Embodied Efficiency
+V-A Experiments on In-Context Learning
+V-B Experiments on Supervised Fine-Tuning
+VI Conclusion
+References
+License: arXiv.org perpetual non-exclusive license
+arXiv:2603.19131v1 [cs.LG] 19 Mar 2026
+From Inference Efficiency to Embodied Efficiency:
+Revisiting Efficiency Metrics for Vision-Language-Action ModelsThanks: *These authors contributed equally.Thanks: +Correspondence to: Yingyan (Celine) Lin (celine.lin@gatech.edu) and Chaojian Li (chaojian@ust.hk).
+Zhuofan Li1*,
+Hongkun Yang1*,
+Zhenyang Chen2*,
+Yangxuan Chen1,
+Yingyan (Celine) Lin2+,
+Chaojian Li1+
+Affiliation: 1Hong Kong University of Science and Technology
+2Georgia Institute of Technology
+Affiliation:
+Abstract
+Vision-Language-Action (VLA) models have recently enabled embodied agents to perform increasingly complex tasks by jointly reasoning over visual, linguistic, and motor modalities. However, we find that the prevailing notion of “efficiency” in current VLA research, characterized by parameters, FLOPs, or token decoding throughput, does not reflect actual performance on robotic platforms. In real-world execution, efficiency is determined by system-level embodied behaviors such as task completion time, trajectory smoothness, cumulative joint rotation, and motion energy. Through controlled studies across model compression, token sparsification, and action sequence compression, we make several observations that challenge common assumptions. (1) Methods that reduce computation under conventional metrics often increase end-to-end execution cost or degrade motion quality, despite maintaining task success rates.
+(2) System-level embodied efficiency metrics reveal performance differences in the learned action policies that remain hidden under conventional evaluations.
+(3) Common adaptation methods such as in-context prompting or supervised fine-tuning show only mild and metric-specific improvements in embodied efficiency. While these methods can reduce targeted embodied-efficiency metrics such as jerk or action rate, the resulting gains may come with trade-offs in other metrics, such as longer completion time. Taken together, our results suggest that conventional inference efficiency metrics can overlook important aspects of embodied execution. Incorporating embodied efficiency provides a more complete view of policy behavior and practical performance, enabling fairer and more comprehensive comparisons of VLA models.
+I Introduction
+Fig. 1: Comparison of π0.5\pi_{0.5} [1] VLA models with 5% and 20% of weights pruned using magnitude pruning [2], evaluated on a Libero [3] task with the instruction “pick up the cream cheese and place it in the basket.” The comparison includes task success rate (averaged over 50 test rollout trajectories, following [3]), parameter count, completion time, and end-effector height over time. Notably, in this extreme case, although the 20% pruned model achieves a larger parameter reduction without any drop in success rate, it fails to execute the grasp smoothly, as shown in the zoomed-in sequence. This results in a longer completion time and therefore higher overall system energy consumption. This makes the model “inference-efficient” but not “embodied-efficient”.
+Fig. 2: An overview of the deployment of a VLA model on embodied robotic platforms. Conventional model inference efficiency metrics (e.g., number of parameters, FLOPs, and decoding throughput) apply only to the model inference stage, where the VLA model processes captured images and language instructions to output corresponding action tokens. However, assessing embodied efficiency for the robotic actuation stage requires a different set of metrics, including end-effector path length, joint-space path length, action smoothness, and task completion time.
+Vision-Language-Action (VLA) models have recently emerged as a promising paradigm for enabling embodied agents to perform complex, instruction-conditioned behaviors by jointly reasoning over visual observations, natural language goals, and robot states
+[4, 5, 6, 1].
+As VLA models continue to increase in scale and capability, their ability to execute behaviors efficiently becomes increasingly important for practical deployment, especially in latency- or energy-constrained settings [7, 8, 9, 10]. However, unlike text- or image-only tasks, the performance of embodied agents is determined not only by the efficiency of model inference, but also by the physical behavior of the robotic platform induced by the model’s output actions. Specifically, the power consumption associated with model inference and the power consumption associated with robotic actuation are often of the same order of magnitude. For example, when running the LeRobot example on an NVIDIA Jetson platform [11], the total power draw of the servos in the Koch v1.1 kit [12, 13] under their rated torque is approximately 22 W, while the maximum power budget of the corresponding Jetson Orin NX edge GPU [14] is 20 W. A similar trend holds for more complex embodied systems: a Franka Emika robot arm and its controller [15] can consume up to 430 W, whereas an NVIDIA H100 NVL GPU [16] has a maximum power consumption of around 400 W. These examples highlight that improving inference efficiency alone does not guarantee better system-level embodied efficiency, as actuation costs can dominate or offset model-level gains.
+Despite the importance of the aforementioned robotic actuation in determining overall VLA system efficiency, existing work on efficient VLA does not explicitly incorporate actuation cost when designing compression techniques. Instead, the prevailing approach is to apply efficient AI methods originally developed for large language or vision models, such as pruning [17, 18], quantization [18], token sparsification [19], or lightweight inference architectures [20, 21, 22], and to evaluate their effectiveness using conventional AI efficiency metrics such as parameter count [20, 22], floating point operations (FLOPs) [23], or decoding throughput (e.g., tokens per second) [24]. However, these metrics capture only the efficiency of model inference and fail to reflect the system-level robotic actuation behavior that ultimately determines embodied performance. For example, as shown in Fig. 1, two models with identical task success rates (i.e., 100%) can exhibit drastically different task completion times (13 s vs. 21 s). In this case, the model with 20% of its weights pruned incurs higher overall system energy (i.e., less “embodied-efficient”) expenditure than the 5%-pruned model, despite having fewer parameters and no increase in FLOPs or decoding throughput (i.e., more “inference-efficient”).
+To comprehensively study the mismatch between the prevailing notion of “inference efficiency” and the desired “embodied efficiency”, we examine several commonly used efficiency-improving techniques. These techniques are evaluated using multiple embodied-efficiency metrics, as depicted in Fig. 2. We conduct this analysis across three domains of VLA design:
+(1) model compression (e.g., weight pruning and quantization) [17, 18], (2) token sparsification (e.g., visual token pruning) [25, 17], and (3) action sequence compression (e.g., reducing temporal redundancy in control signals) [26]. Across these domains, our analysis reveals several insights that challenge prevailing assumptions:
+•
+Reducing computational inference cost does not necessarily improve embodied execution efficiency.
+Techniques that decrease FLOPs or tokens per forward pass can increase end-to-end task duration or degrade motion smoothness, even when task success rates are preserved. In particular, pruning 5% of the weights of a commonly used π0\pi_{0} VLA model [6] results in a 13.6% longer task completion time and a 46.2% increase in end-effector path length on the Bridge benchmark [27].
+•
+System-level embodied metrics reveal differences that conventional evaluations overlook. Policies learned by different VLA models that appear equivalent under accuracy- or throughput-based evaluations may differ considerably in the motion dynamics and energy usage they induce. Specifically, π0\pi_{0} [6] and π0\pi_{0}-FAST [26] achieve identical success rates on Libero-Object [3], but π0\pi_{0}-FAST exhibits a 1.5% shorter task completion time along with 34.5% higher jerkiness, implying a more aggressive policy learned by π0\pi_{0}-FAST.
+•
+Common adaptation methods show mild and metric-specific improvements in embodied efficiency. We find that directly applying supervised fine-tuning or in-context prompting can reduce targeted embodied-efficiency metrics such as jerk or action rate, but these gains are often partial and may come with trade-offs in other metrics. For example, adding an auxiliary jerk-based loss during supervised fine-tuning of the π0.5\pi_{0.5} [1] model on Libero-Object [3] reduces jerkiness by 13.2% without changing end-effector path length, while in-context prompting can produce larger jerk reductions of up to 25.8% on Libero-Goal, although sometimes at the cost of longer completion time.
+II Related Work
+II-A VLA for Robotic Control
+VLA models extend the multimodal capabilities of Vision-Language Models (VLMs) to robotic actuation and have rapidly become one of the dominant paradigms for generalist robotic control tasks. In particular, the Robotics Transformer (RT) family [28, 4, 29, 30] demonstrates that large transformer policies trained on diverse, language-conditioned robot demonstrations can unify hundreds of manipulation tasks.
+To improve temporal coherence of action trajectories and execution efficiency, π0\pi_{0} [6] and π0.5\pi_{0.5} [1] replace the autoregressive head design with generative action decoders based on diffusion and flow matching. Nevertheless, due to their large transformer backbones, current VLA models entail substantial computation and data movement during inference, leading to high latency and memory usage [31]. For practical deployment on resource-constrained robotic platforms that require rapid decision-making under limited power budgets, improving the efficiency of VLAs remains a key challenge.
+II-B Efficient VLA
+In the model domain,
+OpenVLA [5] reduces the memory footprint during inference by quantizing weights from bfloat16 to int8 and int4.
+QAIL [32] proposes a quantization-aware fine-tuning scheme to jointly reduce memory consumption and latency per inference step. Beyond quantization, GLUESTICK [33] explores recovering task success rate after structured pruning of less important weights in VLA models. In the token domain, prior works have investigated pruning less informative tokens to reduce prefilling cost.
+SP-VLA [17] and SQAP-VLA [18] prune visual tokens to accelerate the perception-to-action pipeline.
+Several studies also design new VLA pipelines that effectively compress both the model and token representations. For instance,
+RoboMamba [21] replaces the transformer backbone with a state-space model to facilitate faster token decoding. Beyond compression in the model and token domains, several efforts target the action representation domain to more compactly represent action sequences.
+FAST [26] leverages a discrete cosine transform to reduce temporal redundancy in action chunks.
+RynnVLA-001 [34] adopts a variational autoencoder for action compression, reducing the dimensionality of the action space.
+Despite these advances toward more efficient VLA models, most existing work overlooks the overall energy efficiency of the full closed-loop system, encompassing both model inference and the resulting robotic actuation.
+Fig. 3: Visualization of the trajectories of Model A (a baseline π0\pi_{0}) and Model B (a π0\pi_{0} model with 10% of weights pruned) when performing the 4th task of the Libero-Goal suite [3]. The trajectories are projected onto the X–Y, Y–Z, and X–Z planes for improved visualization clarity, revealing that Model B induces a longer path.
+III Preliminaries
+III-A From Model Inference to Robotic Actuation
+Following the formulation in [28], for the deployment of VLA models on robotic platforms, we model the closed-loop execution of a language-conditioned robot as a sequential decision-making process (𝒮,𝒪,𝒜,𝒫)(\mathcal{S},\mathcal{O},\mathcal{A},\mathcal{P}), where 𝒮\mathcal{S}, 𝒪\mathcal{O}, 𝒜\mathcal{A}, and 𝒫\mathcal{P} denote the state, observation, action spaces, and transition function, respectively. At timestep tt, the environment is in state st∈𝒮s_{t}\in\mathcal{S}, the robot receives an observation ot∈𝒪o_{t}\in\mathcal{O} (e.g., RGB images, as depicted on the left side of Fig. 2), and the VLA model πθ\pi_{\theta} outputs an action at∈𝒜a_{t}\in\mathcal{A} conditioned on the observation oto_{t} and a language goal gg, i.e.,
+at∼πθ​(at∣ot,g).a_{t}\sim\pi_{\theta}(a_{t}\mid o_{t},g).
+(1)
+The environment then evolves according to the transition kernel st+1∼𝒫(⋅∣st,at)s_{t+1}\sim\mathcal{P}(\cdot\mid s_{t},a_{t}), and low-level controllers map the high-level actions ata_{t} to joint torques and resulting motions. This formulation provides the basis for analyzing the embodied efficiency of VLA-driven robotic systems.
+III-B Evaluation Metrics for Embodied Efficiency
+To evaluate the embodied efficiency of the inference-to-actuation process, we adopt metrics that capture both model inference behavior and robotic actuation performance.
+Specifically, the adopted embodied efficiency metrics fall into the following two categories.
+(1) Task duration metrics, which quantify the accumulated execution cost during embodied actuation driven by VLA inference:
+•
+Task completion time τ\tau is defined as τ=T/f\tau=T/f,
+where TT is the number of timesteps and ff is the control frequency. A smaller τ\tau indicates higher execution efficiency, as it measures the total time during which energy is consumed for model inference and robotic actuation.
+•
+End-effector path length LeeL_{\text{ee}} is defined as Lee=∑t=1T−1‖pt+1−pt‖2L_{\text{ee}}=\sum_{t=1}^{T-1}\bigl\|p_{t+1}-p_{t}\bigr\|_{2},
+where ptp_{t} denotes the end-effector pose (e.g., the robot’s gripper in Fig. 2) at timestep tt. A shorter path LeeL_{\text{ee}} indicates less actuator travel and thus higher efficiency.
+•
+Joint-space path length LjointL_{\text{joint}} is defined as Ljoint=∑t=1T−1‖qt+1−qt‖2L_{\text{joint}}=\sum_{t=1}^{T-1}\bigl\|q_{t+1}-q_{t}\bigr\|_{2},
+where qtq_{t} represents the joint configuration at timestep tt (e.g., the blue arrow in Fig. 2). A smaller LjointL_{\text{joint}} corresponds to reduced mechanical work and therefore higher efficiency.
+(2) Motion smoothness metrics, which measure jerk or jitter that arises during robotic actuation due to unstable VLA action outputs or physical constraints:
+•
+Average jerk L2 norm JJ is defined as J=f4T−2​∑t=2T−1‖q˙t+1−2​q˙t+q˙t−1‖22,J=\frac{f^{4}}{T-2}\sum_{t=2}^{T-1}\|\dot{q}_{t+1}-2\dot{q}_{t}+\dot{q}_{t-1}\|_{2}^{2},
+which averages the L2 norm of the discrete second-order difference of joint configurations. A higher JJ reflects more frequent accelerations and decelerations, which generally incur higher instantaneous power and dissipative losses [35].
+•
+Average action rate RR is defined as R=1T−1​∑t=1T−1‖at+1−at‖2R=\frac{1}{T-1}\sum_{t=1}^{T-1}\bigl\|a_{t+1}-a_{t}\bigr\|_{2},
+which measures how rapidly high-level actions change across timesteps. A higher RR indicates more aggressive command variations and thus typically lower energy efficiency.
+To reduce random variation, we evaluate each policy across NN episodes and compute the overall task success rate SR as SR=1N​∑i=1N𝟏​[succi]\text{SR}=\frac{1}{N}\sum_{i=1}^{N}\mathbf{1}[\text{succ}_{i}],
+where 𝟏​[succi]\mathbf{1}[\text{succ}_{i}] is the success indicator for the ii-th episode. Similarly, all the aforementioned metrics are averaged over the successful episodes among the
+NN evaluation episodes:
+m¯succ=∑i=1Nmi​ 1​[succi]∑i=1N𝟏​[succi],m∈{τ,Lee,Ljoint,J,R}.\overline{m}_{\text{succ}}=\frac{\sum_{i=1}^{N}m_{i}\,\mathbf{1}[\text{succ}_{i}]}{\sum_{i=1}^{N}\mathbf{1}[\text{succ}_{i}]},\qquad m\in\{\tau,L_{\text{ee}},L_{\text{joint}},J,R\}.
+(2)
+Most efficient-VLA studies report performance in simulation, where environments are controllable and standardized. However, accurate modeling of actuator dynamics and heat dissipation remains a known limitation of simulators, making direct energy estimation unreliable [36]. Therefore, instead of simulated energy, we adopt the aforementioned set (τ¯,L¯ee,L¯joint,J¯,R¯)(\overline{\tau},\overline{L}_{\text{ee}},\overline{L}_{\text{joint}},\overline{J},\overline{R}) as kinematic and control-based proxies correlated with traversal distance and actuation effort, serving as informative indicators of energy efficiency. Taken together, (SR,τ¯,L¯ee,L¯joint,J¯,R¯)(\text{SR},\overline{\tau},\overline{L}_{\text{ee}},\overline{L}_{\text{joint}},\overline{J},\overline{R}) provide a task-aware, kinematics- and control-based perspective of efficiency: successful policies that complete tasks faster, with shorter paths and smoother motions, correspond to closed-loop behaviors that are more amenable to energy-efficient execution on physical robots.
+TABLE I: Evaluation of VLA models compressed with unstructured weight pruning [37] across embodied efficiency metrics averaged over four task suites of Libero (Libero-Spatial, Libero-Object, Libero-Goal, Libero-10). ↓𝐰\mathbf{\downarrow\!w} denotes the pruning ratio.
+Norm. τ¯\overline{\tau}, L¯ee\overline{L}_{\text{ee}}, L¯joint\overline{L}_{\text{joint}}, J¯\overline{J}, and R¯\overline{R} indicate the normalized task completion time, end-effector path length, joint-space path length, average jerk L2 norm, and average action rate relative to the baseline, respectively.
+Model
+π𝟎\mathbf{\pi_{0}}
+π0.5\mathbf{\pi_{0.5}}
+MolmoAct
+Baseline
+↓w=5%\downarrow\!w=5\%
+↓w=10%\downarrow\!w=10\%
+Baseline
+↓w=5%\downarrow\!w=5\%
+↓w=10%\downarrow\!w=10\%
+Baseline
+↓w=5%\downarrow\!w=5\%
+↓w=10%\downarrow\!w=10\%
+↓w=20%\downarrow\!w=20\%
+Success Rate (%)
+91.3
+92.1 (+0.8)
+88.6 (-2.7)
+96.8
+96.7 (+0.1)
+96.1 (-0.7)
+86.3
+86.5 (+0.2)
+88.8 (+2.5)
+87.3 (+1.0)
+Norm. τ¯\overline{\tau} (%)
+100
+99.9 (-0.1)
+101.6 (+1.6)
+100
+100.8 (+0.8)
+103.0 (+3.0)
+100
+99.0 (-1.0)
+101.2 (+1.2)
+101.5 (+1.5)
+Norm. L¯ee\overline{L}_{\text{ee}} (%)
+100
+101.7 (+1.7)
+105.6 (+5.6)
+100
+100.2 (+0.2)
+100.0 (+0.0)
+100
+101.5 (+1.5)
+100.0 (+0.0)
+102.3 (+2.3)
+Norm. L¯joint\overline{L}_{\text{joint}} (%)
+100
+99.0 (-1.0)
+102.8 (+2.8)
+100
+100.4 (+0.4)
+100.0 (+0.0)
+100
+100.4 (+0.4)
+101.4 (+1.4)
+100.7 (+0.7)
+Norm. J¯\overline{J} (%)
+100
+102.6 (+2.6)
+111.0 (+11.0)
+100
+101.6 (+1.6)
+100.7 (+0.7)
+100
+96.8 (-3.2)
+101.9 (+1.9)
+105.8 (+5.8)
+Norm. R¯\overline{R} (%)
+100
+100.8 (+0.8)
+103.1 (+3.1)
+100
+98.0 (-2.0)
+102.5 (+2.5)
+100
+99.2 (-0.8)
+100.1 (+0.1)
+101.0 (+1.0)
+IV Inference Efficiency vs. Embodied Efficiency
+With the embodied efficiency metrics defined in Sec. III-B, we conduct experiments on compressing VLA models across different domains, i.e., model/token/action, to investigate how compression techniques originally designed to improve inference efficiency affect embodied efficiency. For each task in the benchmark suite, i.e., Libero-Spatial, Libero-Object, Libero-Goal, Libero-10 [3], and Bridge [27], we run N=50N=50 evaluation episodes, consistent with the settings in OpenPi [38], or until 10 successful episodes (𝟏​[succi]=1\mathbf{1}[\text{succ}_{i}]=1 for the ii-th) are obtained, following the settings in the original Libero dataset [3]. We report metrics averaged across episodes using Eq. 2.
+IV-A Experiments on Model Compression
+For model compression, we conduct experiments using weight pruning [37] and quantization [39] on several representative VLA models, including π0\pi_{0} [6], π0.5\pi_{0.5} [1], and MolmoAct [40].
+Weight pruning. As summarized in Tab. I, we prune the weights with the smallest magnitudes in each baseline model, where ↓𝐰\mathbf{\downarrow\!w} denotes the pruning rate. We observe that when the pruning rate ↓𝐰\mathbf{\downarrow\!w} ranges from 5% to 20%, without notably hurting the task success rate (e.g., at most -2.7% drop), the end-to-end execution cost increases noticeably (e.g., up to +5.6% in terms of end-effector path length), and motion smoothness degrades notably (e.g., up to +11.0% in average jerk L2 norm). To understand the decreased embodied efficiency, we further visualize the trajectories of a baseline model and a pruned model in Fig. 3. Although both models complete the task successfully, the pruned model follows a noticeably longer path, an aspect that is difficult to capture with conventional model inference efficiency metrics. These results indicate that although pruning effectively reduces model size, it can make the model less embodied-efficient than uncompressed baselines. We further conduct unstructured weight pruning on a more challenging benchmark, Bridge [27]. As shown in Fig. 4, even with only 5% of the weights pruned, the end-effector path length increases by 46.2% with only a 0.2% drop in success rate, consistent with our observations in Tab. I.
+Fig. 4: Comparison of the baseline π0\pi_{0} [6, 41] and its pruned variant (5% weights removed via magnitude pruning [2]) on the Bridge benchmark [27].
+Weight quantization. As summarized in Tab. II, we explore quantizing the bfloat16 models to int8 and int4. Similar to our observations on model pruning, while quantization largely preserves task success rate, with the worst-case drop limited to −1.8%-1.8\%,
+it introduces degradation in motion smoothness. The average jerk L2 norm J¯\bar{J} increases across all VLA models under both quantization levels, with int4 quantization yielding particularly pronounced jerk increases of up to +19.5%+19.5\% (π0\pi_{0}), +14.1%+14.1\% (MolmoAct), and +3.5%+3.5\% (π0.5\pi_{0.5}).
+TABLE II:
+Evaluation of VLA models compressed with post-training weight quantization [39] across embodied efficiency metrics averaged over four task suites of Libero (Libero-Spatial, Libero-Object, Libero-Goal, Libero-10). 𝐏⁡(𝐰)\mathbf{P(w)} denotes the weight bit precision.
+Norm. τ¯\overline{\tau}, L¯ee\overline{L}_{\text{ee}}, L¯joint\overline{L}_{\text{joint}}, J¯\overline{J}, and R¯\overline{R} indicate the normalized task completion time, end-effector path length, joint-space path length, average jerk L2 norm, and average action rate relative to the baseline, respectively.
+Following the official OpenPi implementation [38], we employ a fake quantization scheme to evaluate the impact of bit-precision reduction. Specifically, weights are first quantized to the target precision 𝐏⁡(𝐰)\mathbf{P(w)} and subsequently dequantized back to their original floating-point format to simulate the quantization error during inference, ensuring compatibility with the model’s standard execution pipeline.
+Metric
+π𝟎\mathbf{\pi_{0}}
+π0.5\mathbf{\pi_{0.5}}
+MolmoAct
+Baseline
+𝐏⁡(𝐰)=int8\mathbf{P(w)}=\texttt{int8}
+𝐏⁡(𝐰)=int4\mathbf{P(w)}=\texttt{int4}
+Baseline
+𝐏⁡(𝐰)=int8\mathbf{P(w)}=\texttt{int8}
+𝐏⁡(𝐰)=int4\mathbf{P(w)}=\texttt{int4}
+Baseline
+𝐏⁡(𝐰)=int8\mathbf{P(w)}=\texttt{int8}
+𝐏⁡(𝐰)=int4\mathbf{P(w)}=\texttt{int4}
+Success Rate (%)
+92
+92.7 (+0.7)
+90.2 (-1.8)
+96.3
+96.3 (+0.0)
+97.1 (+0.8)
+86.3
+88.2 (+1.9)
+88.6 (+2.3)
+Norm. τ¯\overline{\tau} (%)
+100
+99.8 (-0.2)
+102.8 (+2.8)
+100
+100.3 (+0.3)
+99.3 (-0.7)
+100
+100.9 (+0.9)
+100.7 (+0.7)
+Norm. L¯ee\overline{L}_{\text{ee}} (%)
+100
+99.9 (-0.1)
+101.1 (+1.1)
+100
+100.0 (+0.0)
+99.6 (-0.4)
+100
+100.0 (+0.0)
+100.0 (+0.0)
+Norm. L¯joint\overline{L}_{\text{joint}} (%)
+100
+100.6 (+0.6)
+104.4 (+4.4)
+100
+100.1 (+0.1)
+99.2 (-0.8)
+100
+103.1 (+3.1)
+101.1 (+1.1)
+Norm. J¯\overline{J} (%)
+100
+100.4 (+0.4)
+119.5 (+19.5)
+100
+96.6 (-3.4)
+103.5 (+3.5)
+100
+100.8 (+0.8)
+114.1 (+14.1)
+Norm. R¯\overline{R} (%)
+100
+100.2 (+0.2)
+104.1 (+4.1)
+100
+99.6 (-0.4)
+100.1 (+0.1)
+100
+100.2 (+0.2)
+101.8 (+1.8)
+Overall, these results suggest that even when VLA models with compressed weights achieve task success rates comparable to their uncompressed counterparts, their embodied efficiency can differ substantially due to variations in motion dynamics, trajectory smoothness, and overall actuation effort. These system-level factors, which directly affect execution time and energy usage, are not reflected in conventional inference efficiency metrics that focus solely on computational cost during model forward passes.
+Fig. 5: Evaluation of VLA models compressed with visual token pruning [25] across different embodied efficiency metrics. Each subplot corresponds to a specific model-task-suite pair (e.g., “π0.5\pi_{0.5} - Libero-Goal” represents evaluating the π0.5\pi_{0.5} model [1] on the Libero-Goal [3] task suite under different token pruning ratios). All embodied efficiency metrics are shown as percentages normalized to each model’s unpruned baseline.
+IV-B Experiments on Token Compression
+Besides directly compressing model weights via pruning or quantization in Sec. IV-A, we also explore applying the visual token pruning technique [25] to π0.5\pi_{0.5} [1] and MolmoAct [40]. As depicted in Fig. 5, we observe that higher token pruning ratios often lead to jerkier trajectories. For example, when the pruning ratio increases from 12% to 56% and 78%, the average jerk L2 norm rises from 204% to 337% and 375% of the unpruned model for the π0.5\pi_{0.5} [1] model evaluated on the Libero-Spatial [3] task suite, highlighting the negative impact of token-level compression on embodied efficiency.
+IV-C Experiments on Action Compression
+In addition to model- and token-level compression examined in Sec. IV-A and Sec. IV-B, respectively, we further investigate compression in the action space. Following the settings in [26], we replace the action head in π0\pi_{0} [6] with the FAST action tokenizer [26]. As shown in Tab. III, FAST generates less smooth actions, even increasing the average jerk L2 norm by 28.0% to 50.6%, while reducing completion time by 1.5% to 5.6%. These trade-offs, revealed by embodied efficiency metrics, offer a more comprehensive understanding of how different action tokenizers balance execution speed, motion smoothness, and energy efficiency. Such insights can guide practitioners to select action tokenization strategies that best align with the requirements and constraints of their specific robotic applications.
+TABLE III: Evaluation of VLA models compressed with temporal action compression via the FAST tokenizer [26] across different embodied efficiency metrics.
+Task Suite
+Tokenizer
+Success Rate
+Completion
+End-Effector
+Joint-Space
+Avg. Jerk
+Avg. Action
+Time τ¯\overline{\tau}
+Path Length L¯ee\overline{L}_{\text{ee}}
+Path Length L¯joint\overline{L}_{\text{joint}}
+L2 Norm J¯\overline{J}
+Rate R¯\overline{R}
+Libero-Spatial
+π0\pi_{0} [6]
+99.1%
+5.4
+1.0
+4.0
+861.9
+0.124
+FAST [26]
+96.0% (-3.1)
+5.1 (-5.6%)
+1.0 (+0.0%)
+3.8 (-5.0%)
+1298.2 (+50.6%)
+0.125 (+0.8%)
+Libero-Object
+π0\pi_{0} [6]
+99.1%
+6.8
+1.0
+3.8
+464.5
+0.106
+FAST [26]
+99.0% (-0.1)
+6.7 (-1.5%)
+1.1 (+10.0%)
+3.7 (-2.6%)
+624.6 (+34.5%)
+0.104 (-1.9%)
+Libero-Goal
+π0\pi_{0} [6]
+95.0%
+5.6
+0.9
+3.6
+1540.9
+0.114
+FAST [26]
+91.2% (-3.8)
+5.4 (-3.6%)
+0.8 (-11.1%)
+3.6 (+0.0%)
+1973.1 (+28.0%)
+0.112 (-1.8%)
+TABLE IV: Evaluating the π0.5\pi_{0.5} VLA model [1] under different in-context learning prompt designs. This implementation adopts the official π0.5\pi_{0.5} configuration [38] to support the use of in-context prompts.
+Task Suite
+Prompt Type
+Success Rate
+Completion
+End-Effector
+Joint-Space
+Avg. Jerk
+Avg. Action
+Time τ¯\overline{\tau}
+Path Length L¯ee\overline{L}_{\text{ee}}
+Path Length L¯joint\overline{L}_{\text{joint}}
+L2 Norm J¯\overline{J}
+Rate R¯\overline{R}
+Libero-Spatial
+None
+98.4%
+5.2
+1.0
+3.9
+678.4
+0.122
+Brief
+98.4% (+0.0)
+5.4 (+2.3%)
+1.0 (+0.0%)
+3.8 (-1.2%)
+628.1 (-7.4%)
+0.119 (-2.5%)
+Detail
+98.2% (-0.2)
+5.8 (+11.2%)
+1.0 (+0.0%)
+3.9 (+0.0%)
+587.5 (-13.4%)
+0.112 (-8.2%)
+Libero-Object
+None
+97.6%
+7.0
+1.1
+3.9
+506.8
+0.118
+Brief
+98.8% (+1.2)
+7.0 (+0.0%)
+1.1 (+0.0%)
+3.8 (-2.0%)
+462.2 (-8.8%)
+0.115 (-2.54%)
+Detail
+98.0% (+0.4)
+7.3 (+4.4%)
+1.1 (+0.0%)
+3.7 (-4.1%)
+409.3 (-19.24%)
+0.112 (-5.1%)
+Libero-Goal
+None
+97.2%
+5.6
+0.8
+3.7
+1524.9
+0.116
+Brief
+96.8% (-0.4)
+5.6 (+0.0%)
+0.8 (+0.0%)
+3.7 (+0.0%)
+1290.3 (-15.4%)
+0.110 (-5.1%)
+Detail
+96.2% (-1.0)
+5.8 (+4.3%)
+0.8 (+0.0%)
+3.6 (-2.0%)
+1131.9 (-25.8%)
+0.105 (-9.5%)
+TABLE V: Evaluating the π0.5\pi_{0.5} VLA model [1] under different supervised fine-tuning loss designs on the Libero [3] dataset.
+Task Suite
+Training Loss
+Success Rate
+Completion
+End-Effector
+Joint-Space
+Avg. Jerk
+Avg. Action
+Time τ¯\overline{\tau}
+Path Length L¯ee\overline{L}_{\text{ee}}
+Path Length L¯joint\overline{L}_{\text{joint}}
+L2 Norm J¯\overline{J}
+Rate R¯\overline{R}
+Libero-Spatial
+Baseline
+100.0%
+5.2
+1.0
+3.9
+631.3
+0.122
++ Auxiliary Loss
+99.6% (-0.4)
+5.2 (+0.0%)
+1.0 (+0.0%)
+3.8 (-2.6%)
+526.6 (-16.6%)
+0.115 (-5.7%)
+Libero-Object
+Baseline
+99.1%
+6.7
+1.1
+3.8
+404.7
+0.107
++ Auxiliary Loss
+99.4% (+0.3)
+6.9 (+3.0%)
+1.1 (+0.0%)
+3.8 (+0.0%)
+351.3 (-13.2%)
+0.100 (-6.5%)
+Libero-Goal
+Baseline
+96.4%
+5.3
+0.8
+3.6
+1810.0
+0.112
++ Auxiliary Loss
+97.6% (+1.2)
+5.5 (+3.8%)
+0.8 (+0.0%)
+3.6 (+0.0%)
+1374.9 (-24.0%)
+0.104 (-7.1%)
+V Evaluating Adaptation Strategies in Terms of Embodied Efficiency
+Motivated by the unique perspective offered by embodied efficiency metrics (see Sec. IV) compared to conventional evaluations, we further investigate whether standard adaptation strategies used in large language models can effectively steer VLA behavior toward higher embodied efficiency. We explore two approaches. (1) In-context learning [42]: we augment the prompt with optimization targets based on the embodied-efficiency metrics defined in Sec. III-B, enabling the model to condition its predictions on efficiency-aware context. (2) Supervised fine-tuning: we incorporate an embodied-efficiency term as an auxiliary loss to regularize action generation.
+V-A Experiments on In-Context Learning
+We prompt the π0.5\pi_{0.5} model using two forms of efficiency-aware context, Brief and
+Detail, and evaluate the resulting action quality across three task suites. Notably, we conduct these experiments on π0.5\pi_{0.5} (rather than π0\pi_{0}) because the original π0\pi_{0} model has a constrained maximum language token length that precludes the use of long-form in-context prompts. In the
+Brief setting, the original task prompt is augmented with a high-level directive:
+“Generate the actions to minimize energy consumption.” In the Detail setting,
+we provide a more explicit optimization objective: “To minimize energy consumption, minimize
+the action rate R=1T−1​∑t=1T−1∥at+1−at∥2R=\frac{1}{T-1}\sum_{t=1}^{T-1}\lVert a_{t+1}-a_{t}\rVert_{2}.” We also instruct
+the model to reduce the total number of steps. As shown in Tab. IV, in-context learning consistently reduces the average action rate R¯\bar{R} across all three task suites under both prompt designs, with substantial reductions in the average jerk L2 norm J¯\bar{J} across all task suites. These reductions, however, come at the cost of longer completion time, with increases of up to +11.2%+11.2\%.
+V-B Experiments on Supervised Fine-Tuning
+We fine-tune the π0.5\pi_{0.5} VLA model [1] using an auxiliary Jerk-L2 loss and Action-Rate loss; that is, we add η​J¯\eta\overline{J} and η​R¯\eta\overline{R} (η=0.01\eta=0.01) during training to balance the magnitudes of the auxiliary loss and the baseline loss. As shown in Tab. V, this loss design reduces the average jerk across different task suites by 16.6% to 24.0% without compromising success rate (+0.4% on average). However, the corresponding task completion time increases by up to 3.8%.
+VI Conclusion
+In this work, we show that conventional inference-centric metrics do not reliably predict real-world execution quality for VLA models. Methods that appear efficient under standard evaluations can lengthen task duration, increase path length, and degrade motion smoothness. Dedicated embodied efficiency metrics can expose differences that remain hidden under conventional evaluations alone. Additionally, common adaptation methods provide only mild and metric-specific improvements in embodied efficiency, often with trade-offs. Our results highlight the need for efficient VLA research to jointly consider inference efficiency and embodied execution. Incorporating the investigated embodied-efficiency metrics in this work has the potential to enable a more faithful assessment of closed-loop behavior, guiding the development of VLA systems that are both computationally efficient and behaviorally robust.
+References
+[1]
+P. Intelligence, K. Black, N. Brown, J. Darpinian, K. Dhabalia, D. Driess, A. Esmail, M. Equi, C. Finn, N. Fusai, et al. (2025)
+π0.5\pi_{0.5}: A vision-language-action model with open-world generalization.
+arXiv preprint arXiv:2504.16054.
+Cited by: Fig. 1,
+3rd item,
+§I,
+§II-A,
+Fig. 5,
+§IV-A,
+§IV-B,
+TABLE IV,
+TABLE V,
+§V-B.
+[2]
+S. Han, J. Pool, J. Tran, and W. Dally (2015)
+Learning both weights and connections for efficient neural network.
+Advances in neural information processing systems 28.
+Cited by: Fig. 1,
+Fig. 4.
+[3]
+B. Liu, Y. Zhu, C. Gao, Y. Feng, Q. Liu, Y. Zhu, and P. Stone (2023)
+Libero: benchmarking knowledge transfer for lifelong robot learning.
+Advances in Neural Information Processing Systems 36, pp. 44776–44791.
+Cited by: Fig. 1,
+2nd item,
+3rd item,
+Fig. 3,
+Fig. 5,
+§IV-B,
+TABLE V,
+§IV.
+[4]
+B. Zitkovich, T. Yu, S. Xu, P. Xu, T. Xiao, F. Xia, J. Wu, P. Wohlhart, S. Welker, A. Wahid, Q. Vuong, V. Vanhoucke, H. Tran, R. Soricut, A. Singh, J. Singh, P. Sermanet, P. R. Sanketi, G. Salazar, M. S. Ryoo, K. Reymann, K. Rao, K. Pertsch, I. Mordatch, H. Michalewski, Y. Lu, S. Levine, et al. (2023)
+RT-2: vision-language-action models transfer web knowledge to robotic control.
+In Proceedings of The 7th Conference on Robot Learning,
+Proceedings of Machine Learning Research, Vol. 229, pp. 2165–2183.
+Cited by: §I,
+§II-A.
+[5]
+M. J. Kim, K. Pertsch, S. Karamcheti, T. Xiao, A. Balakrishna, S. Nair, R. Rafailov, E. Foster, G. Lam, P. Sanketi, Q. Vuong, T. Kollar, B. Burchfiel, R. Tedrake, D. Sadigh, S. Levine, P. Liang, and C. Finn (2024)
+OpenVLA: An Open-Source Vision-Language-Action Model.
+arXiv.
+Note: arXiv:2406.09246 [cs]Comment: Website: https://openvla.github.io/
+External Links: Link,
+Document
+Cited by: §I,
+§II-B.
+[6]
+K. Black, N. Brown, D. Driess, A. Esmail, M. Equi, C. Finn, N. Fusai, L. Groom, K. Hausman, B. Ichter, et al. (2024)
+π0\pi_{0}: A vision-language-action flow model for general robot control.
+arXiv preprint arXiv:2410.24164.
+Cited by: 1st item,
+2nd item,
+§I,
+§II-A,
+Fig. 4,
+§IV-A,
+§IV-C,
+TABLE III,
+TABLE III,
+TABLE III.
+[7]
+W. Guan, Q. Hu, A. Li, and J. Cheng (2025)
+Efficient vision-language-action models for embodied manipulation: a systematic survey.
+External Links: 2510.17111,
+Link
+Cited by: §I.
+[8]
+H. Fang, Y. Liu, Y. Du, L. Du, and H. Yang (2025)
+Sqap-vla: a synergistic quantization-aware pruning framework for high-performance vision-language-action models.
+arXiv preprint arXiv:2509.09090.
+Cited by: §I.
+[9]
+Y. Ma, Y. Zhou, Y. Yang, T. Wang, and H. Fan (2025)
+Running vlas at real-time speed.
+arXiv preprint arXiv:2510.26742.
+Cited by: §I.
+[10]
+T. Jiang, X. Jiang, Y. Ma, X. Wen, B. Li, K. Zhan, P. Jia, Y. Liu, S. Sun, and X. Lang (2025)
+The better you learn, the smarter you prune: towards efficient vision-language-action models via differentiable token pruning.
+arXiv preprint arXiv:2509.12594.
+Cited by: §I.
+[11]
+NVIDIA Jetson AI Lab (2024)
+LeRobot – nvidia jetson ai lab.
+Note: https://www.jetson-ai-lab.com/lerobot.htmlAccessed: 2025-11-12
+Cited by: §I.
+[12]
+ROBOTIS USA (2025)
+Koch v1.1 low-cost robot arm: follower.
+Note: https://www.robotis.us/koch-v1-1-low-cost-robot-arm-follower/Accessed: 2025-11-12
+Cited by: §I.
+[13]
+ROBOTIS USA (2025)
+Koch v1.1 low-cost robot arm: leader.
+Note: https://www.robotis.us/koch-v1-1-low-cost-robot-arm-leader/Accessed: 2025-11-12
+Cited by: §I.
+[14]
+NVIDIA Corporation (2022)
+NVIDIA jetson orin nx series modules data sheet.
+Cited by: §I.
+[15]
+Franka Emika / Franka Robotics GmbH (2020)
+Datasheet – robot arm & control.
+Note: https://download.franka.de/Datasheet-EN.pdfRelease version: April 2020. Accessed: 2025-11-12
+Cited by: §I.
+[16]
+NVIDIA Corporation (2022)
+NVIDIA h100 tensor core gpu data sheet.
+Note: https://resources.nvidia.com/en-us-hopper-architecture/nvidia-tensor-core-gpu-datasheetAccessed: 2025-11-12
+Cited by: §I.
+[17]
+Y. Li, Y. Meng, Z. Sun, K. Ji, C. Tang, J. Fan, X. Ma, S. Xia, Z. Wang, and W. Zhu (2025)
+SP-VLA: A Joint Model Scheduling and Token Pruning Approach for VLA Model Acceleration.
+arXiv.
+Note: arXiv:2506.12723 [cs]
+External Links: Link,
+Document
+Cited by: §I,
+§I,
+§II-B.
+[18]
+H. Fang, Y. Liu, Y. Du, L. Du, and H. Yang (2025)
+SQAP-VLA: A Synergistic Quantization-Aware Pruning Framework for High-Performance Vision-Language-Action Models.
+arXiv.
+Note: arXiv:2509.09090 [cs]Comment: 12 pages, 9 figures
+External Links: Link,
+Document
+Cited by: §I,
+§I,
+§II-B.
+[19]
+T. Jiang, X. Jiang, Y. Ma, X. Wen, B. Li, K. Zhan, P. Jia, Y. Liu, S. Sun, and X. Lang (2025)
+The Better You Learn, The Smarter You Prune: Towards Efficient Vision-language-action Models via Differentiable Token Pruning.
+arXiv.
+Note: arXiv:2509.12594 [cs]Comment: Under review. Project site: https://liauto-research.github.io/LightVLA
+Cited by: §I.
+[20]
+J. Wen, Y. Zhu, J. Li, M. Zhu, K. Wu, Z. Xu, N. Liu, R. Cheng, C. Shen, Y. Peng, F. Feng, and J. Tang (2025)
+TinyVLA: towards fast, data-efficient vision-language-action models for robotic manipulation.
+External Links: 2409.12514,
+Link
+Cited by: §I.
+[21]
+J. Liu, M. Liu, Z. Wang, P. An, X. Li, K. Zhou, S. Yang, R. Zhang, Y. Guo, and S. Zhang (2024)
+RoboMamba: efficient vision-language-action model for robotic reasoning and manipulation.
+External Links: 2406.04339,
+Link
+Cited by: §I,
+§II-B.
+[22]
+M. Shukor, D. Aubakirova, F. Capuano, P. Kooijmans, S. Palma, A. Zouitine, M. Aractingi, C. Pascal, M. Russi, A. Marafioti, S. Alibert, M. Cord, T. Wolf, and R. Cadene (2025)
+SmolVLA: a vision-language-action model for affordable and efficient robotics.
+External Links: 2506.01844,
+Link
+Cited by: §I.
+[23]
+Y. Yue, Y. Wang, B. Kang, Y. Han, S. Wang, S. Song, J. Feng, and G. Huang (2024)
+DeeR-vla: dynamic inference of multimodal large language models for efficient robot execution.
+External Links: 2411.02359,
+Link
+Cited by: §I.
+[24]
+M. J. Kim, C. Finn, and P. Liang (2025)
+Fine-tuning vision-language-action models: optimizing speed and success.
+External Links: 2502.19645,
+Link
+Cited by: §I.
+[25]
+Y. Yang, Y. Wang, Z. Wen, L. Zhongwei, C. Zou, Z. Zhang, C. Wen, and L. Zhang (2025)
+EfficientVLA: Training-Free Acceleration and Compression for Vision-Language-Action Models.
+arXiv.
+Note: arXiv:2506.10100 [cs]
+External Links: Link,
+Document
+Cited by: §I,
+Fig. 5,
+§IV-B.
+[26]
+K. Pertsch, K. Stachowicz, B. Ichter, D. Driess, S. Nair, Q. Vuong, O. Mees, C. Finn, and S. Levine (2025)
+FAST: efficient action tokenization for vision-language-action models.
+External Links: 2501.09747,
+Link
+Cited by: 2nd item,
+§I,
+§II-B,
+§IV-C,
+TABLE III,
+TABLE III,
+TABLE III,
+TABLE III.
+[27]
+H. Walke, K. Black, A. Lee, M. J. Kim, M. Du, C. Zheng, T. Zhao, P. Hansen-Estruch, Q. Vuong, A. He, V. Myers, K. Fang, C. Finn, and S. Levine (2024)
+BridgeData v2: a dataset for robot learning at scale.
+External Links: 2308.12952,
+Link
+Cited by: 1st item,
+Fig. 4,
+§IV-A,
+§IV.
+[28]
+A. Brohan, N. Brown, J. Carbajal, Y. Chebotar, J. Dabis, C. Finn, K. Gopalakrishnan, K. Hausman, A. Herzog, J. Hsu, J. Ibarz, B. Ichter, A. Irpan, et al. (2022)
+RT-1: robotics transformer for real-world control at scale.
+arXiv preprint arXiv:2212.06817.
+Cited by: §II-A,
+§III-A.
+[29]
+A. O’Neill O. X. Collaboration et al. (2023)
+Open x-embodiment: robotic learning datasets and rt-x models.
+arXiv preprint arXiv:2310.08864.
+Cited by: §II-A.
+[30]
+S. Belkhale, T. Ding, T. Xiao, P. Sermanet, Q. Vuong, J. Tompson, Y. Chebotar, D. Dwibedi, and D. Sadigh (2024)
+RT-h: action hierarchies using language.
+arXiv preprint arXiv:2403.01823.
+Cited by: §II-A.
+[31]
+K. Kawaharazuka, J. Oh, J. Yamada, I. Posner, and Y. Zhu (2025)
+Vision-language-action models for robotics: a review towards real-world applications.
+IEEE Access.
+Cited by: §II-A.
+[32]
+S. Park, H. Kim, W. Jeon, J. Yang, B. Jeon, Y. Oh, and J. Choi (2024)
+Quantization-aware imitation-learning for resource-efficient robotic control.
+External Links: 2412.01034,
+Link
+Cited by: §II-B.
+[33]
+J. Jabbour, D. Kim, M. Smith, J. Patrikar, R. Ghosal, Y. Wang, A. Agha, V. J. Reddi, and S. Omidshafiei (2025)
+Don’t run with scissors: pruning breaks vla models but they can be recovered.
+arXiv preprint arXiv:2510.08464.
+Cited by: §II-B.
+[34]
+Y. Jiang, S. Huang, S. Xue, Y. Zhao, J. Cen, S. Leng, K. Li, J. Guo, K. Wang, M. Chen, et al. (2025)
+RynnVLA-001: using human demonstrations to improve robot manipulation.
+arXiv preprint arXiv:2509.15212.
+Cited by: §II-B.
+[35]
+N. R. Arachchige, Z. Chen, W. Jung, W. C. Shin, R. Bansal, P. Barroso, Y. H. He, Y. C. Lin, B. Joffe, S. Kousik, and D. Xu (2025)
+SAIL: faster-than-demonstration execution of imitation learning policies.
+External Links: 2506.11948
+Cited by: 1st item.
+[36]
+J. Hwangbo, J. Lee, A. Dosovitskiy, D. Bellicoso, V. Tsounis, V. Koltun, and M. Hutter (2019)
+Learning agile and dynamic motor skills for legged robots.
+Science Robotics 4 (26).
+External Links: ISSN 2470-9476,
+Link,
+Document
+Cited by: §III-B.
+[37]
+S. Han, H. Mao, and W. J. Dally (2015)
+Deep compression: compressing deep neural networks with pruning, trained quantization and huffman coding.
+arXiv preprint arXiv:1510.00149.
+Cited by: TABLE I,
+§IV-A.
+[38]
+Physical Intelligence (2025)
+openpi: open-source models and packages for robotics.
+Note: https://github.com/Physical-Intelligence/openpi
+Cited by: TABLE II,
+TABLE IV,
+§IV.
+[39]
+E. Frantar, S. Ashkboos, T. Hoefler, and D. Alistarh (2022)
+Gptq: accurate post-training quantization for generative pre-trained transformers.
+arXiv preprint arXiv:2210.17323.
+Cited by: §IV-A,
+TABLE II.
+[40]
+J. Lee, J. Duan, H. Fang, Y. Deng, S. Liu, B. Li, B. Fang, J. Zhang, Y. R. Wang, S. Lee, et al. (2025)
+Molmoact: action reasoning models that can reason in space.
+arXiv:2508.07917.
+Cited by: §IV-A,
+§IV-B.
+[41]
+I. Fang, J. Zhang, S. Tong, and C. Feng (2025)
+From intention to execution: probing the generalization boundaries of vision-language-action models.
+arXiv preprint arXiv:2506.09930.
+Cited by: Fig. 4.
+[42]
+Q. Dong, L. Li, D. Dai, C. Zheng, J. Ma, R. Li, H. Xia, J. Xu, Z. Wu, T. Liu, B. Chang, X. Sun, L. Li, and Z. Sui (2024)
+A survey on in-context learning.
+External Links: 2301.00234,
+Link
+Cited by: §V.
+Experimental support, please
+view the build logs
+for errors. Generated by
+L
+A
+T
+E
+xml
+.
+Instructions for reporting errors
+We are continuing to improve HTML versions of papers, and your feedback helps enhance accessibility and mobile
+support. To report errors in the HTML that will help us improve conversion and rendering, choose any of the
+methods listed below:
+Click the "Report Issue" (
+) button, located in the page header.
+Tip: You can select the relevant text first, to include it in your report.
+Our team has already identified the following issues. We appreciate your time reviewing and reporting rendering errors we
+may not have found yet. Your efforts will help us improve the HTML versions for all readers, because disability
+should not be a barrier to accessing research. Thank you for your continued support in championing open access for
+all.
+Have a free development cycle? Help support accessibility at arXiv! Our collaborators at LaTeXML maintain a list of packages that need conversion, and welcome developer contributions.
+We gratefully acknowledge support from our major funders,
+member institutions, ,
+and all contributors.
+About ·
+Help ·
+Contact ·
+Subscribe ·
+Copyright ·
+Privacy ·
+Accessibility ·
+Operational Status (opens in new tab)

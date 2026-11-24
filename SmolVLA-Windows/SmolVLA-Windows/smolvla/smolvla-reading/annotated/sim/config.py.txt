@@ -1,0 +1,116 @@
+# 原文件 lerobot/src/lerobot/sim/config.py
+# 原行范围 26–82
+# L 后是官方源码或本机文件的原行号。每条中文注释对应紧随其后的原文。
+# 这是静态阅读副本。请在编辑器中阅读。空行保留，节选之间标出跳过的范围。
+
+# …… 跳过原文第 1–25 行 ……
+# L0026 数据类装饰器。Python 根据字段生成初始化等方法。
+@dataclass
+# L0027 定义类 SimConfig。
+class SimConfig:
+    # L0028 原文档中的说明或续行。
+    """The simulator an env runs: integration, task, options and control settings.
+
+    # L0030 以下列出调用参数及其含义。
+    Args:
+        # L0031 原文档中的说明或续行。
+        type (`str`):
+            # L0032 原文档中的说明或续行。
+            Integration, a module of `lerobot.sim.integrations`, e.g. `libero`.
+        # L0033 原文档中的说明或续行。
+        task (`str`):
+            # L0034 原文档中的说明或续行。
+            Task to run, as the integration names it, e.g. `libero_spatial`. Some integrations take a
+            # L0035 原文档中的说明或续行。
+            comma-separated list.
+        # L0036 原文档中的说明或续行。
+        fps (`float`, *optional*, defaults to `30`):
+            # L0037 原文档中的说明或续行。
+            Control rate.
+        # L0038 原文档中的说明或续行。
+        control_mode (`str`, *optional*, defaults to `"position"`):
+            # L0039 原文档中的说明或续行。
+            What an action commands: `position`, `delta` or `eef_pose`.
+        # L0040 原文档中的说明或续行。
+        semantics (`str`, *optional*):
+            # L0041 原文档中的说明或续行。
+            Name of the observation and action conventions. Defaults to `<type>-<control_mode>-v1`.
+        # L0042 原文档中的说明或续行。
+        kwargs (`dict[str, Any]`, *optional*):
+            # L0043 原文档中的说明或续行。
+            Options passed to the integration's `env_fns`.
+        # L0044 原文档中的说明或续行。
+        state_names (`tuple[str, ...]`, *optional*):
+            # L0045 原文档中的说明或续行。
+            Component names of `observation.state`. Left empty, they are `state_<i>`.
+        # L0046 原文档中的说明或续行。
+        action_names (`tuple[str, ...]`, *optional*):
+            # L0047 原文档中的说明或续行。
+            Component names of the action. Left empty, they are `command_<i>`.
+        # L0048 原文档中的说明或续行。
+        robot_type (`str`, *optional*, defaults to `""`):
+            # L0049 原文档中的说明或续行。
+            Body a sim robot records in its dataset. Left empty, it records `sim_robot`.
+    # L0050 文档字符串的边界。
+    """
+
+    # L0052 声明“type”的类型为 str。
+    type: str
+    # L0053 声明“task”（任务）的类型为 str。
+    task: str
+    # L0054 声明“fps”的类型为 float，使用字面值 30作为初始值。
+    fps: float = 30
+    # L0055 声明“control_mode”的类型为 str，使用字面值 'position'作为初始值。
+    control_mode: str = "position"
+    # L0056 声明“semantics”的类型为 str，使用字面值 ''作为初始值。
+    semantics: str = ""
+    # L0057 声明“kwargs”（额外的关键字参数）的类型为 dict[str, Any]，调用 field，用它的结果作为初始值。
+    kwargs: dict[str, Any] = field(default_factory=dict)
+    # L0058 声明“state_names”的类型为 tuple[str, ...]，打包成元组，元素顺序由逗号分隔的位置决定作为初始值。
+    state_names: tuple[str, ...] = ()
+    # L0059 声明“action_names”的类型为 tuple[str, ...]，打包成元组，元素顺序由逗号分隔的位置决定作为初始值。
+    action_names: tuple[str, ...] = ()
+    # L0060 声明“robot_type”的类型为 str，使用字面值 ''作为初始值。
+    robot_type: str = ""
+
+    # L0062 定义方法 __post_init__。
+    def __post_init__(self) -> None:
+        # L0063 原文档中的说明或续行。
+        """Check `control_mode` and `fps`, and fill in the default `semantics`."""
+        # L0064 调用 tuple，用它的结果给 “self.state_names” 赋值。
+        self.state_names = tuple(self.state_names)
+        # L0065 调用 tuple，用它的结果给 “self.action_names” 赋值。
+        self.action_names = tuple(self.action_names)
+        # L0066 条件 self.control_mode not in CONTROL_MODES 成立时进入下方分支。
+        if self.control_mode not in CONTROL_MODES:
+            # L0067 抛出 ValueError，中断当前路径并交给上层的异常处理。
+            raise ValueError(f"Unknown control_mode {self.control_mode!r}; expected one of {CONTROL_MODES}")
+        # L0068 条件 not math.isfinite(self.fps) or self.fps <= 0 成立时进入下方分支。
+        if not math.isfinite(self.fps) or self.fps <= 0:
+            # L0069 抛出 ValueError，中断当前路径并交给上层的异常处理。
+            raise ValueError(f"A simulator needs a positive fps, got {self.fps}")
+        # L0070 条件 not self.semantics 成立时进入下方分支。
+        if not self.semantics:
+            # L0071 计算此行的右侧表达式给 “self.semantics” 赋值。
+            self.semantics = f"{self.type}-{self.control_mode.replace('_', '-')}-v1"
+
+    # L0073 类方法装饰器。调用时首个参数 cls 是类本身。
+    @classmethod
+    # L0074 用环境的类型名解析模块和默认控制约定。
+    def resolve(cls, settings: dict[str, Any]) -> "SimConfig":
+        # L0075 原文档中的说明或续行。
+        """Build a config from `settings`, taking missing values from the integration's `conventions`."""
+        # L0076 进入上下文管理器，缩进块结束时由它处理退出动作。
+        with simulator_required(settings["type"]):
+            # L0077 按 type 动态导入仿真接入。此例是 lerobot.sim.integrations.libero。
+            integration = importlib.import_module(f"lerobot.sim.integrations.{settings['type']}")
+            # L0078 调用 getattr，用它的结果给 “conventions” 赋值。
+            conventions = getattr(integration, "conventions", None)
+            # L0079 用条件表达式在 if 前与 else 后的两个值之间选择给 “declared” 赋值。
+            declared = conventions(settings.get("kwargs") or {}) if conventions else {}
+        # L0080 调用 cls，用它的结果作为当前调用的返回值。
+        return cls(**{**declared, **{key: value for key, value in settings.items() if value is not None}})
+
+
+
+# …… 跳过原文第 83–98 行 ……

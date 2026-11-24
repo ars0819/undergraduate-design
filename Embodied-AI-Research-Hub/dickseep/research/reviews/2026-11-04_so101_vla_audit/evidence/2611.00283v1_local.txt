@@ -1,0 +1,1113 @@
+=== PDF PAGE 1 ===
+Does Validation Loss Predict Real-Robot Success?
+Evidence from Four Imitation-Learning Policies
+on a Low-Cost Arm
+Simon Cowling
+fysical.ai, Denmark
+simon@fysical.ai
+30 October 2026
+Abstract
+Held-out validation loss is the standard offline signal for choosing checkpoints and comparing
+models, but its relation to closed-loop success on a real robot is rarely measured. We measure it for
+ACT, Diffusion Policy, SmolVLA and π0.5 (action expert only), trained on nested subsets of 12 to
+200 demonstrations of a pick-and-place task on an SO-101 arm. We score 82 checkpoints on 25
+held-out demonstrations, with each policy’s training loss and with the error of the actions it outputs,
+and compare the scores with 930 bench rollouts. We also score all 700 intermediate checkpoints of
+70 training runs, and recover the ball positions of every training, held-out and bench episode from
+the front camera. Within each policy, hold-out action error correlates with bench success (Spearman
+ρ from −0.23 to −0.88), but no more strongly than the number of training episodes alone, and not
+at all among seeds trained on the same data. Across policies the ranking is inverted ( ρ = +0.90 at
+200 episodes): the policy with the lowest hold-out error succeeded in 3 of 110 rollouts. The most
+common failure, the arm never leaving its rest pose, ended 96% of rollouts for Diffusion Policy trained
+on untrimmed demonstrations and 47% for SmolVLA, and cannot occur in a hold-out set made of
+demonstrations. Among rollouts in which the arm moved, SmolVLA’s hold-out action error predicts
+success well (ρ = −0.81). For the diffusion and flow-matching policies, hold-out loss rises two- to
+five-fold during training while hold-out action error falls by up to 29%. Held-out metrics are a sound
+diagnostic of learning but no substitute for evaluation on the robot, and we recommend reporting
+initiation failure and success among started rollouts as separate bench outcomes.
+1 Introduction
+Every rollout on a real robot costs minutes of attention and a reset by hand, so a number that could stand
+in for the bench would save most of the cost of a study. Validation loss is the obvious candidate. It is
+cheap, it is computed by the same code that trains the model, and in supervised learning it is the standard
+way to choose a checkpoint and to compare models.
+Robot imitation learning breaks two of the assumptions that make it work elsewhere. The policy is
+trained on single steps but judged on a closed-loop run in which its own actions shape what it sees next,
+so small errors compound [1]. And the demonstrations it is scored on always show the task already under
+way, so some ways of failing never appear in them. Earlier work has found that validation loss is a weak
+guide to success in this setting [2–4]; this study asks how weak, why, and what can replace it.
+We answer these questions with the models and bench results of a previous scaling study [5], in which
+ACT [6], Diffusion Policy [7], SmolVLA [8] and π0.5 [9] were trained on 12 to 200 demonstrations of
+one task on one low-cost arm. The contributions are:
+1. A held-out scoring method that works the same way for four very different policy families, and a
+common measure, action error, that puts them on one scale.
+1
+arXiv:2611.00283v1  [cs.RO]  30 Oct 2026
+
+=== PDF PAGE 2 ===
+Table 1:Training objective of each policy and what its loss compares.
+Policy Training objective What the loss compares Randomness at scoring time
+ACT L1 regression of an action
+chunk (plus a KL term in
+training only)
+predicted actions with
+demonstrated actions,
+normalised
+none: deterministic in
+evaluation mode
+Diffusion Policy denoising (DDPM noise
+prediction, MSE)
+the noise the network predicts
+with the noise that was added
+to a demonstrated chunk
+noise level and noise sample;
+averaged over 4 fixed-seed
+draws
+SmolVLA flow matching (MSE on
+velocity)
+the predicted direction back
+to the clean chunk with the
+true direction
+time step and noise sample; 4
+draws
+π0.5 (action
+expert only)
+flow matching (MSE on
+velocity)
+as SmolVLA as SmolVLA
+2. A comparison of validation numbers with 930 bench rollouts, within models, across models, across
+seeds and across two interventions (EMA weights and trimming the idle lead-in of demonstrations).
+3. Training curves for 70 runs that settle whether the models were trained long enough, and show that
+for diffusion and flow-matching policies the loss and the action error move in opposite directions.
+4. A map of where the balls were placed in every training, hold-out and bench episode, recovered
+from the front camera, and a first look at whether a placement’s distance from the training data
+predicts its success.
+2 Background
+2.1 Validation loss
+A policy learns to answer one question: given what the cameras and joint sensors show now, what did the
+demonstrator do next? The training loss measures how wrong those answers are on the frames used for
+training, which a large network can get right by memorising. Validation loss asks the same question on
+demonstrations kept out of training. In this paper the 25 held-out demonstrations are called thehold-out,
+and the same calculation on 12 demonstrations every model trained on is called thetraining probe.
+2.2 What each policy’s loss measures
+The four policies are trained on different objectives, so their losses are not on a common scale and cannot
+be compared between models.
+Only ACT’s loss is itself an error in the actions. For the other three, which are trained by denoising
+diffusion [10] or flow matching [11], the loss scores how well the network repairs a deliberately corrupted
+demonstration, averaged over every level of corruption. That is not the same as the quality of the action
+the policy finally outputs.
+2.3 Action error: one measure for every model
+To compare models we also score the action each policy actually produces. The policy is run as it is
+on the robot (its inference path and saved postprocessor), and its predicted chunk is compared with the
+demonstrated actions over the steps the robot would execute before re-planning:
+MAE= 1
+N H J
+N
+∑
+n=1
+H
+∑
+h=1
+J
+∑
+j=1
+ ˆan,h,j −a n,h,j
+ (1)
+Here N is the number of scored frames, H the execution horizon, J the six joints, and errors are in
+the recorded joint units. Horizons differ by policy (ACT 100 steps, SmolVLA and π0.5 50, Diffusion
+2
+
+=== PDF PAGE 3 ===
+Policy 24), and errors grow with distance into the future, so action error is comparable within a policy and
+between SmolVLA andπ 0.5, but levels across other pairs carry a horizon confound (Section 9).
+2.4 Related work
+Offline evaluation of robot policies.The robomimic study found that the checkpoint with the lowest
+validation loss could perform 50 to 100% worse on the robot than the best checkpoint [2]. A LeRobot
+community experiment found Diffusion Policy’s validation loss rising while its simulated success im-
+proved, and ACT’s staying flat while its success rose by more than 15% [3]. Restricting offline action
+error to the task-critical segments of a demonstration improves its correlation with rollout success [ 4].
+Other work replaces held-out loss with a different offline signal: off-policy classification predicts the
+relative real-world performance of grasping policies trained in simulation [12], and matched simulated
+environments have been used as a proxy for real-world evaluation of generalist manipulation policies [13].
+The present study measures the gap between held-out metrics and real-robot success for four current
+policy families on one task, and decomposes it by failure mode.
+Why held-out error and closed-loop success diverge.A policy trained by behaviour cloning is
+scored on states drawn from the demonstrations but deployed on states induced by its own actions, where
+errors compound [1]. It can also rely on features that are correlated with the expert’s action without
+causing it [14]. Policies given a history of observations can learn to repeat the expert’s previous action
+instead of predicting the next one [15], and driving policies trained on data in which a stopped vehicle
+usually stays stopped can fail to start moving again, the inertia problem [ 16]. The initiation failure
+analysed in Section 5.4 has the same form. For diffusion policies trained on small datasets, the network
+behaves much like a lookup table of training actions [17], which Section 6.1 uses to explain why their
+hold-out loss and action error diverge.
+Data scaling in imitation learning.Lin et al. found that the generalisation of imitation policies
+to new environments and objects follows a rough power law in their number, and depends far more on
+that diversity than on the absolute number of demonstrations [18]. The placement maps in Section 7 are
+a small-scale analogue: what grows with the budget is how densely the training placements cover the
+workspace.
+3 Experimental setup
+The models, demonstrations and bench protocol are those of [5], which reports the full training recipes
+and bench results. This section summarises what the validation analysis needs.
+3.1 Task and robot
+An SO-101 arm [19] picks a green ball, placed among two red distractor balls on a 50 mm grid board, and
+drops it in a basket. Each episode is recorded at 30 fps from a fixed low front camera and a wrist camera
+(640×480), with the six joint positions and commanded actions.
+3.2 Demonstrations, hold-out and budgets
+The pool holds 225 teleoperated demonstrations, recorded in nine batches of 25 under slightly different
+lighting. A frozen hold-out of 25 episodes was drawn stratified across the nine batches (data seed
+20260922) and never used for training. From the other 200, nested training subsets were drawn once and
+reused for every model and seed: S12 ⊂ S25 ⊂ S50 ⊂ S100 ⊂ S200. Because S12 sits inside every subset,
+it doubles as the training probe. A second copy of the pool has the idle lead-in before the demonstrator’s
+first movement removed (the trimmed data).
+3
+
+=== PDF PAGE 4 ===
+Table 2:Training configurations. A training cell is one combination of model line, budget and seed.
+Model line Training steps Checkpoints
+saved
+Seeds per
+budget
+Cells in the
+bench analysis
+ACT 100,000 every 10,000 4 20
+Diffusion Policy, untrimmed
+data
+100,000 every 10,000 4 trained, 2
+benched
+10 (+2 EMA)
+Diffusion Policy, trimmed data 100,000 every 10,000 2 (seeds 1, 3) 10 (+4 EMA)
+SmolVLA 20,000 every 2,000 4 20
+π0.5, action expert only 6,000 3,000 and 6,000 1 plain + 2 EMA 15 (5 plain, 10
+EMA)
+3.3 Models and training
+All models were trained with LeRobot [20] at commit 8352ca62 (v0.6.2), using its default recipe for each
+policy. We call one trained model, a combination of model line, budget and seed, a training cell.
+ACT trains at a constant learning rate; Diffusion Policy decays its learning rate to zero at the last step
+on a cosine schedule, and SmolVLA on a cosine schedule compressed to its run length. This matters when
+reading the end of a training curve (Section 6).
+3.4 Bench protocol
+Each checkpoint was rolled out from a rest pose at ten standard ball placements, N00 to N09, in the
+standard bench lighting of [5]: the room’s ordinary lighting of 117 to 394 lux, dimmer than the roughly
+500 lux under which the demonstrations were recorded. Each rollout had a 30-second limit and was
+labelled with one outcome: success, never started (the arm did not leave its rest pose), never located the
+ball, grip failed, or another failure. As in [5], late starts and rollouts without a grasp attempt count as other
+failures. The primary analysis set contains every rollout in this lighting at placements N00 to N09 from
+the main grid and the repeat, control and weight-comparison sessions of [5]: 82 checkpoints and 930 of
+the 1,340 rollouts reported there. Excluded are a probe in brighter light, an earlier π0.5 LoRA grid, and
+two trimmed-data checkpoints trained with EMA but rolled out with plain weights; the last two have no
+matching validation scores. We use the audited outcome labels of [ 5], in which 27 of the 1,340 labels
+were corrected from the camera recordings.
+4 Scoring method
+4.1 How a checkpoint is scored
+Each checkpoint is loaded with the normalisation saved alongside it and run in evaluation mode, without
+gradients or image augmentation (ACT skips its V AE encoder; Diffusion Policy uses its centre crop).
+Frames are batched one episode at a time, so every number also exists per episode and its uncertainty is a
+standard error across episodes. For each checkpoint we record, on the hold-out and on the training probe:
+• loss: the policy’s own objective, as in training; for the three generative policies averaged over four
+draws of noise and time step with a fixed seed, so every checkpoint sees the same draws;
+•action error: the mean absolute error of Section 2.3, overall and per joint.
+Final checkpoints of ACT, Diffusion Policy and SmolVLA were scored on every frame (13,372 hold-
+out frames, 6,139 probe frames). π0.5 was scored on every fifth frame in bfloat16, since one checkpoint
+takes most of an hour. The 700 intermediate checkpoints were also scored on every fifth frame; on the
+106 checkpoints scored both ways, this changed loss by a median of 0.8 to 3.5% and action error by 0.2 to
+0.3%, and left the ranking of checkpoints unchanged (rank correlation 0.988 or higher). Plain and EMA
+4
+
+=== PDF PAGE 5 ===
+weights are scored separately. The scorer refuses to run if a hold-out episode appears in a model’s training
+set.
+4.2 Statistics
+• Rank correlation(Spearman’s ρ) between an offline measure and bench success across a model’s
+checkpoints, with p-values from 20,000 permutations. Negative means lower error goes with higher
+success.
+• Expected from episodes alone.Success is simulated 5,000 times with each checkpoint’s success
+probability set to its budget’s pooled rate, so the offline measure carries nothing beyond the budget;
+the observedρis compared with the simulated range.
+• Within-budget correlation.Both variables are centred on their budget means and ρ recomputed,
+with 10,000 permutations within budgets. This asks whether the measure knows which seed did
+better.
+• Success ratesare pooled counts with 95% Wilson intervals; paired counts (EMA, trimming) use
+Fisher’s exact test; seed differences use a chi-square summed over budgets with a simulated p-value.
+4.3 Compute
+Final checkpoints were scored on a single workstation GPU, taking about three minutes per ACT
+checkpoint and under an hour per π0.5 checkpoint. Intermediate checkpoints were scored on NVIDIA
+A10G GPUs through Hugging Face Jobs.
+5 Final checkpoints and bench success
+5.1 Both measures improve with data
+For every model, bench success rises and hold-out action error falls from 12 to 200 episodes, with
+diminishing returns (Figure 1). ACT goes from 1 success in 40 rollouts at 12 episodes to 37 of 40 at 100.
+The pretrained models start higher: π0.5 succeeds in 16 of 40 rollouts with 12 episodes. The gap between
+seen and unseen episodes narrows as data grows, and loss on the training probe rises, because a larger
+training set is harder to fit exactly.
+5.2 Within a model, validation adds nothing to the episode count
+Across each model’s checkpoints, lower hold-out error goes with higher success. But the correlation is
+no stronger than the episode count alone would produce, and among checkpoints trained on the same
+episodes it vanishes.
+Hold-out action error correlates with the logarithm of the episode count at−0.95 to−0.99 for every
+model. It is close to a relabelling of how much data the model saw (Figure 2).
+5.3 Across models, validation points the wrong way
+At 200 episodes the ranking of the five model lines by hold-out action error and the ranking by success
+correlate at +0.90: the lower the error, the worse the bench result. Untrimmed Diffusion Policy has
+the lowest hold-out error in the study and succeeded in 3 of 110 rollouts. Part of this is the horizon
+confound (ACT is scored over 100 steps, Diffusion Policy over 24), but the inversion survives within the
+one like-for-like pair (Section 5.5).
+5
+
+=== PDF PAGE 6 ===
+0%
+50%
+100%Bench success rate
+ACT
+ π0.5 expert-only
+ SmolVLA
+Diffusion Policy
+trimmed
+Diffusion Policy
+untrimmed
+12 50 200
+0.0
+2.5
+5.0
+7.5
+10.0
+12.5Hold-out action error
+100-step horizon
+12 50 200
+50-step horizon
+12 50 200
+50-step horizon
+12 50 200
+24-step horizon
+12 50 200
+24-step horizon
+Training episodes (log scale)
+Success rises and hold-out error falls with more episodes, for every model
+Figure 1:Bench success (top) and hold-out action error (bottom) by number of training episodes. Grey dots are
+single checkpoints; bars are 95% Wilson intervals on the pooled rate. Error horizons differ between columns, so
+compare shapes, not levels.
+Table 3:Rank correlation between hold-out action error and bench success across each model line’s checkpoints,
+the range the episode count alone would produce, and the correlation among checkpoints trained on the same
+number of episodes (with its permutation p-value).
+Model line Checkpointsρ, hold-out error
+vs success
+Expected from
+episodes alone
+[95% range]
+ρwithin budget
+(p)
+ACT 20−0.88−0.89 [−0.95,
+−0.82]
++0.28 (0.82)
+π0.5 expert-only 15−0.55−0.50 [−0.80,
+−0.13]
+−0.22 (0.85)
+SmolVLA 20−0.68−0.62 [−0.78,
+−0.42]
+−0.08 (0.69)
+Diffusion Policy, trimmed 10−0.48−0.48 [−0.76,
+−0.16]
++0.11 (0.75)
+Diffusion Policy,
+untrimmed
+10−0.23−0.34 [−0.70,
++0.29]
+−0.16 (1.00)
+6
+
+=== PDF PAGE 7 ===
+−1.0 −0.8 −0.6 −0.4 −0.2 0.0 0.2 0.4 0.6
+Spearman rank correlation between hold-out action error and bench success
+ACT
+π0.5 expert-only
+SmolVLA
+Diffusion Policy, trimmed
+Diffusion Policy, untrimmed
+   +0.28  (p = 0.82)
+-0.88
+   -0.22  (p = 0.85)
+-0.55
+   -0.08  (p = 0.69)
+-0.68
+   +0.11  (p = 0.75)
+-0.48
+   -0.16  (p = 1.00)
+-0.23
+Observed correlation against what the episode count alone would give
+Observed, all checkpoints
+Expected if only the episode count mattered (95% range)
+Observed within the same episode count (hollow, lower row)
+Figure 2:Observed correlations (filled) against the range the episode count alone would produce (grey), and the
+correlation among checkpoints trained on the same number of episodes (hollow).
+4 6 8 10 12 14
+Hold-out action error (lower is better)
+0%
+25%
+50%
+75%
+100%Bench success rate (seeds pooled)
+12
+200
+12
+200
+12
+200
+12
+200
+12
+200
+Across models, lower hold-out error does not mean higher success
+ACT
+π0.5 expert-only
+SmolVLA
+Diffusion Policy, trimmed
+Diffusion Policy, untrimmed
+Figure 3:Hold-out action error against bench success for each model line from 12 to 200 episodes. If validation
+predicted success across models, the lines would run from top left to bottom right.
+7
+
+=== PDF PAGE 8 ===
+0% 25% 50% 75% 100%
+Share of bench rollouts
+ACT
+π0.5 expert-only
+π0.5 expert-only + EMA
+SmolVLA
+Diffusion Policy, trimmed data
+Diffusion Policy, trimmed data + EMA
+Diffusion Policy, untrimmed + EMA
+Diffusion Policy, untrimmed
+Diffusion Policy, untrimmed (pinned-image control)
+51% 24% 16% 9% n = 200
+65% 17% 12% n = 100
+65% 15% 13% n = 100
+28% 47% 12% n = 200
+33% 9% 24% 12% 22% n = 150
+38% 28% 12% 22% n = 40
+25% 40% 20% 10% n = 20
+96% n = 110
+10% 90% n = 10
+What happened in each rollout, by model variant
+Success Never started Never located the ball Grip failed Other failure
+Figure 4:Outcome of every bench rollout by model variant (standard dim lighting, placements N00 to N09). As
+in [5], late starts and rollouts without a grasp attempt count as other failures.
+5.4 Initiation failure is invisible to validation
+The most common failure in the study is a policy that never moves the arm from its rest pose: 96% of
+untrimmed Diffusion Policy rollouts, 47% of SmolVLA rollouts, 9% of trimmed Diffusion Policy rollouts,
+and none for ACT or π0.5 (Figure 4). A hold-out made of demonstrations cannot contain this situation,
+because the demonstrator always moved.
+5.5 Once the arm starts, validation is informative
+For SmolVLA, hold-out action error is only weakly related to how often the arm starts (ρ = −0.18) but
+strongly related to success among rollouts that did start (ρ = −0.81). SmolVLA and π0.5 are the one pair
+scored over the same 50-step horizon. At 200 episodes their hold-out errors are almost equal (4.98 and
+5.11), and so are their success rates among started rollouts (71% and 73%). The difference in overall
+success, 38% against 73%, is almost all initiation.
+5.6 EMA and trimming change the bench, not the validation
+We compare 11 pairs of models trained on the same data, budget and seed, one without and one with an
+exponential moving average (EMA) of the weights; the two members of each pair were trained separately.
+Their hold-out action error differs by at most 1.5% and their hold-out loss by at most 3.0%. On the bench,
+π0.5 and trimmed Diffusion Policy are unchanged, but the two untrimmed Diffusion Policy models trained
+with EMA started in 12 of 20 rollouts, against 2 of 20 for their counterparts trained without it (Fisher p =
+0.002; Figure 6). The EMA models were retrained and benched on different days, so with two pairs the
+difference cannot be attributed to EMA rather than to variation between training runs [5]. Either way, it is
+a large difference in behaviour on the robot that validation did not register.
+Trimming the idle lead-in from the training data took four paired Diffusion Policy cells from 2
+successes in 40 rollouts to 34 in 70. Scored on their own validation data, the trimmed models looked
+slightly worse (Figure 7). The trimmed and untrimmed hold-outs contain different frames, so the two sets
+of numbers are not directly comparable, but nothing in either predicted success rising from 5% to 49%.
+8
+
+=== PDF PAGE 9 ===
+12 25 50 100 200
+Training episodes
+0
+1
+2
+3
+4
+5
+6
+7
+Hold-out action error (50 steps)
+12 25 50 100 200
+Training episodes
+0%
+50%
+100%
+Success, all rollouts
+12 25 50 100 200
+Training episodes
+0%
+50%
+100%
+Success, rollouts that started
+SmolVLA and π0.5 over the same 50-step horizon
+π0.5 expert-only SmolVLA
+Figure 5:SmolVLA and π0.5 by budget: hold-out action error (left), success over all rollouts (middle), and success
+over the rollouts in which the arm started (right).
+0% 50% 100%
+π0.5  S012 seed 0
+π0.5  S025 seed 0
+π0.5  S050 seed 0
+π0.5  S100 seed 0
+π0.5  S200 seed 0
+DP trimmed  S050 seed 1
+DP trimmed  S050 seed 3
+DP trimmed  S100 seed 1
+DP trimmed  S100 seed 3
+DP untrimmed  S050 seed 1
+DP untrimmed  S200 seed 3
+Bench success
+0% 50% 100%
+Rollouts that started
+4 6
+Hold-out action error
+Models trained without and with EMA (same data, budget and seed)
+without EMA with EMA
+Figure 6:Each row pairs a model trained without EMA (hollow) with a model trained separately with EMA on the
+same data, budget and seed (filled), scored with its averaged weights.
+9
+
+=== PDF PAGE 10 ===
+S012 seed 3S050 seed 1S100 seed 1S200 seed 3
+0%
+50%
+100%
+Bench success
+untrimmed data
+trimmed data
+S012 seed 3S050 seed 1S100 seed 1S200 seed 3
+0%
+50%
+100%
+Rollouts that started
+S012 seed 3S050 seed 1S100 seed 1S200 seed 3
+0
+1
+2
+3
+4
+5
+6
+Hold-out error (own data)
+Diffusion Policy with and without the idle lead-in in its training data
+Figure 7:The same Diffusion Policy cells trained with and without the idle lead-in.
+5.7 Seeds differ on the bench, not in validation
+SmolVLA seeds trained on the same episodes differ on the bench by more than chance (simulated p =
+0.04), mostly in how often the arm starts: at 200 episodes the four seeds started 2, 3, 6 and 10 of their ten
+rollouts. Their hold-out action error differs by about 1%. ACT’s seed differences on the bench are within
+chance (p = 0.11), and its hold-out error varies by 4 to 7% between seeds.
+5.8 Loss on the training episodes orders the budgets backwards
+A model trained on 12 episodes fits them almost perfectly, so its probe loss is the lowest in the study
+while its bench success is the lowest. Probe loss therefore correlates positively with success: +0.86
+for ACT, +0.67 for SmolVLA, +0.51 for π0.5. Training loss measures how closely a model fits its own
+demonstrations, not how well it performs the task, and cannot be used to compare data budgets.
+6 Training dynamics
+We scored all 700 saved checkpoints of the 70 ACT, Diffusion Policy and SmolVLA runs, ten per run, on
+the hold-out and on the training probe. Loss on the training probe falls to the last checkpoint for every
+model and budget. This reflects fitting of the training set and does not show whether a model was trained
+long enough; the hold-out curves do.
+6.1 For the generative policies, loss and action error disagree
+For ACT, hold-out loss and hold-out action error tell the same story: both drift down a few percent early
+and then stay flat. For Diffusion Policy and SmolVLA they tell opposite stories (Figure 8). Hold-out
+loss is lowest at the first saved checkpoint for all 15 of their model and budget combinations and climbs
+steadily, to 3.5 to 5.1 times its starting value for untrimmed Diffusion Policy, 2.8 to 5.3 for trimmed and
+2.0 to 2.9 for SmolVLA. Over the same steps, the error of the actions they produce stays level at small
+10
+
+=== PDF PAGE 11 ===
+×1
+×2
+×4
+Hold-out loss
+(× first checkpoint, log)
+ACT
+Diffusion Policy
+untrimmed
+Diffusion Policy
+trimmed
+ SmolVLA
+10 50 100
+-30%
+-20%
+-10%
+0
+Hold-out action error
+(change from first checkpoint)
+10 50 100
+ 10 50 100
+ 10 50 100
+Training progress (% of the training schedule)
+12 episodes 25 episodes 50 episodes 100 episodes 200 episodes
+Figure 8:Hold-out loss as a multiple of its first-checkpoint value (top, log scale) and hold-out action error as a
+change from its first-checkpoint value (bottom), against training progress. Shades of blue are the episode budgets.
+budgets and falls at large ones, by up to 29% for untrimmed Diffusion Policy and 12% for SmolVLA at
+200 episodes.
+The explanation lies in what the loss measures (Section 2.2). These models are trained to repair a
+corrupted demonstration at every level of corruption. Trained long on a fixed set of demonstrations, the
+network learns to pull any noisy input firmly towards the actions it has seen [17]. On a hold-out frame the
+correct action is not one of those, so at many noise levels the repair is confidently wrong and the averaged
+loss rises. The action the policy outputs comes from running the whole denoising chain, which converges
+on a training-like action that fits the situation increasingly well. Action error scores that output.
+Consequently, early stopping on hold-out loss would have halted every Diffusion Policy and SmolVLA
+run at 10% of its schedule, where hold-out action error was up to 41% higher than at the end of training.
+For ACT, whose loss is itself an action error, the two criteria agree.
+6.2 Convergence on unseen demonstrations
+On unseen demonstrations, only Diffusion Policy at 100 and 200 episodes was still improving when
+training stopped.
+• ACTreaches within 2% of its final hold-out action error by 20,000 to 40,000 steps at every budget.
+Over the second half of training the change is −2.2% to +0.9%, inside the 4 to 7% spread between
+seeds. ACT trains at a constant learning rate, so this plateau is the model’s own (Figure 9).
+•Diffusion Policyat 12 to 50 episodes is within 2% of its final value by 10,000 to 30,000 steps. At
+100 and 200 episodes (untrimmed) its hold-out action error fell 4.6% and 5.7% over the second half,
+in all four seeds; a straight-line fit per seed gives p = 0.048 and 0.001. Trimmed Diffusion Policy
+at 200 episodes points the same way (−2.7%, p = 0.10 with two seeds). No other combination of
+model and budget shows a trend (p ≥ 0.10). Its cosine schedule drives the learning rate to zero at
+the end, so the remaining gain may be larger than the curves suggest (Figure 10).
+11
+
+=== PDF PAGE 12 ===
+0.05
+0.1
+0.2
+0.5
+Loss (log scale)
+12 episodes
+ 25 episodes
+ 50 episodes
+ 100 episodes
+ 200 episodes
+50k 100k
+0
+5
+10
+15Action error (joint units)
+50k 100k
+ 50k 100k
+ 50k 100k
+ 50k 100k
+Training step
+Hold-out (25 unseen episodes) Training probe (12 seen episodes) single seeds lowest hold-out mean
+Figure 9:ACT: hold-out (blue) and training-probe (grey) loss (top, log scale) and action error (bottom) at every
+budget. Thin lines are seeds, bold lines their mean; the ring marks the lowest hold-out mean.
+Table 4:Change in hold-out action error from more data and from more training steps, and the change in hold-out
+loss over training.
+Model line 12→200
+episodes (final
+step)
+10× more steps at
+12 episodes
+10× more steps at
+200 episodes
+Hold-out loss over
+training, 12 / 200
+episodes
+ACT−40%−4%−2%×1.0 /×1.0
+Diffusion Policy,
+untrimmed
+−39%−2%−29%×3.5 /×4.7
+Diffusion Policy, trimmed −40% +3%−18%×2.8 /×5.3
+SmolVLA−31% +2%−12%×2.8 /×2.0
+• SmolVLAstarts from pretrained weights and reaches within 2% of its final hold-out action error by
+2,000 to 10,000 steps; over the second half it changes by−1.6% to +0.2% (Figure 11).
+6.3 More data versus more training steps
+Going from 12 to 200 episodes reduced hold-out action error by 31 to 40% for every model. Training ten
+times longer reduced it by 2% for ACT and, at 12 episodes, by at most 4% for any model. For Diffusion
+Policy and SmolVLA the gain from more steps grows with the budget, to 29% for untrimmed Diffusion
+Policy at 200 episodes: more demonstrations also take more steps to absorb (Figure 12).
+6.4 Bench results come from near-best checkpoints
+Every bench result comes from a final checkpoint. For all 20 combinations of model line and budget, the
+final checkpoint is within 5.3% of the best hold-out action error reached during training (median 0.8%),
+against differences of 31 to 40% between 12 and 200 episodes. Selecting checkpoints by validation would
+therefore not have changed the scaling results of [5]. Whether bench success also stayed flat while the
+12
+
+=== PDF PAGE 13 ===
+0.0005
+0.001
+0.002
+0.005
+0.01
+0.02
+0.05
+0.1
+0.2
+Loss (log scale)
+12 episodes
+ 25 episodes
+ 50 episodes
+ 100 episodes
+ 200 episodes
+50k 100k
+0
+2
+4
+6Action error (joint units)
+50k 100k
+ 50k 100k
+ 50k 100k
+ 50k 100k
+Training step
+Hold-out (25 unseen episodes) Training probe (12 seen episodes) single seeds lowest hold-out mean
+Figure 10:Diffusion Policy, untrimmed data, in the same layout. Hold-out loss rises from the first checkpoint while
+hold-out action error falls.
+0.005
+0.01
+0.02
+0.05
+0.1
+0.2
+0.5
+1
+Loss (log scale)
+12 episodes
+ 25 episodes
+ 50 episodes
+ 100 episodes
+ 200 episodes
+10k 20k
+0
+2
+4
+6
+8Action error (joint units)
+10k 20k
+ 10k 20k
+ 10k 20k
+ 10k 20k
+Training step
+Hold-out (25 unseen episodes) Training probe (12 seen episodes) single seeds lowest hold-out mean
+Figure 11:SmolVLA in the same layout (20,000 training steps).
+13
+
+=== PDF PAGE 14 ===
+12 50 200
+0.0
+2.5
+5.0
+7.5
+10.0
+12.5
+15.0Hold-out action error
+10k, 50k, 100k steps
+ACT
+12 50 200
+0
+1
+2
+3
+4
+5
+6
+10k, 50k, 100k steps
+Diffusion Policy
+untrimmed
+12 50 200
+0
+1
+2
+3
+4
+5
+6
+10k, 50k, 100k steps
+Diffusion Policy
+trimmed
+12 50 200
+0
+2
+4
+6
+8
+2k, 10k, 20k steps
+SmolVLA
+Training episodes (log scale)
+first checkpoint halfway final checkpoint (model colour)
+Figure 12:Hold-out action error by episode count at the first, middle and final checkpoint. The vertical gap between
+lines is what training longer bought; the slope is what more data bought.
+offline curves did is untested: in [3], ACT’s simulated success rose by more than 15% while its validation
+loss changed by 2%.
+7 Spatial coverage of ball placements
+7.1 Recovering positions from the front camera
+We located all three balls at the start of every recorded episode and of one bench session, in millimetres on
+the board. In each frame the 50 mm grid is detected and fitted, which gives the camera’s pose; each ball
+is then fitted as a sphere of known size seen by that camera, so balls cut off by the frame edge or partly
+hidden can still be placed.
+The camera model is consistent across all 225 episodes: the front camera sits 82 mm above the board,
+tilted 28◦ down, with a focal length of about 735 px. Fitted ball diameters come out at 29 mm (green) and
+31 mm (red) with a spread under 1.5 mm, an independent check on the scale. Positions from frame 0 and
+frame 30 of the same episode agree to 0.7 mm (median; 7 mm at most). Hiding parts of fully visible balls
+on purpose shows that a ball with only 30% of its width in view is still placed to within 1.1 mm (median;
+3.4 mm at the 90th percentile). In one episode the green ball was placed after recording began, and frame
+30 was used. Relative to the grid, the camera shifted by about 5 mm between recording batches 1 to 4 and
+5 to 9; positions are reported relative to the camera.
+7.2 Coverage grows with the budget
+Green start positions cover the whole floor the camera sees, about 200 mm across and 70 to 290 mm out
+from the camera (Figure 13). How close a hold-out ball is to the nearest training ball shrinks steadily with
+data: a median of 19 mm at 12 episodes, 12 mm at 50 and 5 mm at 200 (Figure 14). With 12 episodes, 9
+of the 25 hold-out balls lie outside the area spanned by the training balls; from 50 episodes on, 5 do, all
+at the edges of the camera’s view. This is the geometric side of Section 5.1: hold-out error falls as the
+training set covers the hold-out’s situations more densely.
+14
+
+=== PDF PAGE 15 ===
+−150 −100 −50 0 50 100 150
+Across (mm, + is right in the camera image)
+0
+50
+100
+150
+200
+250
+300Out from the camera (mm)
+camera
+Green ball start positions: 225 recorded episodes and the 10 bench placements
+training, first in S200 (100)
+training, first in S100 (50)
+training, first in S50 (25)
+training, first in S25 (13)
+training, first in S12 (12)
+hold-out (25)
+estimated from a partly visible ball (45)
+bench placements N00-N09
+N00
+N01N02
+N03
+N04
+N05
+N06
+N07
+N08
+N09
+Grey lines: the 50 mm board grid. Shaded area: the part of the board the front camera sees.
+Figure 13:Green ball start positions in all 225 recorded episodes, coloured by the smallest budget that includes
+them, with the hold-out (diamonds) and the ten bench placements (stars). Dotted rings mark balls placed from a
+partial view.
+−100 0 100
+0
+50
+100
+150
+200
+250
+300Out from the camera (mm)
+nearest training ball, median
+hold-out 19 mm, bench 25 mm
+S12: 12 training episodes
+−100 0 100
+nearest training ball, median
+hold-out 17 mm, bench 19 mm
+S25: 25 training episodes
+−100 0 100
+nearest training ball, median
+hold-out 12 mm, bench 11 mm
+S50: 50 training episodes
+−100 0 100
+nearest training ball, median
+hold-out 8 mm, bench 9 mm
+S100: 100 training episodes
+−100 0 100
+nearest training ball, median
+hold-out 5 mm, bench 5 mm
+S200: 200 training episodes
+green ball, training episodes in this budget green ball, hold-out episodes green ball, bench placements
+Figure 14:Training green balls in each budget (dots, shaded by their area), with hold-out balls (diamonds) and
+bench placements (stars).
+15
+
+=== PDF PAGE 16 ===
+100
+200
+300Out (mm)
+nearest S12 green ball: 38 mm
+N00: 25% success (26/106)
+nearest S12 green ball: 37 mm
+N01: 40% success (42/106)
+nearest S12 green ball: 9 mm
+N02: 45% success (48/106)
+nearest S12 green ball: 60 mm
+N03: 22% success (23/106)
+nearest S12 green ball: 26 mm
+N04: 36% success (38/106)
+−100 0 100
+Across (mm)
+100
+200
+300Out (mm)
+nearest S12 green ball: 17 mm
+(second red ball not located)
+N05: 27% success (29/106)
+−100 0 100
+Across (mm)
+nearest S12 green ball: 12 mm
+N06: 44% success (47/106)
+−100 0 100
+Across (mm)
+nearest S12 green ball: 25 mm
+N07: 44% success (47/106)
+−100 0 100
+Across (mm)
+nearest S12 green ball: 9 mm
+N08: 34% success (36/106)
+−100 0 100
+Across (mm)
+nearest S12 green ball: 37 mm
+N09: 35% success (37/106)
+The ten bench placements (session of 29 Sep), with success over all rollouts in standard (dim) lighting
+green target red distractors dark ring: ball partly out of frame or hidden green ball in the 200 training episodes
+Figure 15:The ten bench layouts over the 200 training positions, with each placement’s success rate over all
+rollouts in standard (dim) lighting (106 per placement).
+7.3 The bench placements
+The ten bench placements were mapped from a single bench session (29 September 2026), chosen because
+the ball positions logged for it were closest to the typical position of each placement across sessions.
+The bench camera pose matches that of the recordings (82 mm high, tilted 27◦ down, rotated about 2.5◦
+relative to them). Nine of the ten bench green balls lie inside the area spanned by the training balls at
+every budget. N03, at the near edge of the view and 82 mm out, lies just outside it even at 200 episodes,
+although a training ball is 6 mm away. At 200 episodes every bench green ball is within 11 mm of a
+training ball (median 5 mm); at 12 episodes the median is 25 mm.
+7.4 Distance from the training data and bench success
+The two hardest placements are the two furthest from what the 12-episode models saw: N03 (22% success)
+is 60 mm from the nearest S12 green ball and N00 (25%) 38 mm. The easiest, N02 (45%), is 9 mm away.
+Across the ten placements, success and distance at S12 correlate atρ=−0.63 (p = 0.053).
+Pooled over budgets, placements far from any training ball succeed less often ( ρ = −0.65 over 50
+placement-by-budget cells), but distance and success both follow the budget. Within each budget the
+relation is weaker and not significant (mean ρ = −0.26, permutation p = 0.08). It is clearest at 12 episodes
+(ρ = −0.53) and absent at 200 (ρ = +0.15), once every placement has a training example within about 10
+mm (Figure 16). With ten placements, distance is entangled with every other feature of a layout, such as
+N03’s green ball being partly out of view, so the association is suggestive rather than established.
+8 Discussion
+8.1 What the validation numbers measure
+Read on their own, the validation results are internally consistent: every model learns more from more
+demonstrations, with diminishing returns; pretrained models generalise from fewer examples; ACT stops
+improving on unseen data early in its schedule; and models trained with and without EMA score almost
+identically. The placement maps show the mechanism: the situations in the hold-out are covered more
+16
+
+=== PDF PAGE 17 ===
+0 10 20 30 40 50 60
+Distance from the bench green ball to the nearest training green ball (mm)
+0%
+25%
+50%
+75%
+100%Bench success rate, all models
+Each point is one placement at one budget (marker size = rollouts)
+training budget
+12 episodes
+25 episodes
+50 episodes
+100 episodes
+200 episodes
+Figure 16:Bench success rate of each placement at each budget against the distance from its green ball to the
+nearest training green ball. Marker size is the number of rollouts.
+densely as the training set grows. Validation is a clean readout of how much a model has learned from its
+data.
+What it does not measure is whether the policy, run closed loop from a rest pose, will do the task.
+The study shows that gap in four independent ways: the ranking across models is inverted, seeds with
+indistinguishable validation numbers differ on the bench, EMA and trimming changed the bench without
+moving validation, and for generative policies the loss itself moves the wrong way during training.
+8.2 Why validation cannot see initiation failure
+The failure that separates SmolVLA and Diffusion Policy from ACT and π0.5, and SmolVLA’s seeds from
+one another, is the arm never starting. A hold-out drawn from demonstrations cannot contain it, because
+the demonstrator always moved. The frames closest to it are the idle lead-in at the start of an untrimmed
+demonstration, where the correct answer is to hold still, which is exactly what a policy that never starts
+does. An idle-prone policy is rewarded by those frames and penalised by none. The mechanism resembles
+the inertia problem described for driving policies [16]: where the data show a stationary agent usually
+remaining stationary, being at rest becomes a predictor of staying at rest.
+This is why trimming is the most informative single experiment. Removing the idle lead-in removed
+the behaviour from training and the frames that rewarded it from validation, so the trimmed models’
+validation numbers got slightly worse while their bench success rose from 5% to 49%. A validation set
+that could detect initiation failure would need rest-pose observations paired with the demonstrator’s first
+movement as the target, which is the opposite of what a recording contains.
+Lighting adds to the blind spot. The bench ran in the room’s ordinary lighting, dimmer than the
+recordings. In the brighter-light probe of [ 5], untrimmed Diffusion Policy started in 16 of 50 rollouts,
+against 2 of 50 for the same checkpoints in dim light, and SmolVLA in 36 of 50 against 32 of 50. Part of
+the initiation failure is therefore a response to a change in conditions between recording and deployment,
+which a hold-out recorded under the training conditions cannot reveal either.
+17
+
+=== PDF PAGE 18 ===
+8.3 Loss and action error for generative policies
+For diffusion and flow-matching policies, the loss scores the repair of a corrupted demonstration at every
+noise level, not the action the policy outputs. As these models memorise their training actions [17], the
+repair of unseen actions gets worse while the output improves. Their hold-out loss is therefore not a
+measure of generalisation in the usual sense, and it inverts the usual reading of a validation curve.
+Action error has limits of its own. Errors grow with the horizon, so levels differ by policy for
+mechanical reasons. And the sampling policies choose one of several plausible motions: on a frame where
+the demonstrator could reasonably have done two things, they are sometimes scored as wrong for doing
+the other. ACT, which regresses towards the average motion, is not penalised in that way, which may be
+part of why its error is the highest in the study while its success is the highest of the models trained from
+scratch.
+8.4 Why seeds do not separate
+A success rate from ten rollouts carries about ±15 percentage points of uncertainty; hold-out error is
+averaged over 13,372 frames and is precise to a few percent. Among seeds that all start, the bench
+differences are mostly rollout noise. Among seeds that do not all start, the difference is initiation, which
+validation does not see. In both cases there is nothing for a within-budget correlation to find.
+8.5 Implications for evaluation practice
+These results suggest a division of labour between offline metrics and evaluation on the robot. Hold-out
+action error is a sound criterion for deciding when to stop training: it plateaued within 20 to 40% of
+ACT’s schedule, and it identified Diffusion Policy at 100 and 200 episodes as the only configurations
+still improving when training ended. For diffusion and flow-matching policies, hold-out loss should not
+be used for this purpose, because it rises from the first checkpoint while the policy’s outputs improve.
+Whenever action error is reported, its horizon should be stated. Validation is also useful for detecting
+broken runs, incorrect episode lists and faulty training recipes, which appear as outliers against the rest of
+a grid.
+On this evidence, hold-out metrics should not be used to choose between seeds, between converged
+checkpoints or between model families, or to decide which configurations merit robot evaluation: in this
+study the configuration with the lowest hold-out error performed worst on the bench. Training loss should
+not be used to compare data budgets, since it orders them backwards.
+For bench evaluation, reporting initiation failure separately from other failure modes, and success
+among the rollouts in which the policy started alongside overall success, divides closed-loop performance
+into a component that held-out imitation metrics track and one they cannot observe. An offline test for
+initiation would have to be constructed deliberately (Section 10).
+9 Limitations
+All results come from one pick-and-place task on one SO-101 setup in one laboratory, and should be read
+as a detailed case study rather than a general law. The bench lighting was dimmer than the lighting under
+which the demonstrations were recorded, so bench success reflects robustness to that change as well as
+generalisation to new placements. Most checkpoints have ten bench rollouts, about ±15 percentage points
+of uncertainty each; the analysis therefore relies on pooled rates and paired comparisons, and differences
+between single training cells should not be over-read. The grids are uneven: π0.5 has two seeds (seed
+3 only with EMA weights) and saved only its halfway and final checkpoints, the untrimmed Diffusion
+Policy line was benched with two seeds per budget, and the trimmed line has two seeds.
+Action error is scored over each policy’s own execution horizon (24 to 100 steps), so SmolVLA against
+π0.5 is the only like-for-like comparison of levels. π0.5 and all intermediate checkpoints were scored on
+every fifth frame, and π0.5 in bfloat16; the effect of the stride was checked (Section 4.1), the effect of
+18
+
+=== PDF PAGE 19 ===
+reduced precision was not. Trimmed and untrimmed models are validated on different hold-out frames,
+so their validation numbers are not directly comparable. The end of the Diffusion Policy and SmolVLA
+curves is shaped by their learning-rate schedules, taken to be LeRobot’s defaults, so the remaining gain
+for Diffusion Policy at 100 and 200 episodes is uncertain.
+Bench results exist only for final checkpoints, so the assumption that bench success follows hold-out
+action error along a training run is not tested. Bench ball positions were mapped from a single session, and
+placements shift by a few millimetres between sessions; ten placements are too few to separate distance
+from the training data from other features of a layout.
+10 Future work
+Several questions raised by these results can be addressed offline, with the existing recordings, checkpoints
+and bench record. The most direct is an offline initiation probe: presenting each policy with the opening
+frames of the hold-out demonstrations, while the arm is still at rest, and measuring whether its predicted
+actions would move the arm within the first second. If this quantity tracks each checkpoint’s bench rate
+of starting, it would provide an offline test for the failure mode that validation cannot observe. Two
+refinements of action error are also open: restricting it to the approach and grasp segments, following [4],
+and scoring all policies over a common 24-step horizon to remove the horizon confound from cross-model
+comparisons. Finally, Diffusion Policy at 100 and 200 demonstrations was still improving on unseen data
+when training stopped, and its behaviour under a longer schedule remains to be measured.
+11 Conclusion
+Validation loss and hold-out action error are good measures of learning and poor measures of performance
+on the robot. Across four policy families, five data budgets and 930 bench rollouts, they show cleanly that
+every model learns more from more demonstrations, that pretrained models generalise from fewer, that
+ACT and SmolVLA stopped improving on unseen data well before their schedules ended, and that only
+Diffusion Policy with 100 or more demonstrations was still improving.
+They predict bench success no better than the episode count does, say nothing about which seed will do
+better, and rank models in the wrong order. The reason is a specific blind spot rather than noise: the most
+common failure in the study, the arm never starting, cannot appear in a hold-out made of demonstrations.
+Where that failure is absent, among rollouts that started, hold-out error and success agree well. For
+diffusion and flow-matching policies the hold-out loss is misleading even as a training diagnostic, rising
+from the first checkpoint while the actions they produce improve.
+Hold-out action error is therefore suited to deciding when to stop training and to detecting broken runs.
+Choosing between seeds, checkpoints and model families still requires evaluation on the robot, which
+is more informative when success among the rollouts in which the policy started is reported alongside
+overall success.
+References
+[1] S. Ross, G. Gordon, and J. A. Bagnell. A reduction of imitation learning and structured prediction to
+no-regret online learning. InProceedings of the International Conference on Artificial Intelligence
+and Statistics (AISTATS), 2011. arXiv:1011.0686.
+[2] A. Mandlekar, D. Xu, J. Wong, S. Nasiriany, C. Wang, R. Kulkarni, L. Fei-Fei, S. Savarese, Y . Zhu,
+and R. Martín-Martín. What matters in learning from offline human demonstrations for robot
+manipulation. InConference on Robot Learning (CoRL), 2021. arXiv:2108.03298.
+[3] M. Barannikov. Is using a validation set useful for end-to-end learning in robotics?
+19
+
+=== PDF PAGE 20 ===
+Hugging Face community blog, 2024. https://huggingface.co/blog/m1b/
+validation-loss-robotics.
+[4] H. Huang, T. Zheng, Y . Chen, J. You, and Y . Gao. Critical Interval MSE: toward reliable offline
+validation for robot manipulation policies, 2026. arXiv:2606.29898.
+[5] S. Cowling. From 12 to 200 demonstrations: how ACT, Diffusion Policy, SmolVLA and π0.5 scale
+on a low-cost arm, 2026. arXiv:2610.37170.
+[6] T. Z. Zhao, V . Kumar, S. Levine, and C. Finn. Learning fine-grained bimanual manipulation with
+low-cost hardware. InRobotics: Science and Systems (RSS), 2023. arXiv:2304.13705.
+[7] C. Chi, S. Feng, Y . Du, Z. Xu, E. Cousineau, B. Burchfiel, and S. Song. Diffusion Policy: vi-
+suomotor policy learning via action diffusion. InRobotics: Science and Systems (RSS), 2023.
+arXiv:2303.04137.
+[8] M. Shukor et al. SmolVLA: a vision-language-action model for affordable and efficient robotics,
+2025. arXiv:2506.01844.
+[9] Physical Intelligence, K. Black, et al. π0.5: a vision-language-action model with open-world
+generalization, 2025. arXiv:2504.16054.
+[10] J. Ho, A. Jain, and P. Abbeel. Denoising diffusion probabilistic models. InAdvances in Neural
+Information Processing Systems (NeurIPS), 2020. arXiv:2006.11239.
+[11] Y . Lipman, R. T. Q. Chen, H. Ben-Hamu, M. Nickel, and M. Le. Flow matching for generative mod-
+eling. InInternational Conference on Learning Representations (ICLR), 2023. arXiv:2210.02747.
+[12] A. Irpan, K. Rao, K. Bousmalis, C. Harris, J. Ibarz, and S. Levine. Off-policy evaluation via
+off-policy classification. InAdvances in Neural Information Processing Systems (NeurIPS), 2019.
+arXiv:1906.01624.
+[13] X. Li et al. Evaluating real-world robot manipulation policies in simulation. InConference on Robot
+Learning (CoRL), 2024. arXiv:2405.05941.
+[14] P. de Haan, D. Jayaraman, and S. Levine. Causal confusion in imitation learning. InAdvances in
+Neural Information Processing Systems (NeurIPS), 2019. arXiv:1905.11979.
+[15] C. Wen, J. Lin, T. Darrell, D. Jayaraman, and Y . Gao. Fighting copycat agents in behavioral cloning
+from observation histories. InAdvances in Neural Information Processing Systems (NeurIPS), 2020.
+arXiv:2010.14876.
+[16] F. Codevilla, E. Santana, A. M. López, and A. Gaidon. Exploring the limitations of behavior cloning
+for autonomous driving. InIEEE/CVF International Conference on Computer Vision (ICCV), 2019.
+arXiv:1904.08980.
+[17] C. He, X. Liu, G. Sznaier Camps, G. Sartoretti, and M. Schwager. Demystifying diffusion policies:
+action memorization and simple lookup table alternatives, 2025. arXiv:2505.05787.
+[18] F. Lin, Y . Hu, P. Sheng, C. Wen, J. You, and Y . Gao. Data scaling laws in imitation learning for
+robotic manipulation. InInternational Conference on Learning Representations (ICLR), 2025.
+arXiv:2410.18647.
+[19] TheRobotStudio. SO-ARM100: standard open SO-100 and SO-101 arms. GitHub repository.
+https://github.com/TheRobotStudio/SO-ARM100.
+[20] R. Cadene et al. LeRobot: state-of-the-art machine learning for real-world robotics in Py-
+Torch. GitHub repository, 2024. https://github.com/huggingface/lerobot, commit
+8352ca62 (v0.6.2).
+20
+
+=== PDF PAGE 21 ===
+A Experimental details
+Table A1 lists the data, scoring components and settings from which every number in this paper is
+computed. Both copies of the demonstration dataset are publicly available on the Hugging Face Hub under
+the Apache 2.0 licence: fysical/greenball_pool_225_v1 and fysical/greenball_pool_225_v1_trimmed.
+Table A1:Data, scoring components and settings.
+Component Description Settings
+Demonstrations
+(fysical/greenball_
+pool_225_v1)
+225 teleoperated demonstrations; a
+trimmed copy has the idle lead-in
+removed
+30 fps; front and wrist cameras, 640×
+480
+Data split (subsets.json) 25 hold-out episodes and nested
+training subsets S12 to S200
+data seed 20260922; hold-out stratified
+over nine recording batches
+Scorer (val_loss.py) loss and action error per checkpoint,
+overall and per episode
+evaluation mode; 4 noise draws, seed
+20261007; probe S12; plain or EMA
+weights; rejects any model whose
+training set contains a hold-out episode
+Final-checkpoint scores 128 checkpoints, on the hold-out and
+the training probe
+every frame (π0.5 every fifth frame,
+bfloat16)
+Training-curve scores 700 intermediate checkpoints of ACT,
+Diffusion Policy and SmolVLA
+every fifth frame; NVIDIA A10G
+Bench record one row per rollout with its audited
+outcome label, from [5]
+primary set: standard (dim) lighting,
+placements N00 to N09
+Start frames first frames of every recorded episode
+and of one bench session
+frames 0 and 30; bench session of 29
+September 2026
+Ball positions start position of every ball, in
+millimetres relative to the front camera
+per-frame grid fit; focal length 735 px;
+ball radius 14.4 mm (green), 15.6 mm
+(red)
+Software: LeRobot commit 8352ca62 (v0.6.2). Statistics: Spearman’s ρ with permutation p-values
+(20,000 permutations; 10,000 within budgets), binomial simulation for the episode-count baseline (5,000
+draws), Wilson intervals, Fisher’s exact test.
+21

@@ -1,0 +1,84 @@
+# 原文件 lerobot/src/lerobot/configs/default.py
+# 原行范围 190–229
+# L 后是官方源码或本机文件的原行号。每条中文注释对应紧随其后的原文。
+# 这是静态阅读副本。请在编辑器中阅读。空行保留，节选之间标出跳过的范围。
+
+# …… 跳过原文第 1–189 行 ……
+# L0190 数据类装饰器。Python 根据字段生成初始化等方法。
+@dataclass
+# L0191 保存环境批次和回合数等调度参数。实例被 EvalPipelineConfig 持有。
+class EvalConfig:
+    # L0192 目标回合数，原命令显式设为 1。
+    n_episodes: int = 50
+    # L0193 原作者对相邻代码的说明。
+    # `batch_size` specifies the number of environments to use in a gym.vector.VectorEnv.
+    # L0194 运算设备或数据传输的说明。
+    # Set to 0 for auto-tuning based on available CPU cores and n_episodes.
+    # L0195 每批的仿真实例数。零表示由后面的函数自动计算。
+    batch_size: int = 0
+    # L0196 原作者对相邻代码的说明。
+    # `use_async_envs` specifies whether to use asynchronous environments (multiprocessing).
+    # L0197 原作者对相邻代码的说明。
+    # Defaults to True; automatically downgraded to SyncVectorEnv when batch_size=1.
+    # L0198 允许异步环境。原命令关闭异步并只创建一个环境。
+    use_async_envs: bool = True
+    # L0199 原作者对相邻代码的说明。
+    # Whether to record eval rollouts as a LeRobot dataset on disk.
+    # L0200 声明“recording”的类型为 bool，使用布尔值 False作为初始值。
+    recording: bool = False
+    # L0201 原作者对相邻代码的说明。
+    # If set, push recorded eval datasets to the Hub under this repo id (one repo per task,
+    # L0202 原作者对相邻代码的说明。
+    # suffixed by task and env index). Requires recording=true.
+    # L0203 声明“recording_repo_id”的类型为 str | None，设为空值 None作为初始值。
+    recording_repo_id: str | None = None
+    # L0204 原作者对相邻代码的说明。
+    # Whether the pushed recording repositories should be private.
+    # L0205 声明“recording_private”的类型为 bool，使用布尔值 False作为初始值。
+    recording_private: bool = False
+    # L0206 原作者对相邻代码的说明。
+    # Cap each episode at this many steps (the env's own limit still applies when lower).
+    # L0207 原作者对相邻代码的说明。
+    # For quick end-to-end checks such as CI; success rates from capped episodes are not meaningful.
+    # L0208 声明“max_episode_steps”的类型为 int | None，设为空值 None作为初始值。
+    max_episode_steps: int | None = None
+
+    # L0210 每个 EvalConfig 实例构造完成后运行参数校验和批次数处理。
+    def __post_init__(self) -> None:
+        # L0211 条件 self.recording_repo_id is not None and not self.recording 成立时进入下方分支。
+        if self.recording_repo_id is not None and not self.recording:
+            # L0212 抛出 ValueError，中断当前路径并交给上层的异常处理。
+            raise ValueError("eval.recording_repo_id requires eval.recording=true.")
+        # L0213 条件 self.max_episode_steps is not None and self.max_episode_steps < 1 成立时进入下方分支。
+        if self.max_episode_steps is not None and self.max_episode_steps < 1:
+            # L0214 抛出 ValueError，中断当前路径并交给上层的异常处理。
+            raise ValueError(f"eval.max_episode_steps must be at least 1, got {self.max_episode_steps}.")
+        # L0215 条件 self.batch_size == 0 成立时进入下方分支。
+        if self.batch_size == 0:
+            # L0216 调用 self._auto_batch_size，用它的结果给 “self.batch_size” 赋值。
+            self.batch_size = self._auto_batch_size()
+        # L0217 条件 self.batch_size > self.n_episodes 成立时进入下方分支。
+        if self.batch_size > self.n_episodes:
+            # L0218 读取属性 self.n_episodes给 “self.batch_size” 赋值。
+            self.batch_size = self.n_episodes
+
+    # L0220 根据可用的 CPU 核心和回合数计算自动批大小。
+    def _auto_batch_size(self) -> int:
+        # L0221 原文档中的说明或续行。
+        """Pick batch_size based on CPU cores, capped by n_episodes."""
+        # L0222 导入模块 math。
+        import math
+        # L0223 导入模块 os。
+        import os
+
+        # L0225 组合多个布尔判断，按 Python 的短路规则求值给 “cpu_cores” 赋值。
+        cpu_cores = os.cpu_count() or 4
+        # L0226 原作者对相邻代码的说明。
+        # Each async env worker needs ~1 core; leave headroom for main process + inference.
+        # L0227 调用 max，用它的结果给 “by_cpu” 赋值。
+        by_cpu = max(1, math.floor(cpu_cores * 0.7))
+        # L0228 调用 min，用它的结果作为当前调用的返回值。
+        return min(by_cpu, self.n_episodes, 64)
+
+
+# …… 跳过原文第 230–294 行 ……

@@ -1,0 +1,813 @@
+
+--- PAGE 1 ---
+ELASTIC: Efficiently Learning to Adaptively Scale
+Test-Time Compute for Generative Control Policies
+Andrew Zou Li, Gokul Swamy, Yonatan Bisk, Andrea Bajcsy
+Carnegie Mellon University
+{azl2, gswamy, ybisk, abjacsy}@andrew.cmu.edu
+Abstract:Generative control policies (GCPs), such as diffusion policies and flow-
+based vision-language-action models, enable test-time scaling in robot control.
+Test-time compute can be allocated along two axes:sequential scaling, which in-
+creases denoising steps to refine actions, andparallel scaling, which samples mul-
+tiple candidate actions to search across modes of the policy distribution. However,
+the optimal allocation of sequential and parallel compute is hard to know a priori
+as it is state-, task-, and policy-dependent. For example, early stages of a grasp
+may benefit from broader parallel exploration, while near-contact phases may re-
+quire more sequential refinement for precision. We presentELASTIC, an algo-
+rithm that learns state-dependent test-timecompute schedulesfor GCPs. We for-
+mulate compute allocation as a meta-Markov Decision Process in which a meta-
+policy interacts with a frozen pretrained robot policy and selects sequential steps
+and parallel samples at each denoising iteration to maximize task success while
+minimizing compute. Using reinforcement learning, this meta-policy also learns
+adaptive compute schedules without access to the GCP’s training data. Across
+simulated manipulation benchmarks with diffusion policies,ELASTICPareto-
+dominates fixed and single-axis scaling baselines at matched compute budgets.
+On real-world robot manipulation with theπ 0.5 vision-language-action model,
+ELASTICmatches best-of-10success while reducing wall-clock latency by 34%.
+Keywords:Test-time Scaling, Generative Control, Reinforcement Learning
+1 Introduction
+Generative control policies (GCPs), such as diffusion policies and flow-based Vision-Language Ac-
+tion models (VLAs), have demonstrated remarkable success at imitating complex, multimodal dis-
+tributions over actions [1, 2, 3, 4]. At inference time, these models iteratively transform samples
+from a Gaussian distribution to the target action distribution via a sequential refinement process
+[5, 6, 7]. This structure is precisely what enablestest-time scalingfor GCPs: the ability to improve
+policy performance via more inference-time computation, rather than via more training.
+Broadly speaking, test-time compute can be allocated along two orthogonal axes.Sequential scal-
+ingrefines a robot’s action samples toward higher-quality solutions through additional integration
+steps [6]. For example, consider the pick-and-place manipulation task in Figure 1. Finer integra-
+tion steps during denoising yield more precise robot motions.Parallel scalingsamples and denoises
+multiple candidates from the policy, exploring different modes of the action distribution. From these,
+one can select the best sample for a given task via a verifier (e.g., Best-of-Nsearch [8]). Going back
+to Figure 1, parallel scaling enables the robot to explore action modes that move towards the purple
+or the blue mug; the verifier then discards the blue mug action mode based on the prompt.
+Yet, it is not obvious a priori which axis to scale: the right allocation varies with the task, the state,
+and the policy’s own competence. For example, sequential scaling is ineffective on the mug pick-
+and-place task when the base policy is uncertain about which mug to pick up; this is fundamentally
+arXiv:2606.31132v1  [cs.RO]  30 Jun 2026
+
+--- PAGE 2 ---
+𝒩(0,𝐼) denoising time 𝜏
+All samples too noisy No task progress Distinct modes! 
+Red is bad for task
+Skip ahead with 
+Ye l l o w 
+Ye l l o w too imprecise 
+Slowly denoise Green
+Real World
+Parallel
+Sequential
+put purple mug 
+in basket
+πGCP(u|o)
+Qϕ
+0.72 
+0.76
+Executing Green
+Figure 1:Parallel vs. Sequential Scaling in Robotics.Parallel scaling explores diverse action
+modes, while sequential scaling refines solution quality. OurELASTICalgorithm jointly allocates
+both compute axes to optimize the performance–latency tradeoff.
+a mode selection problem that benefits more from parallel sampling. Conversely, parallel scaling
+without sufficient sequential refinement produces imprecise actions that can lead to grasp failures.
+One might hope to maximally scale both sequential and parallel compute to maximize performance.
+In robotics, however, test-time computation directly translates into control latency, which is un-
+desirable for real-time, reactive control. Sequential scaling clearly increases latency by requiring
+additional denoising steps before action execution. But parallel scaling is also not free: while candi-
+dates can be evaluated concurrently in principle, onboard deployment is limited by finite hardware
+parallelism and memory bandwidth. As a result, both test-time scaling axes incur nontrivial latency
+costs, yet existing methods typically fix compute at conservative and inefficient settings.
+Our key insight is thatthe optimal test-time compute allocation can be learned via reinforcement
+learning: by interacting with the frozen base policy, a “meta-policy” can learn when to favor se-
+quential scaling or parallel scaling as a function of the task, state, and the GCP’s capabilities.
+Specifically, we formulate compute allocation as a meta-Markov Decision Process (MDP), before
+detailing the key algorithmic choices required to solve this meta-MDP efficiently. We call our algo-
+rithmELASTIC:EfficientlyLearning toAdaptivelyScaleTest-timeCompute for GCPs.
+Contributions.We formulate compute allocation as a meta-MDP, where a meta-policy interacts
+with a frozen pretrained GCP and selects the number of sequential steps and parallel samples at
+each denoising iteration to maximize task success under a compute budget. In simulated manipula-
+tion benchmarks with diffusion policies,ELASTICPareto-dominates fixed and single-axis baselines
+at matched compute budgets. On hardware with theπ 0.5 vision-language-action (VLA) model,
+ELASTICmatches Best-of-10success while reducing wall-clock latency by 34%.
+2 Related Work
+Sequential Scaling.Sequential scaling in generative models trades off inference compute and out-
+put quality by choosing when to allocate generation steps (e.g., longer reasoning traces in language
+models or more denoising steps in diffusion models). In robotics, this idea has recently been ex-
+plored for diffusion policies, where inference speed and action quality can be controlled through
+the number of denoising steps. Prior work includes distillation-based methods [9] (which compress
+inference into one or few steps, but require retraining), advanced ODE solvers [6, 10], and, most rel-
+evant to our work, methods that freeze the base policy but instead adapt denoising schedules based
+on robot state using variance estimation or reinforcement learning [11, 12, 13]. We instead study the
+joint allocation of test-time compute across both sequential and parallel scaling axes, arguing that
+sequential scaling alone is insufficient for maximizing performance.
+2
+
+--- PAGE 3 ---
+Parallel Scaling.An orthogonal axis of test-time scaling is through parallel sampling and verifi-
+cation, as in Best-of-N search [14, 15, 16, 17]. In robotics, learning to search with verifiers has
+been explored for improving performance [18, 19, 20] and aligning policies to human preferences
+[21, 22]. These methods completely denoise a fixed number of candidates, applying a constant
+parallel overhead regardless of environment state. The resulting overhead is substantial: RoboMon-
+key [18] reports over 4×the base policy inference latency at 16 samples even with a specialized
+serving engine. In contrast, we explore interventions during the denoising process of each parallel
+sample to reduce computational cost while preserving the performance benefits of these methods.
+FASTER [23] attempts to reduce parallel overhead via early stopping, but their proposed noise-
+aware verifier is in practice used only to select among initial noise samples prior to denoising, rather
+than to prune candidates mid-trajectory, and does not account for sequential denoising length.
+Sequential-Parallel Tradeoff. Adaptively scaling both sequential and parallel axes is a less studied
+problem [17, 24]. Most related to our work is the algorithm ZIP-RC [24] applied to language model-
+ing, which formulates compute allocation over parallel samples as a meta-MDP, learning to predict
+the joint distribution over expected reward and the remaining generation length for each sample.
+However, ZIP-RC relies on language models’ next-token logits for self-verification, which has no
+analog in GCPs: actions carry real-world consequences beyond appending a token, and intermediate
+denoising updates do not encode downstream task success.
+3 Preliminaries: Generative Control Policies & Test-time Scaling Axes
+Diffusion and Flow Matching.Diffusion and flow-matching models learn to generate samples from
+a complex target distributionp(x)by transforming samples from an easy distribution. Specifically,
+these models learn a time-dependent vector field that, when integrated, transports samples from a
+Gaussian noise distribution,N(0, I), to samples from the training distribution,p(x)[25, 5, 7]. Let
+θbe the parameters of the learned vector field,τ∈[0,1]be the denoising time, andx τ be the
+sample at any denoising timeτ. Starting from a noisy samplex 1 ∼ N(0, I)atτ= 1, the numerical
+integration of the learned velocity networkv θ or noise prediction networkϵ θ results in the denoised
+samplex 0 ∼p(x)atτ= 0. In particular, we iteratively applyx τ−∆τ =f(x τ , τ,∆τ;θ), where∆τ
+is the integration step size.
+Generative Control Policies.We refer to policies that produce actions via an iterative generation
+process asgenerative control policies(GCPs). In robotics, diffusion and flow models have been
+used extensively to model conditional action distributions [1, 2]. We denote the robot’s policy as
+πGCP :=p(u t |o t), whereu t ∈ Uis a chunk of robot actions (e.g., joint velocities) ando t ∈ Ois
+the robot’s current observation (e.g., proprioceptive state and RGB camera images) at time stept.
+Scaling Axis 1: Sequential.For a fixed denoising step size∆τ, the iterative denoising process
+requiresL=⌈T /∆τ⌉evaluations of the learned network (v θ orϵ θ). Smaller∆τ’s result in finer
+numerical integration and produce generations that are closer to the target distribution; however,
+they increase the denoising trajectory lengthLand thus wall-clock latency. Larger∆τ’s decrease
+wall-clock latency, but potentially result in lower-quality generations.Sequential test-time scaling
+involves adapting the denoising step size∆τto tradeoff generation fidelity vs. latency.
+Scaling Axis 2: Parallel.Another GCP control knob is the number of action samples that are
+denoised. Intuitively, denoisingNindependent samples in parallel allows us to hit multiple modes
+of the learned action distribution. This is commonly coupled with a Best-of-N step, in which each
+denoised action is evaluated by an external verifierQϕ and only the top-performing one is executed.
+However, the use of a verifier and parallel inference increases wall-clock latency under an inference-
+time memory budget, especially on top of models like VLAs [18, 21].Parallel test-time scaling
+adapts the number of samplesNthat are denoised to tradeoff generation fidelity vs. latency.
+3
+
+--- PAGE 4 ---
+4ELASTIC: Efficiently Learning to Adaptively Scale Test-Time Compute
+Although GCPs expose sequential and parallel test-time compute axes, it is hard to know a priori
+whichto scale andwhereto scale. This is because the optimal compute allocation depends on the task
+(e.g., precise peg insertion requiring greater sequential scaling), the base policy’s action distribution
+(e.g., mode collapse making parallel scaling ineffective), as well as the state the robot is currently in
+(e.g., sequential scaling being beneficial at critical pre-grasp positions). Thus, we frame the problem
+oflearning how to allocate test-time computeas solving ameta-Markov Decision Process (MDP).
+4.1 Test-Time Compute as aMeta-Markov Decision Process
+We formalize optimizing test-time compute as solving a meta-MDPM meta = (S,A, T, r). We
+control the joint denoising process overNsamples, each corresponding to a denoising trajectory
+from noise to robot action [26]. 1 We select one of these actions to execute.
+Physical Environment. Although our meta-MDP optimizes over the denoising process, the actions
+generated affect the physical world. Let the physical states bex∈ X(e.g., proprioceptive state,
+environment geometry, object poses) and the robot’s control action (e.g., joint torques) beu∈ U.
+States (S).Let meta-statess k ∈ Sbe defined as the concatenation of the physical state and
+denoising state at every denoising stepkof the joint denoising trajectory. In particular, we set
+sk = (x, u1:N
+k , τ1:N
+k , m1:N
+k )wherex∈ Xis the physical state (constant throughout the denoising
+process),u 1:N
+k areNpartially-denoised action samples from the GCP at denoising timesτ 1:N
+k , and
+m1:N
+k is a mask indicating which samples are active. Note that samples may advance to different
+denoising timesτat the same stepk, so we include the vectorτ 1:N
+k as part of the state.
+Actions(A).We define meta-actions asa:= ∆τ 1:N
+k ∈ A, which represents how much each
+sample advances (i.e., the stride of the integration). For each samplei∈ |N|, the action lies in
+∆τ (i)
+k ∈[0, τ k], where we define∆τ (i)
+k = 0as permanently stopping the sample, akin to pruning
+or early stopping the sample from the search. While the maximumNis fixed, we can scale down
+parallel compute by removing or never using samples in the parallel search. In contrast to prior
+works [13, 23], our choice of action space allows us tosimultaneously optimizeover both axes of
+test-time scaling in a state-dependent fashion: we control how quickly samples “jump” through the
+denoising process (sequential scaling), as well as keeping/pruning samples (parallel scaling).
+Transition(T).The transition functionT(s ′ |s, a)encapsulates both physical and denoising
+dynamics. Specifically, active action samplesu 1:N
+k evolve via the denoising dynamics governed by
+the pretrainedπ GCP with stridesa. Pruning a sample witha (i) = 0setsm (i)
+k = 0. Pruned and fully
+denoised samples maintain their statesregardless ofa. After every sample is fully denoised (i.e.,
+τ (i)
+k = 0, i∈[N]) or pruned (i.e.,m (i)
+k = 0, i∈[N]), we feed un-pruned samples to verifierQ ϕ.
+The action with the highest verifier score is executed on the robot, evolving the physical statex.
+4.2 Reward Design for Trading Off Performance and Compute
+Our reward is a sum of task performance and computational cost terms. Because nuanced behaviors
+such as pruning and coordination unfold over the course of the denoising process rather than at a
+single step, we definer compute as a function of the entire denoising trajectoryξ= (s 0, a0, s1, . . .)
+that culminates in a low-level robot actionu.
+Task Performance Reward.Because the denoising process is nested inside the real-world dy-
+namics, the effective horizon of the meta-MDP is quite large. We also only receive a single bit of
+feedback at the end of the real-world episode. Put together, we are faced with a challenging credit
+assignment problem. To address this concern, we fit an environment-levelQ-function forr task and
+use it as a terminal value estimate at the end of the denoising trajectory. Note that this transformation
+1While this formulation may make it seem like we’re optimizing greedily over a single real-world timestep,
+our use of a terminal value estimate allows us to optimize over the full real-world episode, as we detail below.
+4
+
+--- PAGE 5 ---
+preserves policy optimality [27]; becauseQ task estimates the expected return over the remainder of
+the real-world episode rather than just the immediate-step reward, it folds the downstream conse-
+quences of the current action into a single terminal value. Consequently, optimizing the meta-MDP
+independently at each robot timestep remains optimal. We also use this verifier for action selection
+in parallel scaling (i.e.,Q ϕ =Q task).
+Compute Reward.We designr compute to be able to flexibly penalize expenditures along either test-
+time compute axis. First, we define the length of a denoising trajectory asℓ(i)(ξ) =P
+k m(i)
+k . Then,
+oursequential costLis the length of the slowest-finishing sample:L(ξ) = max i∈[N] ℓ(i), and our
+parallel costPis the time-averaged number of active samples:P(ξ) = PN
+i ℓ(i)(ξ)/L(ξ)≥1. We
+then scale these costs by weightsα, β∈R ≥0 and add the task performance term to arrive at:
+r(ξ) =Q task(x, u)−αL(ξ)−β(P(ξ)−1).(1)
+The coefficientsαandβallow us to interpolate between regimes: largeαwith smallβfavors fast
+single-sample inference; largeβwith smallαpenalizes stragglers without penalizing uniform depth;
+and the magnitudes of both determine the tradeoff between reward and computational cost.
+4.3 Key Design Decisions for Efficiently Solving the Meta-MDP
+We solve the meta-MDP described in 4.1 via Soft Actor-Critic (SAC) [28], training both ameta-
+policyπ meta :S →∆(A)and ameta-criticQ meta :S × A →R. The actor is inserted into the base
+policy’s denoising loop and outputs a denoising stride for allNsamples following Algorithm 1,
+while a centralized critic estimates the value of the denoising trajectory under the group reward in
+Eq. (1). We now detail several design decisions required to facilitate efficient meta-policy learning.
+First, recall that the meta-MDP state contains a set ofNdenoising samples whose ordering is ar-
+bitrary. Permuting the samples should permute the actor’s denoising decisions (equivariance), but
+should not change the critic’s scalar value estimate (invariance). Any architecture that assigns mean-
+ing to sample index, such as concatenation, would generalize poorly to identical denoising states
+appearing in different slots. Thus, we parameterizeπ meta andQ meta with attention over the sample
+set, yielding a permutation-equivariant actor and a permutation-invariant centralized critic. Sec-
+ond, the samples are coupled by the parallel-compute penalty in Eq. (1), so the value of denoising
+one sample depends on other samples. A decentralized design with independent, per sample actors
+would produce near-symmetric decisions early in denoising. This would prevent desirable coordi-
+nated behavior, like a sample in a more promising region of the action space suppressing compute on
+weaker peers. In response, we use a centralized actor and critic to coordinate strides across samples.
+Third, to ensure strides depend on physical state, we apply FiLM conditioning [29] to the frozen
+base policy’s observation embedding, modulating how each denoising state is interpreted.
+Since solving the meta-MDP is a challenging exploration problem, we improve sample efficiency of
+training by adopting hybrid reinforcement learning [30]. First, inPhase 1: Offline Critic Pretrain-
+ing, we pretrain the critic on an offline buffer collected with rollouts ofπ base under various fixed
+denoising schedules. Next, inPhase 2: Hybrid RL, we run rollouts ofπ base withπ meta controlling
+the sequential and parallel inference compute following Algorithm 1. To improve sample efficiency,
+we augment the replay buffer with counterfactual compute allocations. In particular, we generate
+this off-policy data by runningπ GCP with allNsamples at each state and subsample candidates to
+simulate varying budgets – see Appendix 7.3 for more details.
+5ELASTICOutperforms Fixed and Single-Axis Test-Time Scaling
+We design our experiments to demonstrate the following:(1)adaptive scaling outperforms fixed
+allocation across a variety of compute costs and tasks;(2)ELASTIClearns qualitatively reasonable
+compute allocation behaviors;(3)ELASTICscales to the state-of-the-art pre-trainedπ 0.5 VLA on
+real hardware and improves performance with less wall-clock inference latency.
+5
+
+--- PAGE 6 ---
+5.1ELASTIC’s Test-time Compute Beats Fixed Allocation with Diffusion Policies
+Setup.We first demonstrate adaptive allocation outperforms fixed and single-axis scaling under
+matched compute at three different compute cost combinations. We evaluate on a suite of tasks
+chosen to surface different mechanisms of train-test mismatch because it is where test-time scaling
+has clear room to improve performance. We also explore how much we want to scale along each
+axis as we vary the costs(α, β)of scaling each axis in the reward Eq. (1).
+Invalidated action modes: we use PUSHT [1] and a variant called PUSHT OBSTACLEdesigned to
+invalidate action modes of the base policy by introducing an obstacle at test-time that is not visible
+to the policy, but is visible in the training data of the verifier.
+Suboptimal demonstrations: From Robomimic [31], we use both the SQUAREPH and MH tasks,
+in which the base policy is trained on higher quality proficient human (PH) data and mixed human
+(MH) data.
+Mode ambiguity: From Robomimic, we use the CANPAIREDtask, in which the training data has
+paired 50% “good” (i.e., placing towards the goal location) and 50% “bad” (i.e., dropping the can
+over the side of the table) mode data. The mode split occurs right after pickup. We create a harder
+version of the task called CANREVERSEby reversing 70% of the training trajectories at random
+timesteps after pickup, ensuringπ GCP is more likely to select a bad mode.
+Forπ GCP, we use the original Diffusion Policy [1] checkpoint when available (PUSHT and SQUARE
+tasks) or train a diffusion policy with the default configuration otherwise (CANPAIREDand CAN
+REVERSE). For parallel scaling and the task rewardQ task, we train a verifierQ ϕ via Bellman
+Residual Minimization on a mixture of success and failure data fromπGCP rollouts (Appendix 7.5.1).
+Methods & Metrics.We measure the success rate of each method across 200 fixed initial conditions
+per task. We record the average sequential stepsLand average parallel samplesPused per action
+generation. We train and testELASTICunder three(α, β)cost regimes:(0.03,0.1),(0.1,0.03),
+and(0.1,0.1), covering scenarios where parallel overhead (e.g., memory, verifier cost) or sequential
+evaluations are the bottleneck, and where both matter.
+Baselines.We compare against baselines that matchELASTIC’s average computeαL+βP, but dif-
+fer in how that compute is allocated.Fixeduses a state-independentallocation of(L, P)matched to
+ELASTIC’s mean values, testing whether state adaptation matters beyond choosing the right average
+allocation.Sequentialexhausts the budget with only sequential steps on a single sample, testing
+whether joint allocation matters in each task. For reference, we also report the performance of the
+defaultDiffusion Policy(DP: 10 steps, 1 sample) and maximum compute withBoN(Best-of-N: 10
+steps, N samples). ForBoNand when initializing samples inELASTIC, we useN= 8on the harder
+CANREVERSEtask andN= 4for other tasks. Appendix 7.2.1 also reports results for alearned
+Fixedbaseline, which directly optimizes a per-episode(L, P)via a similar RL setup at the same
+(α, β)costs, rather than matchingELASTIC’s average allocation.
+Results.Figure 2 shows the success rate of each method against the sequential stepsLand parallel
+samplesPit uses, withSequentialandFixedeach shown at three budgets matched toELASTIC’s
+three(α, β)settings:Sequentialspends each budget entirely onL, whileFixedsplits it betweenL
+andPbut holds the split fixed across states.ELASTICconsistently outperformsFixedallocation at
+matched compute (shown by the gray arrow), with the largest gains on tasks whereπGCP was trained
+on diverse, imperfect data, such as CANPAIREDand SQUAREMH.
+These results also demonstrate that knowing the right amount to scale each axis at test-time is not
+obvious. PUSHT scales well with additional sequential steps, but barely benefits fromBoNsearch.
+Conversely, in CANand PUSHT OBSTACLEtasks, sequential scaling performance gains saturate
+quickly, while parallel samples can substantially close the gap toBoNsuccess rates with far fewer
+sequential steps. In general, it is unclear a priori for some arbitrary set of costs(α, β)whether
+sequential or parallel compute is more beneficial.
+6
+
+--- PAGE 7 ---
+Figure 2:Diffusion Policy Success Rate vs. Sequential StepsLand Parallel SamplesP.
+ELASTICoutperformsFixedandSequential-only scaling at matched compute across 6 tasks and
+3 cost settings (200 trials each), demonstrating the value of state-dependent allocation. Each marker
+is one method’s operating point(L, P);SequentialandFixedsweep three matched-budget points
+(one per cost setting). The gap betweenFixedandELASTIC(gray arrow) is attributable to state-
+dependent allocation alone, sinceFixedusesELASTIC’s averageL, P.
+5.2 What Test-time Compute Schedule DoesELASTIC’s Meta-Policy Learn?
+Having established thatELASTICoutperforms fixed allocation, we now qualitatively examine the
+allocation strategies the meta-policy discovers.
+ELASTICautonomously discovers bottlenecks to task success.CANPAIRED, CANREVERSE,
+and PUSHT OBSTACLEshow the clearest evidence of state-dependent allocation. For example,
+Figure 3 shows how the meta-policy allocates compute along both axes across time in CANPAIRED.
+Sequential steps spike at the pickup phase, where clean denoising is required for reliable grasping;
+parallel candidates spike after, where the base policy’s training data splits into multiple modes and
+Qϕ can discriminate between them. After the mode split resolves, both axes collapse: free motion
+toward the goal is unimodal and simple for the base policy. Since the mode split is concentrated at a
+small number of states, Figure 2 shows thatELASTICachieves success with substantially less total
+compute than full Best-of-N scaling at every step. Similar trends can be seen in PUSHT OBSTACLE
+(Figure 8), whereELASTICmaximizes parallel sample usage to navigate around the obstacle.
+not enough  
+parallel samples 
+ﬁ wrong mode 
+initial approach pick potential mode split 
+ move place
+not enough  
+sequential steps 
+ﬁ failed grasp
+Figure 3:Allocation Timeline: CANPAIRED.ELASTICallocates more sequential steps during the
+pick, to avoid a missed grasp (top right), and more parallel samples at states where action modes
+potentially split, to avoid selecting a wrong mode that throws the can off the table (bottom right).
+Compute allocation adapts to base policy performance, not just task geometry.Despite sharing
+the same task environment, SQUAREPH and SQUAREMH yield different allocation patterns under
+the same cost coefficients and verifier: Figure 9 shows that the MH checkpoint receives a larger num-
+ber of sequential steps and parallel sample usage throughout, whereas the PH checkpoint does not,
+revealing where mixed-quality demonstrations impair the base policy. Notably, these states do not
+always correspond precisely to the grasp or insertion phases, suggesting thatELASTIClearns to use
+test-time compute to compensate for regions where mixed data actually degrades task performance.
+5.3ELASTICYieldsEfficientTest-time Scaling with Vision-Language-Action Models
+The GCPs we have studied condition on privileged, low-dimensional state vectors when generating
+actions. Now, we turn to state-of-the-art vision-language-action (VLA) modelπ 0.5 [2], which gen-
+7
+
+--- PAGE 8 ---
+erates actions conditioned on visual observations, and study howELASTICbalances performance
+improvements against compute costs in both simulation and hardware.
+Figure 4:LIBERO-10 Allocation
+Heatmaps.ELASTICallocates
+compute differently across differ-
+ent tasks on a multi-task VLA. At
+pick and place states, the top task
+shows elevated sequential steps,
+whereas the bottom task instead
+uses more parallel samples.
+Setup.Forsimulation, we use the LIBERO-10 bench-
+mark [32] and the corresponding task prompts and run
+theπ 0.5-LIBERO checkpoint zero-shot over 20 trials. For
+hardware, we use a Franka Emika robotic arm running
+theπ 0.5-DROID checkpoint zero-shot. We design a real-
+world pick-and-place task where there are two mugs on a
+table (one purple, one blue) and the language prompt is
+place the purple mug in the basket. Over 20 trials,
+π0.5 achieves 45% success rate, as initial conditions in which
+the purple mug is further away from the camera tend to con-
+fuse the base policyπ 0.5 about which mug to move toward.
+Moreover, the robot sometimes ends up in poor configurations
+during the place, unable to reach over the basket edges. For the
+verifier, we fine-tune V-GPS [20] on a mixture of success and
+failure demos of each task (details in Appendix 7.5.2). Recall
+Section 4.1 formalizes the meta-policy as having access to the
+true statex; here, we instead conditionπ meta onπ 0.5’s observation embeddings, since privileged
+state is unavailable at deployment.Methods & Metrics.Similar to Sec. 5.1 above, we measure
+success rate via binary task completion. For compute, we measure the wall-clock latency of each
+inference call (includingQ ϕ andπ meta if applicable, specifics in Appendix 7.4) measured on an
+RTX 4090 for simulation and RTX 6000 for hardware. In both simulation and hardware, we do 20
+trials of each task per method. We compareELASTICto theBaseVLA, as well as toBoNandFixed
+with the same verifier. We use the V-GPS default ofN= 10samples forBoNand when initializing
+samples inELASTIC.
+Figure 5:Real World Suc-
+cess Rate vs Inference Latency.
+ELASTICadaptively scales com-
+pute to matchBoNperformance
+with 34% less inference latency.
+Average (Sequential Steps, Parallel
+Samples) per method are labeled.
+Hyperparameters.Forsimulation, we setα= 0.13
+andβ= 0.1based on wall-clock latency scaling tests
+on a single RTX 4090. The optimization is conducted
+with 10 rollouts per task from the base policy for the of-
+fline dataset and 20 online rollouts per task. Forhard-
+ware, we test our algorithm with 3 different compute costs:
+(α, β) = (0.13,0.1),(0.2,0.1),(0.13,0.2).
+Results: Simulation.Figure 11 shows success rates and in-
+ference latency across all tasks and methods. Overall success
+rates are comparable across methods asπ 0.5 already performs
+well. On tasks 8 and 9, whereπ 0.5 has a lower success rate,
+scaling either axis (parallel,BoNwith V-GPS, orSequential)
+improves performance but significantly increases inference la-
+tency (+37–40%).ELASTICmatches the higher performance
+ofSequentialwith 6%lessinference latency than theBase
+VLA, which defaults to a fixed denoising schedule with 10 se-
+quential steps.
+Qualitatively, allocation patterns vary substantially across tasks and states, shown in Figures 4
+and 12. Tasks with high base policy success show low parallelism throughout, while tasks like 8
+and 9, in which the base policy benefits from verifier usage, show higher parallelism near grasp and
+place states. Other tasks in which theBaseVLA reaches 100% success rate show reduced sequential
+steps throughout and elevated usage near the critical pick and place regions.
+Results: Hardware.UsingELASTIC, the policy has less inference latency than theBaseVLA while
+improving performance close to full scaling. Figure 5 shows thatELASTICcan match the improve-
+ments of fullBoNscaling with V-GPS while using 34% less inference latency. Achieving stronger
+state-conditioned performance requires additional interaction; here we used 60 offline demos and
+8
+
+--- PAGE 9 ---
+30 online rollouts. The allocation timeline in Figure 6 shows that the number of sequential steps
+needed varies little throughout the task and is far fewer than the default of 10. Based on this result,
+we testedFixedwith (2 sequential steps, 10 samples) and found that it also achieves comparable
+performance to fullBoNwhile using less latency than theBaseVLA. In contrast,Fixedwith (2
+steps, 4 samples) performs worse thanELASTICat (1.9 steps, 3.5 samples) at comparable latency,
+suggesting that state conditioning becomes more valuable at smaller compute budgets.
+not enough  
+sequential steps  
+ﬁ failed grasp
+initial which mug? pre-pick grasp move pre-place place
+not enough  
+parallel samples 
+ﬁ wrong mug 
+Figure 6:Allocation Timeline: Real World Mug Task. UsingELASTIC, the meta-policy allocates
+more parallel samples when deciding which mug to pick near the start and during the placing action.
+Sequential steps vary less, with some peaks near grasping and prior to placing. Failure cases when
+using insufficient compute include selecting the wrong mug, failing to grasp, and failing to reach
+over the basket prior to placing.
+6 Limitations
+AlthoughELASTICconsistently outperformed state-independent allocation and was able to improve
+base policy success while reducing inference latency, limitations remain. The primary limiting fac-
+tor for the effectiveness of our approach is the learned verifierQ ϕ. A noisy verifier masks useful
+signal for distinguishing action quality, hurting meta-policy optimization and parallel scaling. How-
+ever, general-purpose reward models and verifiers are a rapidly advancing area, and our method
+demonstrates how to leverage these models efficiently, especially as they grow in computational
+cost [33, 34, 35, 36, 23]. Also, the meta-policy is currently trained per task, which can be costly for
+multi-task policies like VLAs. Since it conditions on the base policy’s internal features and action
+samples, a promising direction is to test whether these signals can generalize to unseen environ-
+ments.
+9
+
+--- PAGE 10 ---
+References
+[1] C. Chi, S. Feng, Y . Du, Z. Xu, E. Cousineau, B. Burchfiel, and S. Song. Diffusion policy:
+Visuomotor policy learning via action diffusion. InProceedings of Robotics: Science and
+Systems (RSS), 2023.
+[2] K. Black, N. Brown, J. Darpinian, K. Dhabalia, D. Driess, A. Esmail, M. R. Equi, C. Finn,
+N. Fusai, M. Y . Galliker, D. Ghosh, L. Groom, K. Hausman, B. Ichter, S. Jakubczak, T. Jones,
+L. Ke, D. LeBlanc, S. Levine, A. Li-Bell, M. Mothukuri, S. Nair, K. Pertsch, A. Z. Ren, L. X.
+Shi, L. Smith, J. T. Springenberg, K. Stachowicz, J. Tanner, Q. Vuong, H. Walke, A. Walling,
+H. Wang, L. Yu, and U. Zhilinsky.π 0.5: a vision-language-action model with open-world
+generalization. In J. Lim, S. Song, and H.-W. Park, editors,Proceedings of The 9th Conference
+on Robot Learning, volume 305 ofProceedings of Machine Learning Research, pages 17–
+40. PMLR, 27–30 Sep 2025. URLhttps://proceedings.mlr.press/v305/black25a.
+html.
+[3] M. J. Kim, K. Pertsch, S. Karamcheti, T. Xiao, A. Balakrishna, S. Nair, R. Rafailov, E. P.
+Foster, P. R. Sanketi, Q. Vuong, T. Kollar, B. Burchfiel, R. Tedrake, D. Sadigh, S. Levine,
+P. Liang, and C. Finn. Openvla: An open-source vision-language-action model. In P. Agrawal,
+O. Kroemer, and W. Burgard, editors,Proceedings of The 8th Conference on Robot Learning,
+volume 270 ofProceedings of Machine Learning Research, pages 2679–2713. PMLR, 06–09
+Nov 2025. URLhttps://proceedings.mlr.press/v270/kim25c.html.
+[4] Octo Model Team, D. Ghosh, H. Walke, K. Pertsch, K. Black, O. Mees, S. Dasari, J. Hejna,
+C. Xu, J. Luo, T. Kreiman, Y . Tan, L. Y . Chen, P. Sanketi, Q. Vuong, T. Xiao, D. Sadigh,
+C. Finn, and S. Levine. Octo: An open-source generalist robot policy. InProceedings of
+Robotics: Science and Systems, Delft, Netherlands, 2024.
+[5] J. Ho, A. Jain, and P. Abbeel. Denoising diffusion probabilistic models. InAd-
+vances in Neural Information Processing Systems, volume 33, page 6840–6851. Curran
+Associates, Inc., 2020. URLhttps://proceedings.neurips.cc/paper/2020/hash/
+4c5bcfec8584af0d967f1ab10179ca4b-Abstract.html.
+[6] J. Song, C. Meng, and S. Ermon. Denoising diffusion implicit models. InInternational Con-
+ference on Learning Representations, Oct. 2021. URLhttps://openreview.net/forum?
+id=St1giarCHLP.
+[7] Y . Lipman, R. T. Q. Chen, H. Ben-Hamu, M. Nickel, and M. Le. Flow matching for generative
+modeling. InInternational Conference on Learning Representations, 2023. URLhttps:
+//openreview.net/forum?id=PqvMRDCJT9t.
+[8] B. Brown, J. Juravsky, R. S. Ehrlich, R. Clark, Q. V . Le, C. Re, and A. Mirhoseini. Large
+language monkeys: Scaling inference compute with repeated sampling, 2025. URLhttps:
+//openreview.net/forum?id=0xUEBQV54B.
+[9] A. Prasad, K. Lin, J. Wu, L. Zhou, and J. Bohg. Consistency policy: Accelerated visuomotor
+policies via consistency distillation. InRobotics: Science and Systems, 2024.
+[10] C. Lu, Y . Zhou, F. Bao, J. Chen, C. Li, and J. Zhu. Dpm-solver: A fast ode solver for diffusion
+probabilistic model sampling in around 10 steps. InAdvances in Neural Information Pro-
+cessing Systems, 2022. URLhttps://proceedings.neurips.cc/paper_files/paper/
+2022/hash/260a14acce2a89dad36adc8eefe7c59e-Abstract-Conference.html.
+[11] X. Hu, B. Liu, X. Liu, and Q. Liu. Adaflow: Imitation learning with variance-
+adaptive flow-based policies. InAdvances in Neural Information Processing Systems,
+2024. URLhttps://proceedings.neurips.cc/paper_files/paper/2024/hash/
+fa9cfdb49f7de3dee54007f84c0745b1-Abstract-Conference.html.
+10
+
+--- PAGE 11 ---
+[12] A. Trivedi, A. Li, M. Elnoor, Y . U. Ciftci, A. Singh, J. D’sa, S. Bae, D. Isele, T. Padir, and
+F. M. Tariq. Adaptive time step flow matching for autonomous driving motion planning, 2026.
+URLhttps://arxiv.org/abs/2602.10285.
+[13] S.-A. Yu, F. Gao, Y . Wu, C. Yu, and Y . Wang. D3p: Dynamic denoising diffusion policy
+via reinforcement learning. (arXiv:2508.06804), Aug. 2025. doi:10.48550/arXiv.2508.06804.
+URLhttp://arxiv.org/abs/2508.06804. arXiv:2508.06804 [cs].
+[14] A. Setlur, N. Rajaraman, S. Levine, and A. Kumar. Scaling test-time compute without verifi-
+cation or RL is suboptimal. InF orty-second International Conference on Machine Learning,
+2025. URLhttps://openreview.net/forum?id=beeNgQEfe2.
+[15] N. Ma, S. Tong, H. Jia, H. Hu, Y .-C. Su, M. Zhang, X. Yang, Y . Li, T. Jaakkola, X. Jia,
+and S. Xie. Scaling inference time compute for diffusion models. InIEEE/CVF Con-
+ference on Computer Vision and Pattern Recognition (CVPR), pages 2523–2534, 2025.
+URLhttps://openaccess.thecvf.com/content/CVPR2025/html/Ma_Scaling_
+Inference_Time_Compute_for_Diffusion_Models_CVPR_2025_paper.html.
+[16] M. Damani, I. Shenfeld, A. Peng, A. Bobu, and J. Andreas. Learning how hard to think:
+Input-adaptive allocation of lm computation. InInternational Conference on Learning Repre-
+sentations, 2025. URLhttps://openreview.net/forum?id=6qUUgw9bAZ.
+[17] J. Qi, X. Ye, H. Tang, Z. Zhu, and E. Choi. Learning to reason across parallel samples for
+llm reasoning. (arXiv:2506.09014), Oct. 2025. doi:10.48550/arXiv.2506.09014. URLhttp:
+//arxiv.org/abs/2506.09014. arXiv:2506.09014 [cs].
+[18] J. Kwok, C. Agia, R. Sinha, M. Foutter, S. Li, I. Stoica, A. Mirhoseini, and M. Pavone.
+Robomonkey: Scaling test-time sampling and verification for vision-language-action models.
+(arXiv:2506.17811), 2025. doi:10.48550/arXiv.2506.17811. URLhttp://arxiv.org/abs/
+2506.17811. arXiv:2506.17811 [cs].
+[19] A. K. Jain, V . Mohta, S. Kim, A. Bhardwaj, J. Ren, Y . Feng, S. Choudhury, and G. Swamy. A
+smooth sea never made a skilled SAILOR: Robust imitation via learning to search. InAdvances
+in Neural Information Processing Systems, 2025. URLhttps://openreview.net/forum?
+id=qN5hmLkBtC.
+[20] M. Nakamoto, O. Mees, A. Kumar, and S. Levine. Steering your generalists: Improving robotic
+foundation models via value guidance.Conference on Robot Learning (CoRL), 2024.
+[21] Y . Wu, R. Tian, G. Swamy, and A. Bajcsy. From foresight to forethought: Vlm-in-the-loop
+policy steering via latent alignment. InProceedings of Robotics: Science and Systems, 2025.
+URLhttps://roboticsproceedings.org/rss21/p076.html.
+[22] Y . Wu, A. Li, T. Hermans, F. Ramos, A. Bajcsy, and C. P ´erez-D’Arpino. Do what you say:
+Steering vision-language-action models via runtime reasoning-action alignment verification.
+2026 IEEE International Conference on Robotics & Automation (ICRA), 2026.
+[23] P. Dong, A. Swerdlow, D. Sadigh, and C. Finn. Faster: Value-guided sampling for fast rl, 2026.
+URLhttps://arxiv.org/abs/2604.19730.
+[24] R. Manvi, J. Hong, T. Seyde, M. Labonne, M. Lechner, and S. Levine. Zero-overhead intro-
+spection for adaptive test-time compute. (arXiv:2512.01457), Dec. 2025. doi:10.48550/arXiv.
+2512.01457. URLhttp://arxiv.org/abs/2512.01457. arXiv:2512.01457 [cs].
+[25] Y . Song, J. Sohl-Dickstein, D. P. Kingma, A. Kumar, S. Ermon, and B. Poole. Score-
+based generative modeling through stochastic differential equations. InInternational Con-
+ference on Learning Representations, Oct. 2021. URLhttps://openreview.net/forum?
+id=PxTIG12RRHS.
+11
+
+--- PAGE 12 ---
+[26] A. Z. Ren, J. Lidard, L. L. Ankile, A. Simeonov, P. Agrawal, A. Majumdar, B. Burchfiel,
+H. Dai, and M. Simchowitz. Diffusion policy policy optimization. InInternational Con-
+ference on Learning Representations, 2025. URLhttps://openreview.net/forum?id=
+YPR0X7dCXn.
+[27] A. Y . Ng, D. Harada, and S. J. Russell. Policy invariance under reward transformations: Theory
+and application to reward shaping. InProceedings of the Sixteenth International Conference
+on Machine Learning (ICML), pages 278–287, 1999. URLhttps://dl.acm.org/doi/10.
+5555/645528.657613.
+[28] T. Haarnoja, A. Zhou, P. Abbeel, and S. Levine. Soft actor-critic: Off-policy maximum en-
+tropy deep reinforcement learning with a stochastic actor. In J. Dy and A. Krause, editors,
+Proceedings of the 35th International Conference on Machine Learning, volume 80 ofPro-
+ceedings of Machine Learning Research, pages 1861–1870. PMLR, 10–15 Jul 2018. URL
+https://proceedings.mlr.press/v80/haarnoja18b.html.
+[29] E. Perez, F. Strub, H. de Vries, V . Dumoulin, and A. C. Courville. Film: Visual reasoning with
+a general conditioning layer. InAAAI, 2018.
+[30] Y . Song, Y . Zhou, A. Sekhari, D. Bagnell, A. Krishnamurthy, and W. Sun. Hybrid RL: Us-
+ing both offline and online data can make RL efficient. InThe Eleventh International Con-
+ference on Learning Representations, 2023. URLhttps://openreview.net/forum?id=
+yyBis80iUuU.
+[31] A. Mandlekar, D. Xu, J. Wong, S. Nasiriany, C. Wang, R. Kulkarni, L. Fei-Fei, S. Savarese,
+Y . Zhu, and R. Mart´ın-Mart´ın. What matters in learning from offline human demonstrations
+for robot manipulation. InProceedings of the 5th Conference on Robot Learning, volume
+164 ofProceedings of Machine Learning Research, pages 1678–1690. PMLR, 2022. URL
+https://proceedings.mlr.press/v164/mandlekar22a.html.
+[32] B. Liu, Y . Zhu, C. Gao, Y . Feng, qiang liu, Y . Zhu, and P. Stone. LIBERO: Benchmark-
+ing knowledge transfer for lifelong robot learning. InThirty-seventh Conference on Neu-
+ral Information Processing Systems Datasets and Benchmarks Track, 2023. URLhttps:
+//openreview.net/forum?id=xzEtNSuDJk.
+[33] A. Liang, Y . Korkmaz, J. Zhang, M. Hwang, A. Anwar, S. Kaushik, A. Shah, A. S. Huang,
+L. Zettlemoyer, D. Fox, Y . Xiang, A. Li, A. Bobu, A. Gupta, S. Tu, E. Biyik, and J. Zhang.
+Robometer: Scaling general-purpose robotic reward models via trajectory comparisons. In
+Robotics: Science and Systems 2026, 2026.
+[34] Y . J. Ma, J. Hejna, C. Fu, D. Shah, J. Liang, Z. Xu, S. Kirmani, P. Xu, D. Driess, T. Xiao,
+O. Bastani, D. Jayaraman, W. Yu, T. Zhang, D. Sadigh, and F. Xia. Vision language models
+are in-context value learners. InThe Thirteenth International Conference on Learning Repre-
+sentations, 2025. URLhttps://openreview.net/forum?id=friHAl5ofG.
+[35] T. Lee, A. Wagenmaker, K. Pertsch, P. Liang, S. Levine, and C. Finn. Roboreward: General-
+purpose vision-language reward models for robotics, 2026. URLhttps://arxiv.org/abs/
+2601.00675.
+[36] H. Tan, S. Chen, Y . Xu, Z. Wang, Y . Ji, C. Chi, Y . Lyu, Z. Zhao, X. Chen, P. Co, et al. Robo-
+dopamine: General process reward modeling for high-precision robotic manipulation.arXiv
+preprint arXiv:2512.23703, 2025.
+12
+
+--- PAGE 13 ---
+7 Appendix
+7.1ELASTICAlgorithm
+Algorithm 1Inference at every environment stept
+1:Observationo t, base policyπ GCP, meta-policyπ meta, reward modelQ ϕ,Nsamples
+2:Initializeu (i) ∼ N(0, I)fori= 1, . . . , N
+3:Initializeτ (i) ←1fori= 1, . . . , N
+4:Initializem (i) ←1fori= 1, . . . , N
+5:
+6:while∃isuch thatτ (i) >0andm (i) = 1do
+7:s= (o t, u1:N , τ1:N , m1:N)
+8:∆τ 1:N ←π meta(s)▷Joint denoising decision over allNsamples
+9:
+10:fori= 1, . . . , Ndo▷Vectorized overN
+11:ifm (i) = 0orτ (i) = 0then
+12:continue▷Sample already stopped
+13:else if∆τ (i) = 0then
+14:m (i) ←0▷Permanently stop sample
+15:else
+16:u (i) ←π GCP(ot, u(i), τ(i),∆τ (i))▷Denoising step
+17:τ (i) ←max(τ (i) −∆τ (i),0)
+18:end if
+19:end for
+20:
+21:end while
+22:
+23:F ← {i:τ (i) = 0}▷Filter to fully denoised samples only
+24:ˆut ←arg max i∈F Qϕ(ot, u(i))▷Select best with verifier
+25:Executeˆu t in environment, observeo t+1
+πGCP(u1:N
+k |ot)
+ ot
+current observation 
+πmeta(Δτ1:N|ot,u1:N
+k,τ1:N
+k,m1:N
+k )
+ϵθ(ot,u1:N
+k,τ1:N
+k,Δτ1:N
+k )
+k←k+1
+denoising network
+Δτ1:N
+k
+meta-policy
+base policy
+denoising decision
+noisy actions 
+denoised actions
+Qϕ(u1:N,ot)
+u1:N
+veriﬁer
+̂ut
+executed action
+Dbuﬀer
+{u1:N
+1,τ1:N
+1,u1:N
+2,τ1:N
+2,…,ot,rt}
+denoising trajectory, reward 
+SAC Update
+u1:N
+k
+Figure 7:ELASTICPipeline.
+13
+
+--- PAGE 14 ---
+7.2 Additional Results
+approach how to get 
+around obstacle?  
+get around 
+obstacle  push to goal, make adjustments… 
+not enough steps  
+ﬁ stuck
+not enough samples 
+ﬁ blocked 
+Figure 8:Allocation Timeline: PushT Obstacle. UsingELASTIC, the meta-policy allocates more
+parallel samples at the very start, while the obstacle stands between the T and the goal. Sequential
+steps increase when the agent is actively pushing the T around the obstacle, as well as when making
+precise adjustments near the goal. Failure cases include getting blocked by the obstacle (not enough
+parallel samples) and getting stuck in a corner (not enough sequential steps).
+approach grasp move insert
+ approach grasp move insert
+Figure 9:Allocation Timeline: Square MH and PH. UsingELASTIC, the meta-policy allocates
+more parallel compute overall to Square MH (left) compared to Square PH (right). In particular,
+sequential compute varies a lot throughout the Square MH trajectory, peaking when first moving
+toward the square and while approaching the insertion.
+Figure 10:Denoising Timeline.Visualization of how action samples evolve through the denoising
+process under the meta-policy. Each plot shows the Euclidean distance between samples vs. de-
+noising time from different states in a CANPAIREDtrajectory. Stopping behaviors emerge from the
+single scalar reward in Eq. 1 without hand-designed stopping rules or specially trained noise-aware
+verifiers.
+14
+
+--- PAGE 15 ---
+Figure 11:LIBERO-10 Success Rates vs Inference Latency.On LIBERO-10, base policyπ 0.5
+already achieves strong performance. Both scaling axes provide minor success rate gains at the cost
+of significantly longer inference latency: +36.8% forBoNwith V-GPS (10 Sequential Steps, 10
+Parallel Samples) and +40.3% forSequential(18 Sequential Steps, 1 Sample).ELASTICrecovers
+performance gains equal toSequentialwith 6.1%lessinference latency than the baseπ 0.5 policy,
+using (2.6 sequential steps, 6.9 parallel samples) on average.
+Figure 12:LIBERO-10 Allocation Heatmap.The heatmap shows how theELASTICallocates
+sequential steps (top) and parallel samples (bottom) across states forπ 0.5.
+15
+
+--- PAGE 16 ---
+Figure 13:Diffusion Policy Success Rate vs. Sequential StepsLand Parallel SamplesP.We
+plot an additionalLearnedFixedbaseline, which learns a constant allocation ofLsequential steps
+andPparallel samples per action generation.
+7.2.1 Baselines
+SinceELASTICuses varying(L, P)per state,Fixedmatches the mean, ¯L, ¯P, by randomly sam-
+pling between{⌊ ¯L⌋,⌈ ¯L⌉}steps and{⌊ ¯P⌋,⌈ ¯P⌉}samples at each environment state, preserving the
+average while remaining state-independent.
+Sequentialconverts the learned policy’s average compute budget into an equivalent single-sample
+denoising budgetL= (α ¯L+β( ¯P−1))/α, P= 1, and similarly applies floor/ceil rounding so that
+the realized compute is matched.
+LearnedFixeduses the same architecture and training setup asELASTICbut optimizes the(L, P)
+action space. This controls for the possibility thatFixedunderperforms due to a suboptimal allo-
+cation along each axis rather than its lack of state-dependence. However, note that this results in
+different amounts of compute used along each axis compared toELASTIC.
+7.3 Meta-Policy Training Details
+To improve sample efficiency, we augment the online replay buffer with counterfactual compute
+allocations at each visited state. EveryC= 4environment steps, we run a second pass ofπ base with
+allNcandidates active at a fixed stride∆τ∼Uniform(0.5 ∆τ ,1.5 ∆τ), where ∆τis a running
+average ofπ meta’s decisions.
+AllNfully-denoised candidates are scored withQ ϕ. We then generate synthetic terminal transitions
+for subsample sizesk∈ {1,2,4, . . . , N}by randomly selectingkcandidates. For each subsample,
+the terminal reward is recomputed via Eq. 1: task quality is the maximum verifier score among the
+kretained candidates, the sequential cost is fixed by∆τ, and the parallel cost reflectskrather than
+N. All tuples are added to the shared replay buffer, providing coverage across the full range of
+parallel compute budgets and similar sequential compute budgets without additional environment
+interaction.
+7.4 Scaling Performance and Inference Time Measurement
+We measure inference latency as the wall-clock round-trip time of aninfer()request inπ 0.5 over
+the same setup used during deployment. For each setting, we start a fresh policy server and run
+untimed warmup inference calls to exclude compilation effects. The measured inference latency is
+16
+
+--- PAGE 17 ---
+the client-side round-trip time, including client request overhead, meta-policy inference, base policy
+inference, and verifier inference.
+For reference, we measure the inference costs of sequential scaling and parallel scaling on our real
+hardware setup, which uses an RTX 6000. We sweepPfrom 1 to 10 withLfixed at 1, 5, and 10
+and average over 10 timed inference calls. We see that increasing parallel samplesPalso increases
+the inference latency, and that the marginal cost increases with more sequential steps.
+Figure 14: Inference Latency vs Sequential Steps and Parallel Samples
+7.5 Verifier Training
+BecauseQ ϕ depends on environment state, reward targets can be high variance across different
+states. This can degrade sample efficiency, because the optimization can conflate good samples with
+good state. To address this, we find that computing the advantageA=Q−Vcan help, either online
+using actions from the secondπ GCP pass described in 7.3 as the baseline or offline by fittingV.
+7.5.1 Diffusion Policy Verifier Training
+We collect a datasetD ref using 200 rollouts of the base diffusion policy checkpoint at the default
+of 10 DDIM steps, which serves as the reference continuation policy. We train a simple two-layer
+MLP network with hidden width 128, followed by separate value and advantage heads, since we
+use advantage for the meta-policy’s rewards. The predicted valueVθ(s)and advantageA θ(s, a)are
+summed toQ θ(s, a) =V θ(s) +A θ(s, a)and regressed against the empirical return-to-go training
+labels ˆG. We anchor the advantage by adding a loss term that encourages the mean advantage to be
+zero:L=E (s,a, ˆG)∼Dref
+
+Qθ(s, a)− ˆG
+2
++w anchor
+ 
+E(s,a)∼Dref [Aθ(s, a)]
+2
+For certain tasks, the meta-policy is prone to exploiting the verifier by producing actions that the
+verifier scores highly but results in poor actual task returns. Using LayerNorms and adding a con-
+servative Q-value regularizer to penalize high Q-values on randomly sampled action chunks helps
+address this:L cons =w cql
+
+τlog P
+a′∈A(s) eQθ(s,a′)/τ −Q θ(s, a)
+
+, whereA(s)contains actions
+from the dataset and randomly sampled action chunks.
+HyperparameterValue
+Learning Rate1×10 −4
+Weight Decay1×10 −4
+Batch Size 256
+Epochs 200
+wanchor 0.1
+wcql 0.1
+τ1
+Table 1: Hyperparameters for the diffusion policy task verifiers.
+17
+
+--- PAGE 18 ---
+7.5.2 V-GPS Fine-tuning
+We fine-tune V-GPS using the default Conservative Q-Learning (CQL) training configuration for
+LIBERO simulation tasks and Calibrated Q-Learning (Cal-QL) training configuration for the real
+task with default hyperparameters. We find that without Cal-QL on the real task, the verifier cannot
+distinguish between actions that lead to failure modes (pick up blue mug instead of the purple mug).
+We use the exterior view image fromπ0.5 as the observation to V-GPS. We collected 30 rollouts per
+task on LIBERO and 120 rollouts for the real mug task.
+7.6 Meta-Policy Hyperparameters
+HyperparameterDiffusion Policyπ 0.5-LIBEROπ 0.5-DROID
+Actor Learning Rate1×10 −4 1×10 −4 3×10 −4
+Critic Learning Rate3×10 −4 3×10 −4 3×10 −4
+Temperature Learning Rate3×10 −4 3×10 −4 3×10 −4
+Discount 1 1 1
+UTD Ratio 30 8 8
+Batch Size 512 256 256
+Offline Pretraining Steps 5000 5000 5000
+Subsample Counterfactuals Every 4 env steps 4 env steps 4 env steps
+Table 2: Hyperparameters for the meta-policy across 3 different base GCPs.
+18

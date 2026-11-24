@@ -1,0 +1,58 @@
+{
+  "purpose": "第二次独立复跑，用于补齐退出码证据并验证确定性",
+  "rerun_at": "2026-11-20T20:55:45+08:00",
+  "exit_code": 0,
+  "driver_shim_used": "driver-runtime-580.178.04 (LD_LIBRARY_PATH + __EGL_VENDOR_LIBRARY_FILENAMES)",
+  "gpu": {
+    "name": "NVIDIA GeForce RTX 5070",
+    "driver_version": "580.178.04",
+    "memory": "12227 MiB"
+  },
+  "torch": {
+    "version": "2.11.0+cu128",
+    "cuda_available": true
+  },
+  "policy": {
+    "path": "lerobot/smolvla_libero",
+    "revision": "a24f1f380461b665158d52acd140152c79e8b36d",
+    "num_steps": 10,
+    "n_action_steps": 50
+  },
+  "env": {
+    "task": "libero_spatial",
+    "task_ids": [
+      0
+    ],
+    "init_states": true,
+    "hard_reset": true,
+    "control_mode": "relative",
+    "fps": 20,
+    "seed": 1000
+  },
+  "eval": {
+    "pc_success": 100.0,
+    "n_episodes": 1,
+    "n_success": 1,
+    "eval_s": 4.550060749053955,
+    "action_steps": 79,
+    "max_steps": 280
+  },
+  "videos": {
+    "original_run_2026-11-20T20:05": {
+      "path": "/home/lxy/lerobot-smolvla-repro/outputs/spatial-task0/videos/libero_spatial_0/eval_episode_0.mp4",
+      "bytes": 85754,
+      "sha256": "128d27a018a624d11e12654174cc515efe3f7898d3d3083b67c90635f21f31d0"
+    },
+    "rerun_2026-11-20T20:55": {
+      "path": "/home/lxy/lerobot-smolvla-repro/outputs/spatial-task0-rerun/videos/libero_spatial_0/eval_episode_0.mp4",
+      "bytes": 85754,
+      "sha256": "128d27a018a624d11e12654174cc515efe3f7898d3d3083b67c90635f21f31d0"
+    },
+    "identical": true
+  },
+  "logs": {
+    "original": "logs/eval-spatial-task0.log",
+    "rerun": "logs/eval-rerun.log"
+  },
+  "notes": "两次运行间隔 50 分钟、独立进程；同 seed 下动作序列与编码视频逐字节一致，说明该评测链路在相同环境下是确定性的。eval_s 差异（8.90 vs 4.55 s）是墙钟速度差异（GPU 冷/热状态），不影响结果。"
+}

@@ -1,0 +1,920 @@
+# 原文件 lerobot/src/lerobot/processor/pipeline.py
+# 原行范围 77–128, 273–341, 647–790, 965–1055, 1145–1208, 1721–1730, 1869–1901, 2108–2134
+# L 后是官方源码或本机文件的原行号。每条中文注释对应紧随其后的原文。
+# 这是静态阅读副本。请在编辑器中阅读。空行保留，节选之间标出跳过的范围。
+
+# …… 跳过原文第 1–76 行 ……
+    # L0077 注册使用类方法，因为处理步骤的查找表由注册表类公用。
+    @classmethod
+    # L0078 生成用于登记处理步骤类的装饰器。
+    def register[StepT: ProcessorStep](cls, name: str | None = None) -> Callable[[type[StepT]], type[StepT]]:
+        # L0079 原文档中的说明或续行。
+        """A class decorator to register a ProcessorStep.
+
+        # L0081 以下列出调用参数及其含义。
+        Args:
+            # L0082 原文档对“name”的说明。
+            name: The name to register the class under. If None, the class's `__name__` is used.
+
+        # L0084 以下说明调用者接收到的结果。
+        Returns:
+            # L0085 原文档中的说明或续行。
+            A decorator function that registers the class and returns it.
+
+        # L0087 以下说明异常条件。
+        Raises:
+            # L0088 原文档对“ValueError”的说明。
+            ValueError: If a step with the same name is already registered.
+        # L0089 文档字符串的边界。
+        """
+
+        # L0091 定义函数 decorator。
+        def decorator(step_class: type[StepT]) -> type[StepT]:
+            # L0092 原文档中的说明或续行。
+            """The actual decorator that performs the registration."""
+            # L0093 用条件表达式在 if 前与 else 后的两个值之间选择给 “registration_name” 赋值。
+            registration_name = name if name is not None else step_class.__name__
+
+            # L0095 条件 registration_name in cls._registry 成立时进入下方分支。
+            if registration_name in cls._registry:
+                # L0096 抛出 ValueError，中断当前路径并交给上层的异常处理。
+                raise ValueError(
+                    # L0097 f 字符串片段，花括号中的表达式会被求值并插入文本。
+                    f"Processor step '{registration_name}' is already registered. "
+                    # L0098 f 字符串片段，花括号中的表达式会被求值并插入文本。
+                    f"Use a different name or unregister the existing one first."
+                # L0099 闭合上方尚未结束的括号。
+                )
+
+            # L0101 引用已有的值 step_class给 “cls._registry[registration_name]” 赋值。
+            cls._registry[registration_name] = step_class
+            # L0102 原作者对相邻代码的说明。
+            # Store the registration name on the class for easy lookup during serialization.
+            # L0103 引用已有的值 registration_name给 “step_class._registry_name” 赋值。
+            step_class._registry_name = registration_name
+            # L0104 引用已有的值 step_class作为当前调用的返回值。
+            return step_class
+
+        # L0106 引用已有的值 decorator作为当前调用的返回值。
+        return decorator
+
+    # L0108 类方法装饰器。调用时首个参数 cls 是类本身。
+    @classmethod
+    # L0109 从已注册的名字查找处理步骤类。
+    def get(cls, name: str) -> type[ProcessorStep]:
+        # L0110 原文档中的说明或续行。
+        """Retrieves a processor step class from the registry by its name.
+
+        # L0112 以下列出调用参数及其含义。
+        Args:
+            # L0113 原文档对“name”的说明。
+            name: The name of the step to retrieve.
+
+        # L0115 以下说明调用者接收到的结果。
+        Returns:
+            # L0116 原文档中的说明或续行。
+            The processor step class corresponding to the given name.
+
+        # L0118 以下说明异常条件。
+        Raises:
+            # L0119 原文档对“KeyError”的说明。
+            KeyError: If the name is not found in the registry.
+        # L0120 文档字符串的边界。
+        """
+        # L0121 条件 name not in cls._registry 成立时进入下方分支。
+        if name not in cls._registry:
+            # L0122 调用 list，用它的结果给 “available” 赋值。
+            available = list(cls._registry.keys())
+            # L0123 抛出 KeyError，中断当前路径并交给上层的异常处理。
+            raise KeyError(
+                # L0124 f 字符串片段，花括号中的表达式会被求值并插入文本。
+                f"Processor step '{name}' not found in registry. "
+                # L0125 f 字符串片段，花括号中的表达式会被求值并插入文本。
+                f"Available steps: {available}. "
+                # L0126 f 字符串片段，花括号中的表达式会被求值并插入文本。
+                f"Make sure the step is registered using @ProcessorStepRegistry.register()"
+            # L0127 闭合上方尚未结束的括号。
+            )
+        # L0128 用方括号按键或索引读取 cls._registry作为当前调用的返回值。
+        return cls._registry[name]
+
+# …… 跳过原文第 129–272 行 ……
+# L0273 数据类装饰器。Python 根据字段生成初始化等方法。
+@dataclass
+# L0274 处理流水线类，类型参数表示外部输入与输出格式。内部步骤统一使用 EnvTransition。
+class DataProcessorPipeline[TInput, TOutput](HubMixin):
+    # L0275 原文档中的说明或续行。
+    """A sequential pipeline for processing data, integrated with the Hugging Face Hub.
+
+    # L0277 原文档中的说明或续行。
+    This class chains together multiple `ProcessorStep` instances to form a complete
+    # L0278 原文档中的说明或续行。
+    data processing workflow. It's generic, allowing for custom input and output types,
+    # L0279 原文档中的说明或续行。
+    which are handled by the `to_transition` and `to_output` converters.
+
+    # L0281 以下说明对象属性。
+    Attributes:
+        # L0282 原文档对“steps”的说明。
+        steps: A sequence of `ProcessorStep` objects that make up the pipeline.
+        # L0283 原文档对“name”的说明。
+        name: A descriptive name for the pipeline.
+        # L0284 原文档对“to_transition”的说明。
+        to_transition: A function to convert raw input data into the standardized `EnvTransition` format.
+        # L0285 原文档对“to_output”的说明。
+        to_output: A function to convert the final `EnvTransition` into the desired output format.
+        # L0286 原文档对“before_step_hooks”的说明。
+        before_step_hooks: A list of functions to be called before each step is executed.
+        # L0287 原文档对“after_step_hooks”的说明。
+        after_step_hooks: A list of functions to be called after each step is executed.
+    # L0288 文档字符串的边界。
+    """
+
+    # L0290 声明“steps”的类型为 Sequence[ProcessorStep]，调用 field，用它的结果作为初始值。
+    steps: Sequence[ProcessorStep] = field(default_factory=list)
+    # L0291 声明“name”的类型为 str，使用字面值 'DataProcessorPipeline'作为初始值。
+    name: str = "DataProcessorPipeline"
+
+    # L0293 声明“to_transition”的类型为 Callable[[TInput], EnvTransition]，调用 field，用它的结果作为初始值。
+    to_transition: Callable[[TInput], EnvTransition] = field(
+        # L0294 为“default_factory”提供这一项的值，注意它所在的参数表或外层表达式。
+        default_factory=lambda: cast(Callable[[TInput], EnvTransition], batch_to_transition), repr=False
+    # L0295 闭合上方尚未结束的括号。
+    )
+    # L0296 声明“to_output”的类型为 Callable[[EnvTransition], TOutput]，调用 field，用它的结果作为初始值。
+    to_output: Callable[[EnvTransition], TOutput] = field(
+        # L0297 为“default_factory”提供这一项的值，注意它所在的参数表或外层表达式。
+        default_factory=lambda: cast(Callable[[EnvTransition], TOutput], transition_to_batch),
+        # L0298 为“repr”提供这一项的值，注意它所在的参数表或外层表达式。
+        repr=False,
+    # L0299 闭合上方尚未结束的括号。
+    )
+
+    # L0301 声明“before_step_hooks”的类型为 list[Callable[[int, EnvTransition], None]]，调用 field，用它的结果作为初始值。
+    before_step_hooks: list[Callable[[int, EnvTransition], None]] = field(default_factory=list, repr=False)
+    # L0302 声明“after_step_hooks”的类型为 list[Callable[[int, EnvTransition], None]]，调用 field，用它的结果作为初始值。
+    after_step_hooks: list[Callable[[int, EnvTransition], None]] = field(default_factory=list, repr=False)
+    # L0303 声明“_serialized_state_filenames”的类型为 tuple[str | None, ...] | None，调用 field，用它的结果作为初始值。
+    _serialized_state_filenames: tuple[str | None, ...] | None = field(
+        # L0304 为“default”提供这一项的值，注意它所在的参数表或外层表达式。
+        default=None,
+        # L0305 为“init”提供这一项的值，注意它所在的参数表或外层表达式。
+        init=False,
+        # L0306 为“repr”提供这一项的值，注意它所在的参数表或外层表达式。
+        repr=False,
+    # L0307 闭合上方尚未结束的括号。
+    )
+
+    # L0309 有 __call__ 的实例可像函数一样调用。这里的调用语法对应评测中的 preprocessor(observation)。
+    def __call__(self, data: TInput) -> TOutput:
+        # L0310 原文档中的说明或续行。
+        """Processes input data through the full pipeline.
+
+        # L0312 以下列出调用参数及其含义。
+        Args:
+            # L0313 原文档对“data”的说明。
+            data: The input data to process.
+
+        # L0315 以下说明调用者接收到的结果。
+        Returns:
+            # L0316 原文档中的说明或续行。
+            The processed data in the specified output format.
+        # L0317 文档字符串的边界。
+        """
+        # L0318 适配外部输入为流水线内部的数据结构。
+        transition = self.to_transition(data)
+        # L0319 依次运行各处理步骤，并在启用时执行它们的钩子。
+        transformed_transition = self._forward(transition)
+        # L0320 把处理结果还原为调用者需要的形式，例如批量观测字典或动作 Tensor。
+        return self.to_output(transformed_transition)
+
+    # L0322 定义方法 _forward。
+    def _forward(self, transition: EnvTransition) -> EnvTransition:
+        # L0323 原文档中的说明或续行。
+        """Executes all processing steps and hooks in sequence.
+
+        # L0325 以下列出调用参数及其含义。
+        Args:
+            # L0326 原文档对“transition”的说明。
+            transition: The initial `EnvTransition` object.
+
+        # L0328 以下说明调用者接收到的结果。
+        Returns:
+            # L0329 原文档中的说明或续行。
+            The final `EnvTransition` after all steps have been applied.
+        # L0330 文档字符串的边界。
+        """
+        # L0331 按保存顺序遍历步骤，enumerate 提供序号。
+        for idx, processor_step in enumerate(self.steps):
+            # L0332 原作者对相邻代码的说明。
+            # Execute pre-hooks
+            # L0333 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+            for hook in self.before_step_hooks:
+                # L0334 调用 hook 执行操作。
+                hook(idx, transition)
+
+            # L0336 运行当前处理步骤，并把结果留给下一步。
+            transition = processor_step(transition)
+
+            # L0338 原作者对相邻代码的说明。
+            # Execute post-hooks
+            # L0339 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+            for hook in self.after_step_hooks:
+                # L0340 调用 hook 执行操作。
+                hook(idx, transition)
+        # L0341 引用已有的值 transition作为当前调用的返回值。
+        return transition
+
+# …… 跳过原文第 342–646 行 ……
+    # L0647 类方法装饰器。调用时首个参数 cls 是类本身。
+    @classmethod
+    # L0648 从 checkpoint 中的配置文件创建一条处理流水线，按需加载步骤保存的状态。
+    def from_pretrained(
+        # L0649 cls 接收当前类，类方法被调用时由 Python 自动传入。
+        cls,
+        # L0650 “pretrained_model_name_or_path”是当前括号中的一项，逗号将它与下一项分开。
+        pretrained_model_name_or_path: str | Path,
+        # L0651 “config_filename”是当前括号中的一项，逗号将它与下一项分开。
+        config_filename: str,
+        # L0652 后续参数必须按名字传入。
+        *,
+        # L0653 为“force_download”提供这一项的值，注意它所在的参数表或外层表达式。
+        force_download: bool = False,
+        # L0654 为“resume_download”提供这一项的值，注意它所在的参数表或外层表达式。
+        resume_download: bool | None = None,
+        # L0655 为“proxies”提供这一项的值，注意它所在的参数表或外层表达式。
+        proxies: dict[str, str] | None = None,
+        # L0656 为“token”提供这一项的值，注意它所在的参数表或外层表达式。
+        token: str | bool | None = None,
+        # L0657 为“cache_dir”提供这一项的值，注意它所在的参数表或外层表达式。
+        cache_dir: str | Path | None = None,
+        # L0658 为“local_files_only”提供这一项的值，注意它所在的参数表或外层表达式。
+        local_files_only: bool = False,
+        # L0659 为“revision”（固定的 checkpoint 版本）提供这一项的值，注意它所在的参数表或外层表达式。
+        revision: str | None = None,
+        # L0660 为“overrides”提供这一项的值，注意它所在的参数表或外层表达式。
+        overrides: dict[str, Any] | None = None,
+        # L0661 为“to_transition”提供这一项的值，注意它所在的参数表或外层表达式。
+        to_transition: Callable[[TInput], EnvTransition] | None = None,
+        # L0662 为“to_output”提供这一项的值，注意它所在的参数表或外层表达式。
+        to_output: Callable[[EnvTransition], TOutput] | None = None,
+        # L0663 星号展开可迭代对象或关键字字典。若在函数签名中则收集额外参数。
+        **kwargs,
+    # L0664 结束参数表。若箭头后有类型，它标注预期返回值，缩进块是函数体。
+    ) -> DataProcessorPipeline[TInput, TOutput]:
+        # L0665 原文档概述本段功能，从保存配置与状态恢复流水线。
+        """Loads a pipeline from a local directory, single file, or Hugging Face Hub repository.
+
+        # L0667 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        This method implements a simplified loading pipeline with intelligent migration detection:
+
+        # L0669 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        **Simplified Loading Strategy**:
+        # L0670 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        1. **Config Loading** (_load_config):
+           # L0671 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+           - **Directory**: Load specified config_filename from directory
+           # L0672 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+           - **Single file**: Load file directly (config_filename ignored)
+           # L0673 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+           - **Hub repository**: Download specified config_filename from Hub
+
+        # L0675 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        2. **Config Validation** (_validate_loaded_config):
+           # L0676 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+           - Format validation: Ensure config is valid processor format
+           # L0677 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+           - Migration detection: Guide users to migrate old LeRobot models
+           # L0678 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+           - Clear errors: Provide actionable error messages
+
+        # L0680 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        3. **Step Construction** (_build_steps_with_overrides):
+           # L0681 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+           - Class resolution: Registry lookup or dynamic imports
+           # L0682 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+           - Override merging: User parameters override saved config
+           # L0683 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+           - State loading: Load .safetensors files for stateful steps
+
+        # L0685 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        4. **Override Validation** (_validate_overrides_used):
+           # L0686 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+           - Ensure all user overrides were applied (catch typos)
+           # L0687 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+           - Provide helpful error messages with available keys
+
+        # L0689 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        **Migration Detection**:
+        # L0690 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        - **Smart detection**: Analyzes JSON files to detect old LeRobot models
+        # L0691 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        - **Precise targeting**: Avoids false positives on other HuggingFace models
+        # L0692 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        - **Clear guidance**: Provides exact migration command to run
+        # L0693 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        - **Error mode**: Always raises ProcessorMigrationError for clear user action
+
+        # L0695 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        **Loading Examples**:
+        # L0696 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        ```python
+        # L0697 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        # Directory loading
+        # L0698 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        pipeline = DataProcessorPipeline.from_pretrained("/models/my_model", config_filename="processor.json")
+
+        # L0700 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        # Single file loading
+        # L0701 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        pipeline = DataProcessorPipeline.from_pretrained(
+            # L0702 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+            "/models/my_model/processor.json", config_filename="processor.json"
+        # L0703 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        )
+
+        # L0705 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        # Hub loading
+        # L0706 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        pipeline = DataProcessorPipeline.from_pretrained("user/repo", config_filename="processor.json")
+
+        # L0708 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        # Multiple configs (preprocessor/postprocessor)
+        # L0709 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        preprocessor = DataProcessorPipeline.from_pretrained(
+            # L0710 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+            "model", config_filename="policy_preprocessor.json"
+        # L0711 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        )
+        # L0712 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        postprocessor = DataProcessorPipeline.from_pretrained(
+            # L0713 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+            "model", config_filename="policy_postprocessor.json"
+        # L0714 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        )
+        # L0715 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        ```
+
+        # L0717 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        **Override System**:
+        # L0718 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        - **Key matching**: Use registry names or class names as override keys
+        # L0719 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        - **Config merging**: User overrides take precedence over saved config
+        # L0720 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        - **Validation**: Ensure all override keys match actual steps (catch typos)
+        # L0721 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+        - **Example**: overrides={"NormalizeStep": {"device": "cuda"}}
+
+        # L0723 以下列出调用参数及其含义。
+        Args:
+            # L0724 原文档对“pretrained_model_name_or_path”的说明。此段讲从保存配置与状态恢复流水线。
+            pretrained_model_name_or_path: The identifier of the repository on the Hugging Face Hub,
+                # L0725 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+                a path to a local directory, or a path to a single config file.
+            # L0726 原文档对“config_filename”的说明。此段讲从保存配置与状态恢复流水线。
+            config_filename: The name of the pipeline's JSON configuration file. Always required
+                # L0727 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+                to prevent ambiguity when multiple configs exist (e.g., preprocessor vs postprocessor).
+            # L0728 原文档对“force_download”的说明。此段讲从保存配置与状态恢复流水线。
+            force_download: Whether to force (re)downloading the files.
+            # L0729 原文档对“resume_download”的说明。此段讲从保存配置与状态恢复流水线。
+            resume_download: Kept for backward compatibility and ignored. Downloads resume automatically.
+            # L0730 原文档对“proxies”的说明。此段讲从保存配置与状态恢复流水线。
+            proxies: Kept for backward compatibility and ignored. Use HTTP_PROXY and HTTPS_PROXY instead.
+            # L0731 原文档对“token”的说明。此段讲从保存配置与状态恢复流水线。
+            token: The token to use as HTTP bearer authorization for private Hub repositories.
+            # L0732 原文档对“cache_dir”的说明。此段讲从保存配置与状态恢复流水线。
+            cache_dir: The path to a specific cache folder to store downloaded files.
+            # L0733 原文档对“local_files_only”的说明。此段讲从保存配置与状态恢复流水线。
+            local_files_only: If True, avoid downloading files from the Hub.
+            # L0734 原文档对“revision”（固定的 checkpoint 版本）的说明。此段讲从保存配置与状态恢复流水线。
+            revision: The specific model version to use (e.g., a branch name, tag name, or commit id).
+            # L0735 原文档对“overrides”的说明。此段讲从保存配置与状态恢复流水线。
+            overrides: A dictionary to override the configuration of specific steps. Keys should
+                # L0736 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+                match the step's class name or registry name.
+            # L0737 原文档对“to_transition”的说明。此段讲从保存配置与状态恢复流水线。
+            to_transition: A custom function to convert input data to `EnvTransition`.
+            # L0738 原文档对“to_output”的说明。此段讲从保存配置与状态恢复流水线。
+            to_output: A custom function to convert the final `EnvTransition` to the output format.
+            # L0739 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+            **kwargs: Additional arguments (not used).
+
+        # L0741 以下说明调用者接收到的结果。
+        Returns:
+            # L0742 原文档中的说明或续行。此段讲从保存配置与状态恢复流水线。
+            An instance of `DataProcessorPipeline` loaded with the specified configuration and state.
+
+        # L0744 以下说明异常条件。
+        Raises:
+            # L0745 原文档对“FileNotFoundError”的说明。此段讲从保存配置与状态恢复流水线。
+            FileNotFoundError: If the config file cannot be found.
+            # L0746 原文档对“ValueError”的说明。此段讲从保存配置与状态恢复流水线。
+            ValueError: If configuration is ambiguous or instantiation fails.
+            # L0747 原文档对“ImportError”的说明。此段讲从保存配置与状态恢复流水线。
+            ImportError: If a step's class cannot be imported.
+            # L0748 原文档对“KeyError”的说明。此段讲从保存配置与状态恢复流水线。
+            KeyError: If an override key doesn't match any step in the pipeline.
+            # L0749 原文档对“ProcessorMigrationError”的说明。此段讲从保存配置与状态恢复流水线。
+            ProcessorMigrationError: If the model requires migration to processor format.
+        # L0750 文档字符串的边界。
+        """
+        # L0751 调用 str，用它的结果给 “model_id” 赋值。
+        model_id = str(pretrained_model_name_or_path)
+        # L0752 调用 Path，用它的结果给 “model_path” 赋值。
+        model_path = Path(model_id)
+        # L0753 检查来源在本机是直接给定的路径，还是交由 Hub 缓存解析的标识。
+        is_local_source = model_path.is_dir() or model_path.is_file()
+        # L0754 创建字典，用键查找对应的值给 “hub_download_kwargs” 赋值。
+        hub_download_kwargs = {
+            # L0755 字典项“force_download”，冒号右边给出它的值。
+            "force_download": force_download,
+            # L0756 字典项“token”，冒号右边给出它的值。
+            "token": token,
+            # L0757 字典项“cache_dir”，冒号右边给出它的值。
+            "cache_dir": cache_dir,
+            # L0758 字典项“local_files_only”，冒号右边给出它的值。
+            "local_files_only": local_files_only,
+            # L0759 字典项“revision”（固定的 checkpoint 版本），冒号右边给出它的值。
+            "revision": revision,
+        # L0760 闭合上方尚未结束的括号。
+        }
+
+        # L0762 原作者的注释。此处在讲从保存配置与状态恢复流水线。
+        # 1. Load configuration using simplified 3-way logic
+        # L0763 定位并读取序列化的流水线配置。
+        loaded_config, base_path = cls._load_config(model_id, config_filename, hub_download_kwargs)
+
+        # L0765 原作者的注释。此处在讲从保存配置与状态恢复流水线。
+        # 2. Validate configuration and handle migration
+        # L0766 调用 cls._validate_loaded_config 执行操作。
+        cls._validate_loaded_config(model_id, loaded_config, config_filename)
+
+        # L0768 原作者的注释。此处在讲从保存配置与状态恢复流水线。
+        # 3. Build steps with overrides
+        # L0769 用配置和评测覆盖值实例化处理步骤，按需加载每个步骤的保存状态。
+        steps, validated_overrides = cls._build_steps_with_overrides(
+            # L0770 “loaded_config”是当前括号中的一项，逗号将它与下一项分开。
+            loaded_config,
+            # L0771 延续上面的语句，overrides or {},。本段处理从保存配置与状态恢复流水线。
+            overrides or {},
+            # L0772 “model_id”是当前括号中的一项，逗号将它与下一项分开。
+            model_id,
+            # L0773 “base_path”是当前括号中的一项，逗号将它与下一项分开。
+            base_path,
+            # L0774 “config_filename”是当前括号中的一项，逗号将它与下一项分开。
+            config_filename,
+            # L0775 “hub_download_kwargs”是当前括号中的一项，逗号将它与下一项分开。
+            hub_download_kwargs,
+            # L0776 “is_local_source”是当前括号中的一项，逗号将它与下一项分开。
+            is_local_source,
+        # L0777 闭合上方尚未结束的括号。
+        )
+
+        # L0779 原作者的注释。此处在讲从保存配置与状态恢复流水线。
+        # 4. Validate that all overrides were used
+        # L0780 校验覆盖项是否确实匹配对应的步骤。
+        cls._validate_overrides_used(validated_overrides, loaded_config)
+
+        # L0782 原作者的注释。此处在讲从保存配置与状态恢复流水线。
+        # 5. Construct and return the final pipeline instance
+        # L0783 把有序步骤和输入输出适配函数装进流水线对象。
+        pipeline = cls(
+            # L0784 为“steps”提供这一项的值，注意它所在的参数表或外层表达式。
+            steps=steps,
+            # L0785 为“name”提供这一项的值，注意它所在的参数表或外层表达式。
+            name=loaded_config.get("name", "DataProcessorPipeline"),
+            # L0786 为“to_transition”提供这一项的值，注意它所在的参数表或外层表达式。
+            to_transition=to_transition or cast(Callable[[TInput], EnvTransition], batch_to_transition),
+            # L0787 为“to_output”提供这一项的值，注意它所在的参数表或外层表达式。
+            to_output=to_output or cast(Callable[[EnvTransition], TOutput], transition_to_batch),
+        # L0788 闭合上方尚未结束的括号。
+        )
+        # L0789 调用 cls._get_state_filenames_from_config，用它的结果给 “pipeline._serialized_state_filenames” 赋值。
+        pipeline._serialized_state_filenames = cls._get_state_filenames_from_config(loaded_config)
+        # L0790 引用已有的值 pipeline作为当前调用的返回值。
+        return pipeline
+
+# …… 跳过原文第 791–964 行 ……
+    # L0965 类方法装饰器。调用时首个参数 cls 是类本身。
+    @classmethod
+    # L0966 定义方法 _build_steps_with_overrides。作用是给已保存的步骤应用覆盖项并恢复状态。
+    def _build_steps_with_overrides(
+        # L0967 cls 接收当前类，类方法被调用时由 Python 自动传入。
+        cls,
+        # L0968 延续上面的语句，loaded_config: dict[str, Any],。本段处理给已保存的步骤应用覆盖项并恢复状态。
+        loaded_config: dict[str, Any],
+        # L0969 延续上面的语句，overrides: dict[str, Any],。本段处理给已保存的步骤应用覆盖项并恢复状态。
+        overrides: dict[str, Any],
+        # L0970 “model_id”是当前括号中的一项，逗号将它与下一项分开。
+        model_id: str,
+        # L0971 “base_path”是当前括号中的一项，逗号将它与下一项分开。
+        base_path: Path | None,
+        # L0972 “config_filename”是当前括号中的一项，逗号将它与下一项分开。
+        config_filename: str,
+        # L0973 延续上面的语句，hub_download_kwargs: dict[str, Any],。本段处理给已保存的步骤应用覆盖项并恢复状态。
+        hub_download_kwargs: dict[str, Any],
+        # L0974 为“is_local_source”提供这一项的值，注意它所在的参数表或外层表达式。
+        is_local_source: bool = False,
+    # L0975 结束参数表。若箭头后有类型，它标注预期返回值，缩进块是函数体。
+    ) -> tuple[list[ProcessorStep], set[str]]:
+        # L0976 原文档概述本段功能，给已保存的步骤应用覆盖项并恢复状态。
+        """Build all processor steps with overrides and state loading.
+
+        # L0978 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+        This method orchestrates the complete step construction pipeline:
+
+        # L0980 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+        **For each step in loaded_config["steps"]**:
+
+        # L0982 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+        0. **Artifact Resolution** (via _resolve_artifact_paths):
+           # L0983 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+           - Resolve declared relative artifact paths against a local checkpoint
+           # L0984 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+           - Download declared artifacts when loading the pipeline from the Hub
+           # L0985 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+           - Reject absolute paths and path traversal before step construction
+
+        # L0987 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+        1. **Class Resolution** (via _resolve_step_class):
+           # L0988 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+           - **If "registry_name" exists**: Look up in ProcessorStepRegistry
+             # L0989 原文档对“Example”的说明。此段讲给已保存的步骤应用覆盖项并恢复状态。
+             Example: {"registry_name": "normalize_step"} -> Get registered class
+           # L0990 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+           - **Else use "class" field**: Dynamic import from full module path
+             # L0991 原文档对“Example”的说明。此段讲给已保存的步骤应用覆盖项并恢复状态。
+             Example: {"class": "lerobot.processor.normalize.NormalizeStep"}
+           # L0992 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+           - **Result**: (step_class, step_key) where step_key is used for overrides
+
+        # L0994 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+        2. **Step Instantiation** (via _instantiate_step):
+           # L0995 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+           - **Merge configs**: saved_config + user_overrides
+           # L0996 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+           - **Override priority**: User overrides take precedence over saved config
+           # L0997 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+           - **Example**: saved={"mean": 0.0}, override={"mean": 1.0} -> final={"mean": 1.0}
+           # L0998 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+           - **Result**: Instantiated ProcessorStep object
+
+        # L1000 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+        3. **State Loading** (via _load_step_state):
+           # L1001 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+           - **If step has "state_file"**: Load tensor state from .safetensors
+           # L1002 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+           - **Local first**: Check base_path/state_file.safetensors
+           # L1003 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+           - **Hub fallback**: Download state file if the pipeline was loaded from the Hub
+           # L1004 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+           - **Optional**: Only load if step has load_state_dict method
+
+        # L1006 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+        4. **Override Tracking**:
+           # L1007 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+           - **Track used overrides**: Remove step_key from remaining set
+           # L1008 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+           - **Purpose**: Validate all user overrides were applied (detect typos)
+
+        # L1010 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+        **Error Handling**:
+        # L1011 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+        - Class resolution errors -> ImportError with helpful message
+        # L1012 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+        - Instantiation errors -> ValueError with config details
+        # L1013 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+        - State loading errors -> Propagated from load_state_dict
+
+        # L1015 以下列出调用参数及其含义。
+        Args:
+            # L1016 原文档对“loaded_config”的说明。此段讲给已保存的步骤应用覆盖项并恢复状态。
+            loaded_config: The loaded processor configuration (must have "steps" field)
+            # L1017 原文档对“overrides”的说明。此段讲给已保存的步骤应用覆盖项并恢复状态。
+            overrides: User-provided parameter overrides (keyed by class/registry name)
+            # L1018 原文档对“model_id”的说明。此段讲给已保存的步骤应用覆盖项并恢复状态。
+            model_id: The model identifier (needed for Hub state file downloads)
+            # L1019 原文档对“base_path”的说明。此段讲给已保存的步骤应用覆盖项并恢复状态。
+            base_path: Local directory path for finding state files
+            # L1020 原文档对“config_filename”的说明。此段讲给已保存的步骤应用覆盖项并恢复状态。
+            config_filename: Processor config path, used as the repository-relative
+                # L1021 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+                base for state files and declared artifacts.
+            # L1022 原文档对“hub_download_kwargs”的说明。此段讲给已保存的步骤应用覆盖项并恢复状态。
+            hub_download_kwargs: Parameters for hf_hub_download (tokens, cache, etc.)
+            # L1023 原文档对“is_local_source”的说明。此段讲给已保存的步骤应用覆盖项并恢复状态。
+            is_local_source: Whether model_id resolved to a local directory or config file.
+
+        # L1025 以下说明调用者接收到的结果。
+        Returns:
+            # L1026 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+            Tuple of (instantiated_steps_list, unused_override_keys)
+            # L1027 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+            - instantiated_steps_list: List of ready-to-use ProcessorStep instances
+            # L1028 原文档中的说明或续行。此段讲给已保存的步骤应用覆盖项并恢复状态。
+            - unused_override_keys: Override keys that didn't match any step (for validation)
+
+        # L1030 以下说明异常条件。
+        Raises:
+            # L1031 原文档对“ImportError”的说明。此段讲给已保存的步骤应用覆盖项并恢复状态。
+            ImportError: If a step class cannot be imported or found in registry
+            # L1032 原文档对“ValueError”的说明。此段讲给已保存的步骤应用覆盖项并恢复状态。
+            ValueError: If a step cannot be instantiated with its configuration
+        # L1033 文档字符串的边界。
+        """
+        # L1034 调用 deepcopy，用它的结果给 “loaded_config” 赋值。
+        loaded_config = deepcopy(loaded_config)
+        # L1035 调用 cls._resolve_artifact_paths 执行操作。
+        cls._resolve_artifact_paths(
+            # L1036 “loaded_config”是当前括号中的一项，逗号将它与下一项分开。
+            loaded_config,
+            # L1037 “model_id”是当前括号中的一项，逗号将它与下一项分开。
+            model_id,
+            # L1038 “base_path”是当前括号中的一项，逗号将它与下一项分开。
+            base_path,
+            # L1039 “config_filename”是当前括号中的一项，逗号将它与下一项分开。
+            config_filename,
+            # L1040 “hub_download_kwargs”是当前括号中的一项，逗号将它与下一项分开。
+            hub_download_kwargs,
+        # L1041 闭合上方尚未结束的括号。
+        )
+        # L1042 把每个配置项解析为对应的步骤类，并应用覆盖值。
+        steps, remaining_override_keys = cls._build_steps_from_config(loaded_config, overrides)
+
+        # L1044 把已构造的步骤和原配置逐个匹配。strict=True 在长度不一致时抛出异常。
+        for step_instance, step_entry in zip(steps, loaded_config["steps"], strict=True):
+            # L1045 恢复当前步骤保存的状态，例如归一化统计张量。
+            cls._load_step_state(
+                # L1046 “step_instance”是当前括号中的一项，逗号将它与下一项分开。
+                step_instance,
+                # L1047 “step_entry”是当前括号中的一项，逗号将它与下一项分开。
+                step_entry,
+                # L1048 “model_id”是当前括号中的一项，逗号将它与下一项分开。
+                model_id,
+                # L1049 “base_path”是当前括号中的一项，逗号将它与下一项分开。
+                base_path,
+                # L1050 “config_filename”是当前括号中的一项，逗号将它与下一项分开。
+                config_filename,
+                # L1051 “hub_download_kwargs”是当前括号中的一项，逗号将它与下一项分开。
+                hub_download_kwargs,
+                # L1052 “is_local_source”是当前括号中的一项，逗号将它与下一项分开。
+                is_local_source,
+            # L1053 闭合上方尚未结束的括号。
+            )
+
+        # L1055 打包成元组，元素顺序由逗号分隔的位置决定作为当前调用的返回值。
+        return steps, remaining_override_keys
+
+# …… 跳过原文第 1056–1144 行 ……
+    # L1145 类方法装饰器。调用时首个参数 cls 是类本身。
+    @classmethod
+    # L1146 定义方法 _resolve_step_class。作用是从注册名或完整导入路径找处理类。
+    def _resolve_step_class(cls, step_entry: dict[str, Any]) -> tuple[type[ProcessorStep], str]:
+        # L1147 原文档概述本段功能，从注册名或完整导入路径找处理类。
+        """Resolve step class from registry or import path.
+
+        # L1149 原文档中的说明或续行。此段讲从注册名或完整导入路径找处理类。
+        This method implements a two-tier resolution strategy:
+
+        # L1151 原文档中的说明或续行。此段讲从注册名或完整导入路径找处理类。
+        **Tier 1: Registry-based resolution** (preferred):
+        # L1152 原文档中的说明或续行。此段讲从注册名或完整导入路径找处理类。
+        - **If "registry_name" in step_entry**: Look up in ProcessorStepRegistry
+          # L1153 原文档中的说明或续行。此段讲从注册名或完整导入路径找处理类。
+          - **Advantage**: Faster, no imports needed, guaranteed compatibility
+          # L1154 原文档中的说明或续行。此段讲从注册名或完整导入路径找处理类。
+          - **Example**: {"registry_name": "normalize_step"} -> Get pre-registered class
+          # L1155 原文档中的说明或续行。此段讲从注册名或完整导入路径找处理类。
+          - **Error**: KeyError if registry_name not found -> Convert to ImportError
+
+        # L1157 原文档中的说明或续行。此段讲从注册名或完整导入路径找处理类。
+        **Tier 2: Dynamic import fallback**:
+        # L1158 原文档中的说明或续行。此段讲从注册名或完整导入路径找处理类。
+        - **Else use "class" field**: Full module.ClassName import path
+          # L1159 原文档中的说明或续行。此段讲从注册名或完整导入路径找处理类。
+          - **Process**: Split "module.path.ClassName" into module + class parts
+          # L1160 原文档中的说明或续行。此段讲从注册名或完整导入路径找处理类。
+          - **Import**: Use importlib.import_module() + getattr()
+          # L1161 原文档中的说明或续行。此段讲从注册名或完整导入路径找处理类。
+          - **Example**: "lerobot.processor.normalize.NormalizeStep"
+            # L1162 原文档中的说明或续行。此段讲从注册名或完整导入路径找处理类。
+            a. Import module: "lerobot.processor.normalize"
+            # L1163 原文档中的说明或续行。此段讲从注册名或完整导入路径找处理类。
+            b. Get class: getattr(module, "NormalizeStep")
+          # L1164 原文档中的说明或续行。此段讲从注册名或完整导入路径找处理类。
+          - **step_key**: Use class_name ("NormalizeStep") for overrides
+
+        # L1166 原文档中的说明或续行。此段讲从注册名或完整导入路径找处理类。
+        **Override Key Strategy**:
+        # L1167 原文档中的说明或续行。此段讲从注册名或完整导入路径找处理类。
+        - Registry steps: Use registry_name ("normalize_step")
+        # L1168 原文档中的说明或续行。此段讲从注册名或完整导入路径找处理类。
+        - Import steps: Use class_name ("NormalizeStep")
+        # L1169 原文档中的说明或续行。此段讲从注册名或完整导入路径找处理类。
+        - This allows users to override with: {"normalize_step": {...}} or {"NormalizeStep": {...}}
+
+        # L1171 原文档中的说明或续行。此段讲从注册名或完整导入路径找处理类。
+        **Error Handling**:
+        # L1172 原文档中的说明或续行。此段讲从注册名或完整导入路径找处理类。
+        - Registry KeyError -> ImportError with registry context
+        # L1173 原文档中的说明或续行。此段讲从注册名或完整导入路径找处理类。
+        - Import/Attribute errors -> ImportError with helpful suggestions
+        # L1174 原文档中的说明或续行。此段讲从注册名或完整导入路径找处理类。
+        - All errors include troubleshooting guidance
+
+        # L1176 以下列出调用参数及其含义。
+        Args:
+            # L1177 原文档对“step_entry”的说明。此段讲从注册名或完整导入路径找处理类。
+            step_entry: The step configuration dictionary (must have "registry_name" or "class")
+
+        # L1179 以下说明调用者接收到的结果。
+        Returns:
+            # L1180 原文档中的说明或续行。此段讲从注册名或完整导入路径找处理类。
+            Tuple of (step_class, step_key)
+            # L1181 原文档中的说明或续行。此段讲从注册名或完整导入路径找处理类。
+            - step_class: The resolved ProcessorStep class (ready for instantiation)
+            # L1182 原文档中的说明或续行。此段讲从注册名或完整导入路径找处理类。
+            - step_key: The key used for user overrides (registry_name or class_name)
+
+        # L1184 以下说明异常条件。
+        Raises:
+            # L1185 原文档对“ImportError”的说明。此段讲从注册名或完整导入路径找处理类。
+            ImportError: If step class cannot be loaded from registry or import path
+        # L1186 文档字符串的边界。
+        """
+        # L1187 如果 JSON 包含 registry_name，优先按注册名找类。
+        if "registry_name" in step_entry:
+            # L1188 开始执行可能抛出异常的代码，后续 except 或 finally 提供处理。
+            try:
+                # L1189 向 ProcessorStepRegistry 查询保存的处理步骤类。
+                step_class = ProcessorStepRegistry.get(step_entry["registry_name"])
+                # L1190 打包成元组，元素顺序由逗号分隔的位置决定作为当前调用的返回值。
+                return step_class, step_entry["registry_name"]
+            # L1191 捕获这里列出的异常类型，然后执行下方的处理逻辑。
+            except KeyError as e:
+                # L1192 抛出 ImportError，中断当前路径并交给上层的异常处理。
+                raise ImportError(f"Failed to load processor step from registry. {str(e)}") from e
+        # L1193 进入对应的另一条分支，注意用缩进找到配对的判断或异常块。
+        else:
+            # L1194 原作者的注释。此处在讲从注册名或完整导入路径找处理类。
+            # Fallback to dynamic import using the full class path
+            # L1195 用方括号按键或索引读取 step_entry给 “full_class_path” 赋值。
+            full_class_path = step_entry["class"]
+            # L1196 调用 full_class_path.rsplit，用它的结果给 “(module_path, class_name)” 赋值。
+            module_path, class_name = full_class_path.rsplit(".", 1)
+
+            # L1198 开始执行可能抛出异常的代码，后续 except 或 finally 提供处理。
+            try:
+                # L1199 调用 importlib.import_module，用它的结果给 “module” 赋值。
+                module = importlib.import_module(module_path)
+                # L1200 调用 getattr，用它的结果给 “step_class” 赋值。
+                step_class = getattr(module, class_name)
+                # L1201 打包成元组，元素顺序由逗号分隔的位置决定作为当前调用的返回值。
+                return step_class, class_name
+            # L1202 捕获这里列出的异常类型，然后执行下方的处理逻辑。
+            except (ImportError, AttributeError) as e:
+                # L1203 抛出 ImportError，中断当前路径并交给上层的异常处理。
+                raise ImportError(
+                    # L1204 f 字符串片段，花括号中的表达式会被求值并插入文本。
+                    f"Failed to load processor step '{full_class_path}'. "
+                    # L1205 f 字符串片段，花括号中的表达式会被求值并插入文本。
+                    f"Make sure the module '{module_path}' is installed and contains class '{class_name}'. "
+                    # L1206 f 字符串片段，花括号中的表达式会被求值并插入文本。
+                    f"Consider registering the step using @ProcessorStepRegistry.register() for better portability. "
+                    # L1207 f 字符串片段，花括号中的表达式会被求值并插入文本。
+                    f"Error: {str(e)}"
+                # L1208 延续上面的语句，) from e。本段处理从注册名或完整导入路径找处理类。
+                ) from e
+
+# …… 跳过原文第 1209–1720 行 ……
+    # L1721 开始新回合时重置所有处理步骤可重置的状态。
+    def reset(self):
+        # L1722 原文档中的说明或续行。
+        """Resets the state of all stateful steps in the pipeline."""
+        # L1723 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+        for step in self.steps:
+            # L1724 条件 hasattr(step, "reset") 成立时进入下方分支。
+            if hasattr(step, "reset"):
+                # L1725 调用 step.reset，重置对象的当前状态。
+                step.reset()
+
+    # L1727 定义方法 __repr__。
+    def __repr__(self) -> str:
+        # L1728 原文档中的说明或续行。
+        """Provides a concise string representation of the pipeline."""
+        # L1729 用列表推导式从可迭代对象逐项取值并构造结果给 “step_names” 赋值。
+        step_names = [step.__class__.__name__ for step in self.steps]
+
+
+# …… 跳过原文第 1731–1868 行 ……
+# L1869 原作者对相邻代码的说明。
+# Type aliases for semantic clarity.
+# L1870 用方括号按键或索引读取 DataProcessorPipeline给 “RobotProcessorPipeline” 赋值。
+RobotProcessorPipeline = DataProcessorPipeline[TInput, TOutput]
+# L1871 PolicyProcessorPipeline 是以泛型参数表示输入输出类型的流水线别名。
+PolicyProcessorPipeline = DataProcessorPipeline[TInput, TOutput]
+
+
+# L1874 定义类 ObservationProcessorStep，括号列出基类 ProcessorStep、ABC。
+class ObservationProcessorStep(ProcessorStep, ABC):
+    # L1875 原文档中的说明或续行。
+    """An abstract `ProcessorStep` that specifically targets the observation in a transition."""
+
+    # L1877 抽象方法装饰器。可实例化的子类需要补上实现。
+    @abstractmethod
+    # L1878 定义方法 observation。
+    def observation(self, observation: RobotObservation) -> RobotObservation:
+        # L1879 原文档中的说明或续行。
+        """Processes an observation dictionary. Subclasses must implement this method.
+
+        # L1881 以下列出调用参数及其含义。
+        Args:
+            # L1882 原文档对“observation”（观测）的说明。
+            observation: The input observation dictionary from the transition.
+
+        # L1884 以下说明调用者接收到的结果。
+        Returns:
+            # L1885 原文档中的说明或续行。
+            The processed observation dictionary.
+        # L1886 文档字符串的边界。
+        """
+        # L1887 省略号对象 Ellipsis。此处用作接口占位。
+        ...
+
+    # L1889 观测步骤包装接口，取出观测、变换观测并写回 transition。
+    def __call__(self, transition: EnvTransition) -> EnvTransition:
+        # L1890 原文档中的说明或续行。
+        """Applies the `observation` method to the transition's observation."""
+        # L1891 调用 transition.copy，用它的结果给 “self._current_transition” 赋值。
+        self._current_transition = transition.copy()
+        # L1892 读取属性 self._current_transition给 “new_transition” 赋值。
+        new_transition = self._current_transition
+
+        # L1894 调用 new_transition.get，用它的结果给 “observation”（观测） 赋值。
+        observation = new_transition.get(TransitionKey.OBSERVATION)
+        # L1895 条件 observation is None or not isinstance(observation, dict) 成立时进入下方分支。
+        if observation is None or not isinstance(observation, dict):
+            # L1896 抛出 ValueError，中断当前路径并交给上层的异常处理。
+            raise ValueError("ObservationProcessorStep requires an observation in the transition.")
+
+        # L1898 调用 self.observation，用它的结果给 “processed_observation” 赋值。
+        processed_observation = self.observation(observation.copy())
+        # L1899 引用已有的值 processed_observation给 “new_transition[TransitionKey.OBSERVATION]” 赋值。
+        new_transition[TransitionKey.OBSERVATION] = processed_observation
+        # L1900 引用已有的值 new_transition作为当前调用的返回值。
+        return new_transition
+
+
+# …… 跳过原文第 1902–2107 行 ……
+# L2108 定义类 ComplementaryDataProcessorStep，括号列出基类 ProcessorStep、ABC。
+class ComplementaryDataProcessorStep(ProcessorStep, ABC):
+    # L2109 原文档中的说明或续行。
+    """An abstract `ProcessorStep` that targets the 'complementary_data' in a transition."""
+
+    # L2111 抽象方法装饰器。可实例化的子类需要补上实现。
+    @abstractmethod
+    # L2112 定义方法 complementary_data。
+    def complementary_data(self, complementary_data) -> dict[str, Any]:
+        # L2113 原文档中的说明或续行。
+        """Processes a 'complementary_data' dictionary. Subclasses must implement this method.
+
+        # L2115 以下列出调用参数及其含义。
+        Args:
+            # L2116 原文档对“complementary_data”的说明。
+            complementary_data: The input 'complementary_data' from the transition.
+
+        # L2118 以下说明调用者接收到的结果。
+        Returns:
+            # L2119 原文档中的说明或续行。
+            The processed 'complementary_data' dictionary.
+        # L2120 文档字符串的边界。
+        """
+        # L2121 省略号对象 Ellipsis。此处用作接口占位。
+        ...
+
+    # L2123 附加数据处理接口，文字任务是保存在这一部分的数据之一。
+    def __call__(self, transition: EnvTransition) -> EnvTransition:
+        # L2124 原文档中的说明或续行。
+        """Applies the `complementary_data` method to the transition's data."""
+        # L2125 调用 transition.copy，用它的结果给 “self._current_transition” 赋值。
+        self._current_transition = transition.copy()
+        # L2126 读取属性 self._current_transition给 “new_transition” 赋值。
+        new_transition = self._current_transition
+
+        # L2128 调用 new_transition.get，用它的结果给 “complementary_data” 赋值。
+        complementary_data = new_transition.get(TransitionKey.COMPLEMENTARY_DATA)
+        # L2129 条件 complementary_data is None or not isinstance(complementary_data, dict) 成立时进入下方分支。
+        if complementary_data is None or not isinstance(complementary_data, dict):
+            # L2130 抛出 ValueError，中断当前路径并交给上层的异常处理。
+            raise ValueError("ComplementaryDataProcessorStep requires complementary data in the transition.")
+
+        # L2132 调用 self.complementary_data，用它的结果给 “processed_complementary_data” 赋值。
+        processed_complementary_data = self.complementary_data(complementary_data.copy())
+        # L2133 引用已有的值 processed_complementary_data给 “new_transition[TransitionKey.COMPLEMENTARY_DATA]” 赋值。
+        new_transition[TransitionKey.COMPLEMENTARY_DATA] = processed_complementary_data
+        # L2134 引用已有的值 new_transition作为当前调用的返回值。
+        return new_transition
+
+# …… 跳过原文第 2135–2151 行 ……

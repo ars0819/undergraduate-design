@@ -1,0 +1,258 @@
+[
+  {
+    "key": "Transformer",
+    "core": true,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 217,
+    "bytes": 7286
+  },
+  {
+    "key": "DDPM",
+    "core": true,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 220,
+    "bytes": 7341
+  },
+  {
+    "key": "ACT",
+    "core": true,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 203,
+    "bytes": 7796
+  },
+  {
+    "key": "DiffusionPolicy",
+    "core": true,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 211,
+    "bytes": 8772
+  },
+  {
+    "key": "RT1",
+    "core": false,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 217,
+    "bytes": 8778
+  },
+  {
+    "key": "OXE",
+    "core": false,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 227,
+    "bytes": 11523
+  },
+  {
+    "key": "DP3",
+    "core": false,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 206,
+    "bytes": 7019
+  },
+  {
+    "key": "SmolVLA",
+    "core": true,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 218,
+    "bytes": 8762
+  },
+  {
+    "key": "OpenVLA",
+    "core": true,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 232,
+    "bytes": 8681
+  },
+  {
+    "key": "RT2",
+    "core": false,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 213,
+    "bytes": 9070
+  },
+  {
+    "key": "Octo",
+    "core": false,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 215,
+    "bytes": 7757
+  },
+  {
+    "key": "pi0",
+    "core": true,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 205,
+    "bytes": 7937
+  },
+  {
+    "key": "pi05",
+    "core": true,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 213,
+    "bytes": 8636
+  },
+  {
+    "key": "AWQ",
+    "core": true,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 207,
+    "bytes": 8248
+  },
+  {
+    "key": "VLASH",
+    "core": true,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 213,
+    "bytes": 7948
+  },
+  {
+    "key": "ForeAct",
+    "core": true,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 218,
+    "bytes": 7706
+  },
+  {
+    "key": "RTC",
+    "core": true,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 202,
+    "bytes": 7240
+  },
+  {
+    "key": "EfficientVLA",
+    "core": true,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 216,
+    "bytes": 7909
+  },
+  {
+    "key": "VLACache",
+    "core": true,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 219,
+    "bytes": 8401
+  },
+  {
+    "key": "OpenVLAOFT",
+    "core": true,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 211,
+    "bytes": 8201
+  },
+  {
+    "key": "FAST",
+    "core": true,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 211,
+    "bytes": 7040
+  },
+  {
+    "key": "SmoothQuant",
+    "core": false,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 194,
+    "bytes": 7243
+  },
+  {
+    "key": "FlashAttention",
+    "core": false,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 214,
+    "bytes": 7970
+  },
+  {
+    "key": "ConsistencyPolicy",
+    "core": false,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 214,
+    "bytes": 6802
+  },
+  {
+    "key": "TrainingTimeRTC",
+    "core": false,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 207,
+    "bytes": 6368
+  },
+  {
+    "key": "SAC",
+    "core": true,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 201,
+    "bytes": 7672
+  },
+  {
+    "key": "WorldModels",
+    "core": true,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 208,
+    "bytes": 7026
+  },
+  {
+    "key": "DreamerV3",
+    "core": true,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 207,
+    "bytes": 7120
+  },
+  {
+    "key": "ReviewRealWorld",
+    "core": true,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 203,
+    "bytes": 7931
+  },
+  {
+    "key": "SurveyEmbodied",
+    "core": false,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 208,
+    "bytes": 9034
+  },
+  {
+    "key": "SurveyLargeVLM",
+    "core": false,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 200,
+    "bytes": 7743
+  },
+  {
+    "key": "SurveyWAM",
+    "core": false,
+    "sections20": 20,
+    "questions": 5,
+    "summaryCharacters": 214,
+    "bytes": 8731
+  }
+]

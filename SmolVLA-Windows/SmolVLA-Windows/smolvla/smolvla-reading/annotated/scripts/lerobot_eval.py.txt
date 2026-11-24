@@ -1,0 +1,2371 @@
+# 原文件 lerobot/src/lerobot/scripts/lerobot_eval.py
+# 原行范围 1–1252
+# L 后是官方源码或本机文件的原行号。每条中文注释对应紧随其后的原文。
+# 这是静态阅读副本。请在编辑器中阅读。空行保留，节选之间标出跳过的范围。
+# L0001 原作者对相邻代码的说明。
+#!/usr/bin/env python
+
+# L0003 原版权或开源许可声明。
+# Copyright 2024 The HuggingFace Inc. team. All rights reserved.
+# L0004 原作者对相邻代码的说明。
+#
+# L0005 原版权或开源许可声明。
+# Licensed under the Apache License, Version 2.0 (the "License");
+# L0006 原版权或开源许可声明。
+# you may not use this file except in compliance with the License.
+# L0007 原版权或开源许可声明。
+# You may obtain a copy of the License at
+# L0008 原作者对相邻代码的说明。
+#
+# L0009 原版权或开源许可声明。
+#     http://www.apache.org/licenses/LICENSE-2.0
+# L0010 原作者对相邻代码的说明。
+#
+# L0011 原作者对相邻代码的说明。
+# Unless required by applicable law or agreed to in writing, software
+# L0012 原版权或开源许可声明。
+# distributed under the License is distributed on an "AS IS" BASIS,
+# L0013 原版权或开源许可声明。
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# L0014 原版权或开源许可声明。
+# See the License for the specific language governing permissions and
+# L0015 原版权或开源许可声明。
+# limitations under the License.
+# L0016 原文档中的说明或续行。
+"""Evaluate a policy on an environment by running rollouts and computing metrics.
+
+# L0018 原文档对“Requires”的说明。
+Requires: pip install 'lerobot[evaluation]' plus the policy extra (e.g. lerobot[pi])
+          # L0019 原文档中的说明或续行。
+          and the environment extra (e.g. lerobot[pusht]) if evaluating in simulation.
+
+# L0021 原文档中的说明或续行。
+Usage examples:
+
+# L0023 原文档中的说明或续行。
+You want to evaluate a model from the hub (eg: https://huggingface.co/lerobot/diffusion_pusht)
+# L0024 原文档中的说明或续行。
+for 10 episodes.
+
+# L0026 原文档中的说明或续行。
+```
+# L0027 原文档中的说明或续行。
+lerobot-eval \
+    # L0028 原文档中的说明或续行。
+    --policy.path=lerobot/diffusion_pusht \
+    # L0029 原文档中的说明或续行。
+    --env.type=pusht \
+    # L0030 原文档中的说明或续行。
+    --eval.batch_size=10 \
+    # L0031 原文档中的说明或续行。
+    --eval.n_episodes=10 \
+    # L0032 原文档中的说明或续行。
+    --policy.use_amp=false \
+    # L0033 原文档中的说明或续行。
+    --policy.device=cuda
+# L0034 原文档中的说明或续行。
+```
+
+# L0036 原文档中的说明或续行。
+OR, you want to evaluate a model checkpoint from the LeRobot training script for 10 episodes.
+# L0037 原文档中的说明或续行。
+```
+# L0038 原文档中的说明或续行。
+lerobot-eval \
+    # L0039 原文档中的说明或续行。
+    --policy.path=outputs/train/diffusion_pusht/checkpoints/005000/pretrained_model \
+    # L0040 原文档中的说明或续行。
+    --env.type=pusht \
+    # L0041 原文档中的说明或续行。
+    --eval.batch_size=10 \
+    # L0042 原文档中的说明或续行。
+    --eval.n_episodes=10 \
+    # L0043 原文档中的说明或续行。
+    --policy.use_amp=false \
+    # L0044 原文档中的说明或续行。
+    --policy.device=cuda
+# L0045 原文档中的说明或续行。
+```
+
+# L0047 原文档中的说明或续行。
+Note that in both examples, the repo/folder should contain at least `config.json` and `model.safetensors` files.
+
+# L0049 原文档中的说明或续行。
+You can learn about the CLI options for this script in the `EvalPipelineConfig` in lerobot/configs/eval.py
+# L0050 文档字符串的边界。
+"""
+
+# L0052 导入模块 concurrent.futures，简称 cf。
+import concurrent.futures as cf
+# L0053 导入模块 json。
+import json
+# L0054 导入模块 logging。
+import logging
+# L0055 导入模块 threading。
+import threading
+# L0056 导入模块 time。
+import time
+# L0057 从模块 collections 导入 defaultdict。
+from collections import defaultdict
+# L0058 从模块 collections.abc 导入 Callable。
+from collections.abc import Callable
+# L0059 从模块 contextlib 导入 nullcontext。
+from contextlib import nullcontext
+# L0060 从模块 copy 导入 deepcopy。
+from copy import deepcopy
+# L0061 从模块 dataclasses 导入 asdict。
+from dataclasses import asdict
+# L0062 从模块 functools 导入 partial。
+from functools import partial
+# L0063 从模块 pathlib 导入 Path。
+from pathlib import Path
+# L0064 从模块 pprint 导入 pformat。
+from pprint import pformat
+# L0065 从模块 typing 导入 TYPE_CHECKING、Any、TypedDict。
+from typing import TYPE_CHECKING, Any, TypedDict
+
+# L0067 导入模块 einops。
+import einops
+# L0068 导入模块 gymnasium，简称 gym。
+import gymnasium as gym
+# L0069 导入模块 numpy，简称 np。
+import numpy as np
+# L0070 导入模块 torch。
+import torch
+# L0071 从模块 termcolor 导入 colored。
+from termcolor import colored
+# L0072 从模块 torch 导入 Tensor、nn。
+from torch import Tensor, nn
+# L0073 从模块 tqdm 导入 trange。
+from tqdm import trange
+
+# L0075 从配置包导入配置类型和命令行包装模块 parser。
+from lerobot.configs import FeatureType, PolicyFeature, parser
+# L0076 从 configs/eval.py 导入实际的评测配置类。eval_main 的参数类型会引用它。
+from lerobot.configs.eval import EvalPipelineConfig
+# L0077 从模块 lerobot.datasets.lerobot_dataset 导入 LeRobotDataset。
+from lerobot.datasets.lerobot_dataset import LeRobotDataset
+# L0078 从环境包公开的接口导入下列环境工具。找定义时可先点进 envs/__init__.py。
+from lerobot.envs import (
+    # L0079 “check_env_attributes_and_types”是当前括号中的一项，逗号将它与下一项分开。
+    check_env_attributes_and_types,
+    # L0080 导入关闭环境的接口。可以从环境包的导出位置继续定位实现。
+    close_envs,
+    # L0081 导入创建任务环境集合的工厂函数 make_env。
+    make_env,
+    # L0082 导入选择环境专属前后处理器的工厂函数。
+    make_env_pre_post_processors,
+    # L0083 导入通用观测转换。此处是导入语句，具体评测走哪个分支要看第 292 行。
+    preprocess_observation,
+# L0084 闭合上方尚未结束的括号。
+)
+# L0085 从模块 lerobot.envs.factory 导入 descriptor_features。
+from lerobot.envs.factory import descriptor_features
+# L0086 同时导入标准仿真观测转换和 checkpoint 兼容性检查。
+from lerobot.envs.utils import prepare_canonical_observation, validate_checkpoint
+# L0087 从模块 lerobot.lerobot_types 导入 PolicyAction。
+from lerobot.lerobot_types import PolicyAction
+# L0088 导入策略基类及策略、处理流水线的工厂。
+from lerobot.policies import PreTrainedPolicy, make_policy, make_pre_post_processors
+# L0089 从模块 lerobot.processor 导入下方列出的多个名字。
+from lerobot.processor import (
+    # L0090 “PolicyProcessorPipeline”是当前括号中的一项，逗号将它与下一项分开。
+    PolicyProcessorPipeline,
+    # L0091 “bind_relative_anchor”是当前括号中的一项，逗号将它与下一项分开。
+    bind_relative_anchor,
+    # L0092 “policy_output_to_transition”是当前括号中的一项，逗号将它与下一项分开。
+    policy_output_to_transition,
+    # L0093 “transition_to_policy_action”是当前括号中的一项，逗号将它与下一项分开。
+    transition_to_policy_action,
+# L0094 闭合上方尚未结束的括号。
+)
+# L0095 从模块 lerobot.utils.constants 导入 ACTION、DONE、OBS_IMAGE、OBS_IMAGES、OBS_STR、REWARD。
+from lerobot.utils.constants import ACTION, DONE, OBS_IMAGE, OBS_IMAGES, OBS_STR, REWARD
+# L0096 从模块 lerobot.utils.device_utils 导入 get_safe_torch_device。
+from lerobot.utils.device_utils import get_safe_torch_device
+# L0097 从模块 lerobot.utils.eval_stats 导入 success_summary。
+from lerobot.utils.eval_stats import success_summary
+# L0098 从模块 lerobot.utils.import_utils 导入 _peft_available、register_third_party_plugins、require_package。
+from lerobot.utils.import_utils import _peft_available, register_third_party_plugins, require_package
+# L0099 从模块 lerobot.utils.io_utils 导入 write_video。
+from lerobot.utils.io_utils import write_video
+# L0100 从模块 lerobot.utils.random_utils 导入 set_seed。
+from lerobot.utils.random_utils import set_seed
+# L0101 从模块 lerobot.utils.utils 导入 init_logging、inside_slurm。
+from lerobot.utils.utils import (
+    # L0102 “init_logging”是当前括号中的一项，逗号将它与下一项分开。
+    init_logging,
+    # L0103 “inside_slurm”是当前括号中的一项，逗号将它与下一项分开。
+    inside_slurm,
+# L0104 闭合上方尚未结束的括号。
+)
+
+# L0106 条件 TYPE_CHECKING or _peft_available 成立时进入下方分支。
+if TYPE_CHECKING or _peft_available:
+    # L0107 从模块 peft 导入 PeftModel。
+    from peft import PeftModel
+# L0108 进入对应的另一条分支，注意用缩进找到配对的判断或异常块。
+else:
+    # L0109 设为空值 None给 “PeftModel” 赋值。
+    PeftModel = None
+
+
+# L0112 调用 logging.getLogger，用它的结果给 “logger” 赋值。
+logger = logging.getLogger(__name__)
+
+
+# L0115 定义函数 _env_features_to_dataset_features。
+def _env_features_to_dataset_features(env_features: dict[str, PolicyFeature]) -> dict[str, dict[str, Any]]:
+    # L0116 原文档中的说明或续行。
+    """Convert EnvConfig.features to the dict format expected by LeRobotDataset.create()."""
+    # L0117 声明“features”的类型为 dict[str, dict[str, Any]]，创建字典，用键查找对应的值作为初始值。
+    features: dict[str, dict[str, Any]] = {}
+    # L0118 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+    for key, ft in env_features.items():
+        # L0119 调用 tuple，用它的结果给 “shape”（各轴的长度） 赋值。
+        shape = tuple(ft.shape)
+        # L0120 条件 ft.type is FeatureType.VISUAL 成立时进入下方分支。
+        if ft.type is FeatureType.VISUAL:
+            # L0121 创建字典，用键查找对应的值给 “features[key]” 赋值。
+            features[key] = {"dtype": "video", "shape": shape, "names": ["height", "width", "channel"]}
+        # L0122 进入对应的另一条分支，注意用缩进找到配对的判断或异常块。
+        else:
+            # L0123 创建字典，用键查找对应的值给 “features[key]” 赋值。
+            features[key] = {"dtype": "float32", "shape": shape, "names": None}
+    # L0124 创建字典，用键查找对应的值给 “features['next.reward']” 赋值。
+    features["next.reward"] = {"dtype": "float32", "shape": (1,), "names": None}
+    # L0125 创建字典，用键查找对应的值给 “features['next.success']” 赋值。
+    features["next.success"] = {"dtype": "bool", "shape": (1,), "names": None}
+    # L0126 创建字典，用键查找对应的值给 “features['next.done']” 赋值。
+    features["next.done"] = {"dtype": "bool", "shape": (1,), "names": None}
+    # L0127 引用已有的值 features作为当前调用的返回值。
+    return features
+
+
+# L0130 定义函数 _build_raw_frame。
+def _build_raw_frame(
+    # L0131 “raw_obs”是当前括号中的一项，逗号将它与下一项分开。
+    raw_obs: dict,
+    # L0132 “env_idx”是当前括号中的一项，逗号将它与下一项分开。
+    env_idx: int,
+    # L0133 “action”（单步动作）是当前括号中的一项，逗号将它与下一项分开。
+    action: np.ndarray,
+    # L0134 “reward”（单步奖励）是当前括号中的一项，逗号将它与下一项分开。
+    reward: float,
+    # L0135 “success”是当前括号中的一项，逗号将它与下一项分开。
+    success: bool,
+    # L0136 “done”是当前括号中的一项，逗号将它与下一项分开。
+    done: bool,
+    # L0137 “task”（任务）是当前括号中的一项，逗号将它与下一项分开。
+    task: str,
+    # L0138 “env_features”是当前括号中的一项，逗号将它与下一项分开。
+    env_features: dict,
+# L0139 结束参数表。若箭头后有类型，它标注预期返回值，缩进块是函数体。
+) -> dict:
+    # L0140 原文档中的说明或续行。
+    """Build a dataset frame from raw env observations for one env index.
+
+    # L0142 原文档中的说明或续行。
+    Keys in the frame match the keys in env_features so they align with the
+    # L0143 原文档中的说明或续行。
+    dataset schema created by _env_features_to_dataset_features().
+    # L0144 文档字符串的边界。
+    """
+    # L0145 声明“frame”的类型为 dict[str, Any]，创建字典，用键查找对应的值作为初始值。
+    frame: dict[str, Any] = {}
+    # L0146 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+    for key in env_features:
+        # L0147 条件 key == ACTION 成立时进入下方分支。
+        if key == ACTION:
+            # L0148 跳过这一轮剩余操作，进入下一轮循环。
+            continue
+        # L0149 条件 key.startswith("next.") 成立时进入下方分支。
+        if key.startswith("next."):
+            # L0150 跳过这一轮剩余操作，进入下一轮循环。
+            continue
+        # L0151 条件 "pixels" in raw_obs and isinstance(raw_obs["pixels"], dict) 成立时进入下方分支。
+        if "pixels" in raw_obs and isinstance(raw_obs["pixels"], dict):
+            # L0152 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+            for cam_name, img in raw_obs["pixels"].items():
+                # L0153 计算此行的右侧表达式给 “candidate” 赋值。
+                candidate = f"{OBS_IMAGES}.{cam_name}"
+                # L0154 条件 candidate == key 成立时进入下方分支。
+                if candidate == key:
+                    # L0155 用方括号按键或索引读取 img给 “frame[key]” 赋值。
+                    frame[key] = img[env_idx]
+            # L0156 条件 key in frame 成立时进入下方分支。
+            if key in frame:
+                # L0157 跳过这一轮剩余操作，进入下一轮循环。
+                continue
+        # L0158 条件 "pixels" in raw_obs and not isinstance(raw_obs["pixels"], dict) and key in ("pixels", OBS_IMAGE) 成立时进入下方分支。
+        if "pixels" in raw_obs and not isinstance(raw_obs["pixels"], dict) and key in ("pixels", OBS_IMAGE):
+            # L0159 用方括号按键或索引读取 容器给 “frame[key]” 赋值。
+            frame[key] = raw_obs["pixels"][env_idx]
+            # L0160 跳过这一轮剩余操作，进入下一轮循环。
+            continue
+        # L0161 条件 key in raw_obs and isinstance(raw_obs[key], np.ndarray) 成立时进入下方分支。
+        if key in raw_obs and isinstance(raw_obs[key], np.ndarray):
+            # L0162 用方括号按键或索引读取 容器给 “val” 赋值。
+            val = raw_obs[key][env_idx]
+            # L0163 条件 val.dtype == np.float64 成立时进入下方分支。
+            if val.dtype == np.float64:
+                # L0164 调用 val.astype，用它的结果给 “val” 赋值。
+                val = val.astype(np.float32)
+            # L0165 引用已有的值 val给 “frame[key]” 赋值。
+            frame[key] = val
+    # L0166 引用已有的值 action给 “frame[ACTION]” 赋值。
+    frame[ACTION] = action
+    # L0167 调用 np.atleast_1d，用它的结果给 “frame['next.reward']” 赋值。
+    frame["next.reward"] = np.atleast_1d(np.float32(reward))
+    # L0168 调用 np.atleast_1d，用它的结果给 “frame['next.success']” 赋值。
+    frame["next.success"] = np.atleast_1d(np.bool_(success))
+    # L0169 调用 np.atleast_1d，用它的结果给 “frame['next.done']” 赋值。
+    frame["next.done"] = np.atleast_1d(np.bool_(done))
+    # L0170 引用已有的值 task给 “frame['task']” 赋值。
+    frame["task"] = task
+    # L0171 引用已有的值 frame作为当前调用的返回值。
+    return frame
+
+
+# L0174 定义 rollout，一次处理一批回合，在循环里把每一步观测转成动作。
+def rollout(
+    # L0175 “env”是当前括号中的一项，逗号将它与下一项分开。
+    env: gym.vector.VectorEnv,
+    # L0176 “policy”是当前括号中的一项，逗号将它与下一项分开。
+    policy: PreTrainedPolicy,
+    # L0177 延续上面的语句，env_preprocessor: PolicyProcessorPipeline[dict[str, Any], dict[str, Any]],。本段处理重置环境并逐控制步执行动作、保存观察和成功标志。
+    env_preprocessor: PolicyProcessorPipeline[dict[str, Any], dict[str, Any]],
+    # L0178 延续上面的语句，env_postprocessor: PolicyProcessorPipeline[dict[str, Any], dict[str, Any]],。本段处理重置环境并逐控制步执行动作、保存观察和成功标志。
+    env_postprocessor: PolicyProcessorPipeline[dict[str, Any], dict[str, Any]],
+    # L0179 延续上面的语句，preprocessor: PolicyProcessorPipeline[dict[str, Any], dict[str, Any]],。本段处理重置环境并逐控制步执行动作、保存观察和成功标志。
+    preprocessor: PolicyProcessorPipeline[dict[str, Any], dict[str, Any]],
+    # L0180 延续上面的语句，postprocessor: PolicyProcessorPipeline[PolicyAction, PolicyAction],。本段处理重置环境并逐控制步执行动作、保存观察和成功标志。
+    postprocessor: PolicyProcessorPipeline[PolicyAction, PolicyAction],
+    # L0181 为“seeds”提供这一项的值，注意它所在的参数表或外层表达式。
+    seeds: list[int] | None = None,
+    # L0182 为“return_observations”提供这一项的值，注意它所在的参数表或外层表达式。
+    return_observations: bool = False,
+    # L0183 为“render_callback”提供这一项的值，注意它所在的参数表或外层表达式。
+    render_callback: Callable[[gym.vector.VectorEnv], None] | None = None,
+    # L0184 为“recording_dir”提供这一项的值，注意它所在的参数表或外层表达式。
+    recording_dir: Path | None = None,
+    # L0185 为“env_features”提供这一项的值，注意它所在的参数表或外层表达式。
+    env_features: dict | None = None,
+    # L0186 为“recording_repo_id”提供这一项的值，注意它所在的参数表或外层表达式。
+    recording_repo_id: str | None = None,
+    # L0187 为“recording_private”提供这一项的值，注意它所在的参数表或外层表达式。
+    recording_private: bool = False,
+    # L0188 为“predicted_latents_callback”提供这一项的值，注意它所在的参数表或外层表达式。
+    predicted_latents_callback: Callable[[PreTrainedPolicy], None] | None = None,
+    # L0189 为“max_episode_steps”提供这一项的值，注意它所在的参数表或外层表达式。
+    max_episode_steps: int | None = None,
+# L0190 结束参数表。若箭头后有类型，它标注预期返回值，缩进块是函数体。
+) -> dict:
+    # L0191 原文档概述本段功能，重置环境并逐控制步执行动作、保存观察和成功标志。
+    """Run a batched policy rollout once through a batch of environments.
+
+    # L0193 原文档中的说明或续行。此段讲重置环境并逐控制步执行动作、保存观察和成功标志。
+    Note that all environments in the batch are run until the last environment is done. This means some
+    # L0194 原文档中的说明或续行。此段讲重置环境并逐控制步执行动作、保存观察和成功标志。
+    data will probably need to be discarded (for environments that aren't the first one to be done).
+
+    # L0196 原文档中的说明或续行。此段讲重置环境并逐控制步执行动作、保存观察和成功标志。
+    The return dictionary contains:
+        # L0197 原文档中的说明或续行。此段讲重置环境并逐控制步执行动作、保存观察和成功标志。
+        (optional) "observation": A dictionary of (batch, sequence + 1, *) tensors mapped to observation
+            # L0198 原文档中的说明或续行。此段讲重置环境并逐控制步执行动作、保存观察和成功标志。
+            keys. NOTE that this has an extra sequence element relative to the other keys in the
+            # L0199 原文档中的说明或续行。此段讲重置环境并逐控制步执行动作、保存观察和成功标志。
+            dictionary. This is because an extra observation is included for after the environment is
+            # L0200 原文档中的说明或续行。此段讲重置环境并逐控制步执行动作、保存观察和成功标志。
+            terminated or truncated.
+        # L0201 原文档中的说明或续行。此段讲重置环境并逐控制步执行动作、保存观察和成功标志。
+        "action": A (batch, sequence, action_dim) tensor of actions applied based on the observations (not
+            # L0202 原文档中的说明或续行。此段讲重置环境并逐控制步执行动作、保存观察和成功标志。
+            including the last observations).
+        # L0203 原文档中的说明或续行。此段讲重置环境并逐控制步执行动作、保存观察和成功标志。
+        "reward": A (batch, sequence) tensor of rewards received for applying the actions.
+        # L0204 原文档中的说明或续行。此段讲重置环境并逐控制步执行动作、保存观察和成功标志。
+        "success": A (batch, sequence) tensor of success conditions (the only time this can be True is upon
+            # L0205 原文档中的说明或续行。此段讲重置环境并逐控制步执行动作、保存观察和成功标志。
+            environment termination/truncation).
+        # L0206 原文档中的说明或续行。此段讲重置环境并逐控制步执行动作、保存观察和成功标志。
+        "done": A (batch, sequence) tensor of **cumulative** done conditions. For any given batch element,
+            # L0207 原文档中的说明或续行。此段讲重置环境并逐控制步执行动作、保存观察和成功标志。
+            the first True is followed by True's all the way till the end. This can be used for masking
+            # L0208 原文档中的说明或续行。此段讲重置环境并逐控制步执行动作、保存观察和成功标志。
+            extraneous elements from the sequences above.
+
+    # L0210 以下列出调用参数及其含义。
+    Args:
+        # L0211 原文档对“env”的说明。此段讲重置环境并逐控制步执行动作、保存观察和成功标志。
+        env: The batch of environments.
+        # L0212 原文档对“policy”的说明。此段讲重置环境并逐控制步执行动作、保存观察和成功标志。
+        policy: The policy. Must be a PyTorch nn module.
+        # L0213 原文档对“seeds”的说明。此段讲重置环境并逐控制步执行动作、保存观察和成功标志。
+        seeds: The environments are seeded once at the start of the rollout. If provided, this argument
+            # L0214 原文档中的说明或续行。此段讲重置环境并逐控制步执行动作、保存观察和成功标志。
+            specifies the seeds for each of the environments.
+        # L0215 原文档对“return_observations”的说明。此段讲重置环境并逐控制步执行动作、保存观察和成功标志。
+        return_observations: Whether to include all observations in the returned rollout data. Observations
+            # L0216 原文档中的说明或续行。此段讲重置环境并逐控制步执行动作、保存观察和成功标志。
+            are returned optionally because they typically take more memory to cache. Defaults to False.
+        # L0217 原文档对“render_callback”的说明。此段讲重置环境并逐控制步执行动作、保存观察和成功标志。
+        render_callback: Optional rendering callback to be used after the environments are reset, and after
+            # L0218 原文档中的说明或续行。此段讲重置环境并逐控制步执行动作、保存观察和成功标志。
+            every step.
+        # L0219 原文档对“predicted_latents_callback”的说明。此段讲重置环境并逐控制步执行动作、保存观察和成功标志。
+        predicted_latents_callback: Optional callback invoked after every ``select_action`` with the policy
+            # L0220 原文档中的说明或续行。此段讲重置环境并逐控制步执行动作、保存观察和成功标志。
+            itself. World-model policies (e.g. LingBot-VA) stash predicted video latents on
+            # L0221 原文档中的说明或续行。此段讲重置环境并逐控制步执行动作、保存观察和成功标志。
+            ``policy.last_predicted_latents``; this lets the caller concatenate chunks and decode once.
+    # L0222 以下说明调用者接收到的结果。
+    Returns:
+        # L0223 原文档中的说明或续行。此段讲重置环境并逐控制步执行动作、保存观察和成功标志。
+        The dictionary described above.
+    # L0224 文档字符串的边界。
+    """
+    # L0225 检查此条件，条件不成立时抛出 AssertionError。
+    assert isinstance(policy, nn.Module), "Policy must be a PyTorch nn module."
+
+    # L0227 回合重置、初始化或状态清理的说明。
+    # Reset the policy, its processors and the environments. The processors matter: a step that
+    # L0228 原作者的注释。此处在讲重置环境并逐控制步执行动作、保存观察和成功标志。
+    # latches per-episode state -- e.g. ``RelativeActionsProcessorStep``'s cached anchor -- would
+    # L0229 原作者的注释。此处在讲重置环境并逐控制步执行动作、保存观察和成功标志。
+    # otherwise carry the previous batch of episodes' value into this one.
+    # L0230 原作者的注释。此处在讲重置环境并逐控制步执行动作、保存观察和成功标志。
+    # ``SyncInferenceEngine`` already does this on the robot.
+    # L0231 调用实际策略的 reset 方法。SmolVLA 在这里清空动作队列。
+    policy.reset()
+    # L0232 重置策略前处理流水线保存的跨步状态。
+    preprocessor.reset()
+    # L0233 重置动作后处理流水线保存的跨步状态。
+    postprocessor.reset()
+    # L0234 重置向量环境，得到批量初始观测和额外信息。
+    observation, info = env.reset(seed=seeds)
+    # L0235 条件 render_callback is not None 成立时进入下方分支。
+    if render_callback is not None:
+        # L0236 调用 render_callback 执行操作。
+        render_callback(env)
+
+    # L0238 声明“recording_datasets”的类型为 list[LeRobotDataset] | None，设为空值 None作为初始值。
+    recording_datasets: list[LeRobotDataset] | None = None
+    # L0239 设为空值 None给 “raw_observation” 赋值。
+    raw_observation = None
+    # L0240 使用字面值 ''给 “task_desc” 赋值。
+    task_desc = ""
+    # L0241 条件 recording_dir is not None and env_features is not None 成立时进入下方分支。
+    if recording_dir is not None and env_features is not None:
+        # L0242 调用 _env_features_to_dataset_features，用它的结果给 “features” 赋值。
+        features = _env_features_to_dataset_features(env_features)
+        # L0243 调用 env.unwrapped.metadata.get，用它的结果给 “fps” 赋值。
+        fps = env.unwrapped.metadata.get("render_fps", 30)
+        # L0244 创建列表，按给定顺序保留元素给 “recording_datasets” 赋值。
+        recording_datasets = []
+        # L0245 计算此行的右侧表达式给 “multi_env” 赋值。
+        multi_env = env.num_envs > 1
+        # L0246 组合多个布尔判断，按 Python 的短路规则求值给 “base_repo_id” 赋值。
+        base_repo_id = recording_repo_id or "eval_recording"
+        # L0247 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+        for i in range(env.num_envs):
+            # L0248 用条件表达式在 if 前与 else 后的两个值之间选择给 “root” 赋值。
+            root = str(recording_dir / f"env_{i}") if multi_env else str(recording_dir)
+            # L0249 用条件表达式在 if 前与 else 后的两个值之间选择给 “repo_id”（Hub 仓库标识） 赋值。
+            repo_id = f"{base_repo_id}_env_{i}" if multi_env else base_repo_id
+            # L0250 调用 recording_datasets.append，在列表末尾追加一个元素。
+            recording_datasets.append(
+                # L0251 延续上面的语句，LeRobotDataset.create(。本段处理重置环境并逐控制步执行动作、保存观察和成功标志。
+                LeRobotDataset.create(
+                    # L0252 为“repo_id”（Hub 仓库标识）提供这一项的值，注意它所在的参数表或外层表达式。
+                    repo_id=repo_id,
+                    # L0253 为“fps”提供这一项的值，注意它所在的参数表或外层表达式。
+                    fps=fps,
+                    # L0254 为“features”提供这一项的值，注意它所在的参数表或外层表达式。
+                    features=features,
+                    # L0255 为“root”提供这一项的值，注意它所在的参数表或外层表达式。
+                    root=root,
+                    # L0256 为“use_videos”提供这一项的值，注意它所在的参数表或外层表达式。
+                    use_videos=True,
+                # L0257 闭合上方尚未结束的括号。
+                )
+            # L0258 闭合上方尚未结束的括号。
+            )
+        # L0259 调用 deepcopy，用它的结果给 “raw_observation” 赋值。
+        raw_observation = deepcopy(observation)
+        # L0260 开始执行可能抛出异常的代码，后续 except 或 finally 提供处理。
+        try:
+            # L0261 用方括号按键或索引读取 容器给 “task_desc” 赋值。
+            task_desc = list(env.call("task_description"))[0]
+        # L0262 捕获这里列出的异常类型，然后执行下方的处理逻辑。
+        except (AttributeError, NotImplementedError):
+            # L0263 使用字面值 ''给 “task_desc” 赋值。
+            task_desc = ""
+
+    # L0265 创建列表，按给定顺序保留元素给 “all_observations” 赋值。
+    all_observations = []
+    # L0266 创建列表，按给定顺序保留元素给 “all_actions” 赋值。
+    all_actions = []
+    # L0267 创建列表，按给定顺序保留元素给 “all_rewards” 赋值。
+    all_rewards = []
+    # L0268 创建列表，按给定顺序保留元素给 “all_successes” 赋值。
+    all_successes = []
+    # L0269 创建列表，按给定顺序保留元素给 “all_dones” 赋值。
+    all_dones = []
+    # L0270 原作者的注释。此处在讲重置环境并逐控制步执行动作、保存观察和成功标志。
+    # What the simulator reports besides success, one row per step; empty for benchmarks that report nothing.
+    # L0271 声明“all_metrics”的类型为 list[dict[str, np.ndarray]]，创建列表，按给定顺序保留元素作为初始值。
+    all_metrics: list[dict[str, np.ndarray]] = []
+
+    # L0273 原作者的注释。此处在讲重置环境并逐控制步执行动作、保存观察和成功标志。
+    # A relative-action policy predicts a chunk of offsets anchored to the state at prediction
+    # L0274 原作者的注释。此处在讲重置环境并逐控制步执行动作、保存观察和成功标志。
+    # time, but this loop reruns the pre/post pipeline every step, which would re-anchor queued
+    # L0275 原作者的注释。此处在讲重置环境并逐控制步执行动作、保存观察和成功标志。
+    # actions to the current (moved) state. Bind the step to the policy's queue depth so it holds
+    # L0276 原作者的注释。此处在讲重置环境并逐控制步执行动作、保存观察和成功标志。
+    # the anchor until the chunk drains. Done here rather than in `eval_main` so that every caller
+    # L0277 原作者的注释。此处在讲重置环境并逐控制步执行动作、保存观察和成功标志。
+    # of this public loop is covered; rebinding the same callable each rollout is a no-op.
+    # L0278 原作者的注释。此处在讲重置环境并逐控制步执行动作、保存观察和成功标志。
+    # The anchor is [B, state_dim] and tracks exactly what the single shared action queue tracks,
+    # L0279 原作者的注释。此处在讲重置环境并逐控制步执行动作、保存观察和成功标志。
+    # so it inherits the queue's batching assumptions rather than adding any: every sub-env
+    # L0280 原作者的注释。此处在讲重置环境并逐控制步执行动作、保存观察和成功标志。
+    # refills on the same step, and a sub-env that finished early stays frozen at its final state
+    # L0281 原作者的注释。此处在讲重置环境并逐控制步执行动作、保存观察和成功标志。
+    # and its transitions are discarded.
+    # L0282 为使用相对动作处理步骤的策略连接队列深度与锚点。此分支由处理流水线是否包含对应步骤决定。
+    if bind_relative_anchor(policy, preprocessor) is not None:
+        # L0283 调用 logging.info 执行操作。
+        logging.info("Relative actions enabled: chunk anchor held until the action queue drains")
+
+    # L0285 使用字面值 0给 “step” 赋值。
+    step = 0
+    # L0286 原作者的注释。此处在讲重置环境并逐控制步执行动作、保存观察和成功标志。
+    # Keep track of which environments are done.
+    # L0287 创建形状为 [B] 的 NumPy 布尔数组，开始时每个环境都未结束。
+    done = np.array([False] * env.num_envs)
+    # L0288 向底层环境询问每回合的步数上限。
+    max_steps = env.call("_max_episode_steps")[0]
+    # L0289 条件 max_episode_steps is not None 成立时进入下方分支。
+    if max_episode_steps is not None:
+        # L0290 调用 min，用它的结果给 “max_steps” 赋值。
+        max_steps = min(max_steps, max_episode_steps)
+    # L0291 原作者的注释。此处在讲重置环境并逐控制步执行动作、保存观察和成功标志。
+    # Sim envs already return observations with LeRobot keys; other envs return their own format.
+    # L0292 用条件表达式在 if 前与 else 后的两个值之间选择给 “prepare_observation” 赋值。
+    prepare_observation = (
+        # L0293 对已使用 LeRobot 观测键的仿真，选择 NumPy 到 Tensor 的转换。
+        prepare_canonical_observation
+        # L0294 LocalVectorEnv 的 metadata 将此标记设为 True，本次 LIBERO 因而使用上一行的函数。
+        if env.metadata.get("canonical_observations", False)
+        # L0295 补充上方跨行表达式的分支值或条件。
+        else preprocess_observation
+    # L0296 闭合上方尚未结束的括号。
+    )
+    # L0297 调用 trange，用它的结果给 “progbar” 赋值。
+    progbar = trange(
+        # L0298 “max_steps”是当前括号中的一项，逗号将它与下一项分开。
+        max_steps,
+        # L0299 为“desc”提供这一项的值，注意它所在的参数表或外层表达式。
+        desc=f"Running rollout with at most {max_steps} steps",
+        # L0300 为“disable”提供这一项的值，注意它所在的参数表或外层表达式。
+        disable=inside_slurm(),  # we dont want progress bar when we use slurm, since it clutters the logs
+        # L0301 为“leave”提供这一项的值，注意它所在的参数表或外层表达式。
+        leave=False,
+    # L0302 闭合上方尚未结束的括号。
+    )
+    # L0303 调用 check_env_attributes_and_types 执行操作。
+    check_env_attributes_and_types(env)
+    # L0304 开始执行可能抛出异常的代码，后续 except 或 finally 提供处理。
+    try:
+        # L0305 只有还存在未结束的环境且没达到步数上限时才继续控制循环。
+        while not np.all(done) and step < max_steps:
+            # L0306 原作者的注释。此处在讲重置环境并逐控制步执行动作、保存观察和成功标志。
+            # Numpy array to tensor and changing dictionary keys to LeRobot policy format.
+            # L0307 将本轮观测变成 Tensor。双相机分别是 [1,3,360,360] 的 CPU float32，状态是 [1,8] 的 CPU float32。
+            observation = prepare_observation(observation)
+            # L0308 条件 return_observations 成立时进入下方分支。
+            if return_observations:
+                # L0309 调用 all_observations.append，在列表末尾追加一个元素。
+                all_observations.append(deepcopy(observation))
+
+            # L0311 原作者的注释。此处在讲重置环境并逐控制步执行动作、保存观察和成功标志。
+            # Infer "task" from sub-environments (prefer natural language description).
+            # L0312 原作者的注释。此处在讲重置环境并逐控制步执行动作、保存观察和成功标志。
+            # env.call() works with both SyncVectorEnv and AsyncVectorEnv.
+            # L0313 开始执行可能抛出异常的代码，后续 except 或 finally 提供处理。
+            try:
+                # L0314 从底层环境取自然语言任务描述，按批次存成长度为 B 的 Python 列表。
+                observation["task"] = list(env.call("task_description"))
+            # L0315 捕获这里列出的异常类型，然后执行下方的处理逻辑。
+            except (AttributeError, NotImplementedError):
+                # L0316 开始执行可能抛出异常的代码，后续 except 或 finally 提供处理。
+                try:
+                    # L0317 调用 list，用它的结果给 “observation['task']” 赋值。
+                    observation["task"] = list(env.call("task"))
+                # L0318 捕获这里列出的异常类型，然后执行下方的处理逻辑。
+                except (AttributeError, NotImplementedError):
+                    # L0319 计算右侧表达式 [""] * env.num_envs给 “observation['task']” 赋值。
+                    observation["task"] = [""] * env.num_envs
+
+            # L0321 原作者的注释。此处在讲重置环境并逐控制步执行动作、保存观察和成功标志。
+            # Apply environment-specific preprocessing (e.g., IsaaclabArenaProcessorStep for Isaac Lab Arena)
+            # L0322 运行环境级前处理，本次 SmolVLA + LIBERO 对应空流水线。
+            observation = env_preprocessor(observation)
+
+            # L0324 运行 checkpoint 的策略前处理。相机改名，任务文字分词，数据移到 CUDA，状态按保存的统计量归一化。
+            observation = preprocessor(observation)
+            # L0325 进入 PyTorch 推理模式，关闭梯度追踪并省去额外的张量追踪开销。
+            with torch.inference_mode():
+                # L0326 调用 transition_to_policy_action，用它的结果给 “action”（单步动作） 赋值。
+                action = transition_to_policy_action(
+                    # L0327 调用策略对象的 select_action，获得本控制步的动作。SmolVLA 返回形状为 [B,A] 的张量。
+                    policy_output_to_transition(policy.select_action(observation))
+                # L0328 闭合上方尚未结束的括号。
+                )
+            # L0329 条件 predicted_latents_callback is not None 成立时进入下方分支。
+            if predicted_latents_callback is not None:
+                # L0330 调用 predicted_latents_callback 执行操作。
+                predicted_latents_callback(policy)
+            # L0331 将动作反归一化并移回 CPU。此时动作仍为 Tensor。
+            action = postprocessor(action)
+
+            # L0333 创建字典，用键查找对应的值给 “action_transition” 赋值。
+            action_transition = {ACTION: action}
+            # L0334 运行环境级动作后处理。本次配置走空流水线。
+            action_transition = env_postprocessor(action_transition)
+            # L0335 用方括号按键或索引读取 action_transition给 “action”（单步动作） 赋值。
+            action = action_transition[ACTION]
+
+            # L0337 运算设备或数据传输的说明。
+            # Convert to CPU / numpy.
+            # L0338 把动作转换成 CPU 上的 NumPy 数组，保留批次轴。原评测形状为 [1,7]。
+            action_numpy: np.ndarray = action.to("cpu").numpy()
+            # L0339 断言动作有且只有两个轴，先区分环境实例，再区分动作分量。
+            assert action_numpy.ndim == 2, "Action dimensions should be (batch, action_dim)"
+
+            # L0341 原作者的注释。此处在讲重置环境并逐控制步执行动作、保存观察和成功标志。
+            # Apply the next action.
+            # L0342 把动作送入 LocalVectorEnv，返回下一批观测、奖励、终止、截断和辅助信息。
+            observation, reward, terminated, truncated, info = env.step(action_numpy)
+            # L0343 条件 render_callback is not None 成立时进入下方分支。
+            if render_callback is not None:
+                # L0344 调用 render_callback 执行操作。
+                render_callback(env)
+
+            # L0346 原作者的注释。此处在讲重置环境并逐控制步执行动作、保存观察和成功标志。
+            # VectorEnv stores is_success in `info["final_info"][env_index]["is_success"]`. "final_info" isn't
+            # L0347 原作者的注释。此处在讲重置环境并逐控制步执行动作、保存观察和成功标志。
+            # available if none of the envs finished.
+            # L0348 条件 "final_info" in info 成立时进入下方分支。
+            if "final_info" in info:
+                # L0349 用方括号按键或索引读取 info给 “final_info” 赋值。
+                final_info = info["final_info"]
+                # L0350 条件 isinstance(final_info, dict) 成立时进入下方分支。
+                if isinstance(final_info, dict):
+                    # L0351 调用 final_info.get，用它的结果给 “is_success”（仿真的成功标志） 赋值。
+                    is_success = final_info.get("is_success", [False] * env.num_envs)
+                    # L0352 用条件表达式在 if 前与 else 后的两个值之间选择给 “successes” 赋值。
+                    successes = (
+                        # L0353 延续上面的语句，is_success.tolist()。本段处理重置环境并逐控制步执行动作、保存观察和成功标志。
+                        is_success.tolist()
+                        # L0354 条件 hasattr(is_success, "tolist") 成立时进入下方分支。
+                        if hasattr(is_success, "tolist")
+                        # L0355 补充上方跨行表达式的分支值或条件。
+                        else [bool(is_success)] * env.num_envs
+                    # L0356 闭合上方尚未结束的括号。
+                    )
+                # L0357 进入对应的另一条分支，注意用缩进找到配对的判断或异常块。
+                else:
+                    # L0358 原作者的注释。此处在讲重置环境并逐控制步执行动作、保存观察和成功标志。
+                    # Gymnasium < 1.0 returns final_info as a per-env sequence/object array,
+                    # L0359 原作者的注释。此处在讲重置环境并逐控制步执行动作、保存观察和成功标志。
+                    # with entries set to a dict only for envs that just finished.
+                    # L0360 创建列表，按给定顺序保留元素给 “successes” 赋值。
+                    successes = []
+                    # L0361 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+                    for item in final_info:
+                        # L0362 条件 isinstance(item, dict) and "is_success" in item 成立时进入下方分支。
+                        if isinstance(item, dict) and "is_success" in item:
+                            # L0363 调用 successes.append，在列表末尾追加一个元素。
+                            successes.append(bool(item["is_success"]))
+                        # L0364 进入对应的另一条分支，注意用缩进找到配对的判断或异常块。
+                        else:
+                            # L0365 调用 successes.append，在列表末尾追加一个元素。
+                            successes.append(False)
+            # L0366 在结果没有 final_info 而直接提供 is_success 时采用这一分支。LocalVectorEnv 通过 StepResult.info 提供这个字段。
+            elif "is_success" in info:
+                # L0367 取出一批环境的成功标志。
+                is_success = info["is_success"]
+                # L0368 用条件表达式在 if 前与 else 后的两个值之间选择给 “successes” 赋值。
+                successes = (
+                    # L0369 延续上面的语句，is_success.tolist()。本段处理重置环境并逐控制步执行动作、保存观察和成功标志。
+                    is_success.tolist()
+                    # L0370 条件 hasattr(is_success, "tolist") 成立时进入下方分支。
+                    if hasattr(is_success, "tolist")
+                    # L0371 补充上方跨行表达式的分支值或条件。
+                    else [bool(is_success)] * env.num_envs
+                # L0372 闭合上方尚未结束的括号。
+                )
+            # L0373 进入对应的另一条分支，注意用缩进找到配对的判断或异常块。
+            else:
+                # L0374 计算右侧表达式 [False] * env.num_envs给 “successes” 赋值。
+                successes = [False] * env.num_envs
+
+            # L0376 按环境对终止和截断做逐元素逻辑或，得到本步回合结束标记。
+            episode_ends = terminated | truncated
+            # L0377 原作者的注释。此处在讲重置环境并逐控制步执行动作、保存观察和成功标志。
+            # The rollout can end before the simulator declares the episode over.
+            # L0378 原作者的注释。此处在讲重置环境并逐控制步执行动作、保存观察和成功标志。
+            # Use the same boundary in the recorded datasets and returned transitions.
+            # L0379 最后一个许可控制步达到上限时，由评测器结束剩余回合。
+            if step + 1 == max_steps:
+                # L0380 调用 np.ones_like，用它的结果给 “episode_ends” 赋值。
+                episode_ends = np.ones_like(episode_ends, dtype=bool)
+
+            # L0382 条件 recording_datasets is not None and raw_observation is not None 成立时进入下方分支。
+            if recording_datasets is not None and raw_observation is not None:
+                # L0383 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+                for env_idx in range(env.num_envs):
+                    # L0384 条件 done[env_idx] 成立时进入下方分支。
+                    if done[env_idx]:
+                        # L0385 跳过这一轮剩余操作，进入下一轮循环。
+                        continue
+                    # L0386 调用 _build_raw_frame，用它的结果给 “frame” 赋值。
+                    frame = _build_raw_frame(
+                        # L0387 “raw_observation”是当前括号中的一项，逗号将它与下一项分开。
+                        raw_observation,
+                        # L0388 “env_idx”是当前括号中的一项，逗号将它与下一项分开。
+                        env_idx,
+                        # L0389 延续上面的语句，action_numpy[env_idx],。本段处理重置环境并逐控制步执行动作、保存观察和成功标志。
+                        action_numpy[env_idx],
+                        # L0390 延续上面的语句，reward[env_idx],。本段处理重置环境并逐控制步执行动作、保存观察和成功标志。
+                        reward[env_idx],
+                        # L0391 延续上面的语句，successes[env_idx],。本段处理重置环境并逐控制步执行动作、保存观察和成功标志。
+                        successes[env_idx],
+                        # L0392 延续上面的语句，bool(episode_ends[env_idx]),。本段处理重置环境并逐控制步执行动作、保存观察和成功标志。
+                        bool(episode_ends[env_idx]),
+                        # L0393 “task_desc”是当前括号中的一项，逗号将它与下一项分开。
+                        task_desc,
+                        # L0394 延续上面的语句，recording_datasets[env_idx].features,。本段处理重置环境并逐控制步执行动作、保存观察和成功标志。
+                        recording_datasets[env_idx].features,
+                    # L0395 闭合上方尚未结束的括号。
+                    )
+                    # L0396 调用 add_frame 执行操作。
+                    recording_datasets[env_idx].add_frame(frame)
+                    # L0397 条件 episode_ends[env_idx] 成立时进入下方分支。
+                    if episode_ends[env_idx]:
+                        # L0398 调用 save_episode 执行操作。
+                        recording_datasets[env_idx].save_episode()
+                # L0399 调用 deepcopy，用它的结果给 “raw_observation” 赋值。
+                raw_observation = deepcopy(observation)
+
+            # L0401 计算右侧表达式 episode_ends | done给 “done” 赋值。
+            done = episode_ends | done
+
+            # L0403 调用 all_actions.append，在列表末尾追加一个元素。
+            all_actions.append(torch.from_numpy(action_numpy))
+            # L0404 调用 all_rewards.append，在列表末尾追加一个元素。
+            all_rewards.append(torch.from_numpy(reward))
+            # L0405 调用 all_dones.append，在列表末尾追加一个元素。
+            all_dones.append(torch.from_numpy(done))
+            # L0406 调用 all_successes.append，在列表末尾追加一个元素。
+            all_successes.append(torch.tensor(successes))
+            # L0407 调用 all_metrics.append，在列表末尾追加一个元素。
+            all_metrics.append(
+                # L0408 延续上面的语句，{。本段处理重置环境并逐控制步执行动作、保存观察和成功标志。
+                {
+                    # L0409 为“key”提供这一项的值，注意它所在的参数表或外层表达式。
+                    key: np.asarray(value, dtype=np.float32)
+                    # L0410 原作者的注释。此处在讲重置环境并逐控制步执行动作、保存观察和成功标志。
+                    # Gymnasium's vector envs add a boolean presence mask per key of a sub-env's info.
+                    # L0411 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+                    for key, value in (info.get("metrics") or {}).items()
+                    # L0412 条件 not key.startswith("_") 成立时进入下方分支。
+                    if not key.startswith("_")
+                # L0413 闭合上方尚未结束的括号。
+                }
+            # L0414 闭合上方尚未结束的括号。
+            )
+
+            # L0416 用增量赋值更新 step，运算逻辑见左侧运算符。
+            step += 1
+            # L0417 调用 mean，用它的结果给 “running_success_rate” 赋值。
+            running_success_rate = (
+                # L0418 延续上面的语句，einops.reduce(torch.stack(all_successes, dim=1), "b n -> b", "any").numpy().mean()。本段处理重置环境并逐控制步执行动作、保存观察和成功标志。
+                einops.reduce(torch.stack(all_successes, dim=1), "b n -> b", "any").numpy().mean()
+            # L0419 闭合上方尚未结束的括号。
+            )
+            # L0420 调用 progbar.set_postfix 执行操作。
+            progbar.set_postfix({"running_success_rate": f"{running_success_rate.item() * 100:.1f}%"})
+            # L0421 调用 progbar.update，把新条目写入已有容器。
+            progbar.update()
+    # L0422 离开 try 时执行这里的清理，即使前面的路径发生异常。
+    finally:
+        # L0423 条件 recording_datasets is not None 成立时进入下方分支。
+        if recording_datasets is not None:
+            # L0424 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+            for ds in recording_datasets:
+                # L0425 调用 ds.finalize 执行操作。
+                ds.finalize()
+                # L0426 条件 recording_repo_id is not None 成立时进入下方分支。
+                if recording_repo_id is not None:
+                    # L0427 条件 ds.num_episodes > 0 成立时进入下方分支。
+                    if ds.num_episodes > 0:
+                        # L0428 调用 ds.push_to_hub 执行操作。
+                        ds.push_to_hub(private=recording_private)
+                    # L0429 进入对应的另一条分支，注意用缩进找到配对的判断或异常块。
+                    else:
+                        # L0430 调用 logging.warning 执行操作。
+                        logging.warning("No episodes recorded for %s — skipping push to hub.", ds.repo_id)
+
+    # L0432 原作者的注释。此处在讲重置环境并逐控制步执行动作、保存观察和成功标志。
+    # Track the final observation.
+    # L0433 条件 return_observations 成立时进入下方分支。
+    if return_observations:
+        # L0434 调用 prepare_observation，用它的结果给 “observation”（观测） 赋值。
+        observation = prepare_observation(observation)
+        # L0435 调用 all_observations.append，在列表末尾追加一个元素。
+        all_observations.append(deepcopy(observation))
+
+    # L0437 原作者的注释。此处在讲重置环境并逐控制步执行动作、保存观察和成功标志。
+    # Stack the sequence along the first dimension so that we have (batch, sequence, *) tensors.
+    # L0438 创建字典，用键查找对应的值给 “ret” 赋值。
+    ret = {
+        # L0439 为“ACTION”提供这一项的值，注意它所在的参数表或外层表达式。
+        ACTION: torch.stack(all_actions, dim=1),
+        # L0440 字典项“reward”（单步奖励），冒号右边给出它的值。
+        "reward": torch.stack(all_rewards, dim=1),
+        # L0441 字典项“success”，冒号右边给出它的值。
+        "success": torch.stack(all_successes, dim=1),
+        # L0442 字典项“done”，冒号右边给出它的值。
+        "done": torch.stack(all_dones, dim=1),
+    # L0443 闭合上方尚未结束的括号。
+    }
+    # L0444 调用 sorted，用它的结果给 “metric_names” 赋值。
+    metric_names = sorted({key for metrics in all_metrics for key in metrics})
+    # L0445 条件 metric_names 成立时进入下方分支。
+    if metric_names:
+        # L0446 调用 np.zeros，用它的结果给 “missing” 赋值。
+        missing = np.zeros(env.num_envs, dtype=np.float32)
+        # L0447 用字典推导式从可迭代对象逐项取值并构造结果给 “ret['metrics']” 赋值。
+        ret["metrics"] = {
+            # L0448 为“name”提供这一项的值，注意它所在的参数表或外层表达式。
+            name: torch.from_numpy(np.stack([metrics.get(name, missing) for metrics in all_metrics], axis=1))
+            # L0449 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+            for name in metric_names
+        # L0450 闭合上方尚未结束的括号。
+        }
+    # L0451 条件 return_observations 成立时进入下方分支。
+    if return_observations:
+        # L0452 创建字典，用键查找对应的值给 “stacked_observations” 赋值。
+        stacked_observations = {}
+        # L0453 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+        for key in all_observations[0]:
+            # L0454 调用 torch.stack，用它的结果给 “stacked_observations[key]” 赋值。
+            stacked_observations[key] = torch.stack([obs[key] for obs in all_observations], dim=1)
+        # L0455 引用已有的值 stacked_observations给 “ret[OBS_STR]” 赋值。
+        ret[OBS_STR] = stacked_observations
+
+    # L0457 条件 hasattr(policy, "use_original_modules") 成立时进入下方分支。
+    if hasattr(policy, "use_original_modules"):
+        # L0458 调用 policy.use_original_modules 执行操作。
+        policy.use_original_modules()
+
+    # L0460 引用已有的值 ret作为当前调用的返回值。
+    return ret
+
+
+# L0463 定义给一组相同任务环境评测多个回合的函数。
+def eval_policy(
+    # L0464 “env”是当前括号中的一项，逗号将它与下一项分开。
+    env: gym.vector.VectorEnv,
+    # L0465 “policy”是当前括号中的一项，逗号将它与下一项分开。
+    policy: PreTrainedPolicy,
+    # L0466 延续上面的语句，env_preprocessor: PolicyProcessorPipeline[dict[str, Any], dict[str, Any]],。本段处理按批次跑指定回合数，汇总奖励与成功。
+    env_preprocessor: PolicyProcessorPipeline[dict[str, Any], dict[str, Any]],
+    # L0467 延续上面的语句，env_postprocessor: PolicyProcessorPipeline[dict[str, Any], dict[str, Any]],。本段处理按批次跑指定回合数，汇总奖励与成功。
+    env_postprocessor: PolicyProcessorPipeline[dict[str, Any], dict[str, Any]],
+    # L0468 延续上面的语句，preprocessor: PolicyProcessorPipeline[dict[str, Any], dict[str, Any]],。本段处理按批次跑指定回合数，汇总奖励与成功。
+    preprocessor: PolicyProcessorPipeline[dict[str, Any], dict[str, Any]],
+    # L0469 延续上面的语句，postprocessor: PolicyProcessorPipeline[PolicyAction, PolicyAction],。本段处理按批次跑指定回合数，汇总奖励与成功。
+    postprocessor: PolicyProcessorPipeline[PolicyAction, PolicyAction],
+    # L0470 “n_episodes”（评测回合数）是当前括号中的一项，逗号将它与下一项分开。
+    n_episodes: int,
+    # L0471 为“max_episodes_rendered”提供这一项的值，注意它所在的参数表或外层表达式。
+    max_episodes_rendered: int = 0,
+    # L0472 为“videos_dir”提供这一项的值，注意它所在的参数表或外层表达式。
+    videos_dir: Path | None = None,
+    # L0473 为“return_episode_data”提供这一项的值，注意它所在的参数表或外层表达式。
+    return_episode_data: bool = False,
+    # L0474 为“start_seed”提供这一项的值，注意它所在的参数表或外层表达式。
+    start_seed: int | None = None,
+    # L0475 为“recording_dir”提供这一项的值，注意它所在的参数表或外层表达式。
+    recording_dir: Path | None = None,
+    # L0476 为“env_features”提供这一项的值，注意它所在的参数表或外层表达式。
+    env_features: dict | None = None,
+    # L0477 为“recording_repo_id”提供这一项的值，注意它所在的参数表或外层表达式。
+    recording_repo_id: str | None = None,
+    # L0478 为“recording_private”提供这一项的值，注意它所在的参数表或外层表达式。
+    recording_private: bool = False,
+    # L0479 为“save_predicted_video”提供这一项的值，注意它所在的参数表或外层表达式。
+    save_predicted_video: bool = False,
+    # L0480 为“max_episode_steps”提供这一项的值，注意它所在的参数表或外层表达式。
+    max_episode_steps: int | None = None,
+# L0481 结束参数表。若箭头后有类型，它标注预期返回值，缩进块是函数体。
+) -> dict:
+    # L0482 文档字符串的边界。
+    """
+    # L0483 以下列出调用参数及其含义。
+    Args:
+        # L0484 原文档对“env”的说明。此段讲按批次跑指定回合数，汇总奖励与成功。
+        env: The batch of environments.
+        # L0485 原文档对“policy”的说明。此段讲按批次跑指定回合数，汇总奖励与成功。
+        policy: The policy.
+        # L0486 原文档对“n_episodes”（评测回合数）的说明。此段讲按批次跑指定回合数，汇总奖励与成功。
+        n_episodes: The number of episodes to evaluate.
+        # L0487 原文档对“max_episodes_rendered”的说明。此段讲按批次跑指定回合数，汇总奖励与成功。
+        max_episodes_rendered: Maximum number of episodes to render into videos.
+        # L0488 原文档对“videos_dir”的说明。此段讲按批次跑指定回合数，汇总奖励与成功。
+        videos_dir: Where to save rendered videos.
+        # L0489 原文档对“return_episode_data”的说明。此段讲按批次跑指定回合数，汇总奖励与成功。
+        return_episode_data: Whether to return episode data for online training. Incorporates the data into
+            # L0490 原文档中的说明或续行。此段讲按批次跑指定回合数，汇总奖励与成功。
+            the "episodes" key of the returned dictionary.
+        # L0491 原文档对“start_seed”的说明。此段讲按批次跑指定回合数，汇总奖励与成功。
+        start_seed: The first seed to use for the first individual rollout. For all subsequent rollouts the
+            # L0492 原文档中的说明或续行。此段讲按批次跑指定回合数，汇总奖励与成功。
+            seed is incremented by 1. If not provided, the environments are not manually seeded.
+    # L0493 以下说明调用者接收到的结果。
+    Returns:
+        # L0494 原文档中的说明或续行。此段讲按批次跑指定回合数，汇总奖励与成功。
+        Dictionary with metrics and data regarding the rollouts.
+    # L0495 文档字符串的边界。
+    """
+    # L0496 条件 max_episodes_rendered > 0 and not videos_dir 成立时进入下方分支。
+    if max_episodes_rendered > 0 and not videos_dir:
+        # L0497 抛出 ValueError，中断当前路径并交给上层的异常处理。
+        raise ValueError("If max_episodes_rendered > 0, videos_dir must be provided.")
+
+    # L0499 原作者的注释。此处在讲按批次跑指定回合数，汇总奖励与成功。
+    # World-model policies (e.g. LingBot-VA) opt into predicted-video saving via their config.
+    # L0500 组合多个布尔判断，按 Python 的短路规则求值给 “save_predicted_video” 赋值。
+    save_predicted_video = save_predicted_video or bool(
+        # L0501 延续上面的语句，getattr(getattr(policy, "config", None), "save_predicted_video", False)。本段处理按批次跑指定回合数，汇总奖励与成功。
+        getattr(getattr(policy, "config", None), "save_predicted_video", False)
+    # L0502 闭合上方尚未结束的括号。
+    )
+
+    # L0504 条件 not isinstance(policy, PreTrainedPolicy) 成立时进入下方分支。
+    if not isinstance(policy, PreTrainedPolicy):
+        # L0505 调用 ValueError，用它的结果给 “exc” 赋值。
+        exc = ValueError(
+            # L0506 f 字符串片段，花括号中的表达式会被求值并插入文本。
+            f"Policy of type 'PreTrainedPolicy' is expected, but type '{type(policy)}' was provided."
+        # L0507 闭合上方尚未结束的括号。
+        )
+        # L0508 条件 not _peft_available 成立时进入下方分支。
+        if not _peft_available:
+            # L0509 抛出 exc，中断当前路径并交给上层的异常处理。
+            raise exc
+        # L0510 调用 require_package 执行操作。
+        require_package("peft", extra="peft")
+        # L0511 条件 not isinstance(policy, PeftModel) 成立时进入下方分支。
+        if not isinstance(policy, PeftModel):
+            # L0512 抛出 exc，中断当前路径并交给上层的异常处理。
+            raise exc
+
+    # L0514 调用 time.time，用它的结果给 “start” 赋值。
+    start = time.time()
+    # L0515 原作者的注释。此处在讲按批次跑指定回合数，汇总奖励与成功。
+    # Preserve the mode for direct callers. eval_policy_all scopes the mode
+    # L0516 原作者的注释。此处在讲按批次跑指定回合数，汇总奖励与成功。
+    # around all tasks so parallel evaluations cannot race with each other.
+    # L0517 读取属性 policy.training给 “was_training” 赋值。
+    was_training = policy.training
+    # L0518 设置策略为评测态，例如让 dropout 退出训练时的随机行为。
+    policy.eval()
+
+    # L0520 原作者的注释。此处在讲按批次跑指定回合数，汇总奖励与成功。
+    # Determine how many batched rollouts we need to get n_episodes. Note that if n_episodes is not evenly
+    # L0521 原作者的注释。此处在讲按批次跑指定回合数，汇总奖励与成功。
+    # divisible by env.num_envs we end up discarding some data in the last batch.
+    # L0522 计算右侧表达式 n_episodes // env.num_envs + int((n_episodes % env.num_envs) != 0)给 “n_batches” 赋值。
+    n_batches = n_episodes // env.num_envs + int((n_episodes % env.num_envs) != 0)
+
+    # L0524 原作者的注释。此处在讲按批次跑指定回合数，汇总奖励与成功。
+    # Keep track of some metrics.
+    # L0525 创建列表，按给定顺序保留元素给 “sum_rewards” 赋值。
+    sum_rewards = []
+    # L0526 创建列表，按给定顺序保留元素给 “max_rewards” 赋值。
+    max_rewards = []
+    # L0527 创建列表，按给定顺序保留元素给 “all_successes” 赋值。
+    all_successes = []
+    # L0528 声明“all_seeds”的类型为 list[int | None]，创建列表，按给定顺序保留元素作为初始值。
+    all_seeds: list[int | None] = []
+    # L0529 声明“episode_metrics”的类型为 list[dict[str, float]]，创建列表，按给定顺序保留元素作为初始值。
+    episode_metrics: list[dict[str, float]] = []
+    # L0530 创建列表，按给定顺序保留元素给 “threads” 赋值。
+    threads = []  # for video saving threads
+    # L0531 使用字面值 0给 “n_episodes_rendered” 赋值。
+    n_episodes_rendered = 0  # for saving the correct number of videos
+
+    # L0533 原作者的注释。此处在讲按批次跑指定回合数，汇总奖励与成功。
+    # Callback for visualization.
+    # L0534 定义函数 render_frame。
+    def render_frame(env: gym.vector.VectorEnv):
+        # L0535 原作者对相邻代码的说明。
+        # noqa: B023
+        # L0536 条件 n_episodes_rendered >= max_episodes_rendered 成立时进入下方分支。
+        if n_episodes_rendered >= max_episodes_rendered:
+            # L0537 退出当前调用并返回 None。
+            return
+        # L0538 调用 min，用它的结果给 “n_to_render_now” 赋值。
+        n_to_render_now = min(max_episodes_rendered - n_episodes_rendered, env.num_envs)
+        # L0539 条件 isinstance(env, gym.vector.SyncVectorEnv) 成立时进入下方分支。
+        if isinstance(env, gym.vector.SyncVectorEnv):
+            # L0540 调用 ep_frames.append，在列表末尾追加一个元素。
+            ep_frames.append(np.stack([env.envs[i].render() for i in range(n_to_render_now)]))  # noqa: B023
+        # L0541 前面的分支均未命中时，再判断 hasattr(env, "call")。
+        elif hasattr(env, "call"):
+            # L0542 原作者对相邻代码的说明。
+            # Here we must render all frames and discard any we don't need.
+            # L0543 调用 ep_frames.append，在列表末尾追加一个元素。
+            ep_frames.append(np.stack(env.call("render")[:n_to_render_now]))
+
+    # L0545 条件 max_episodes_rendered > 0 成立时进入下方分支。
+    if max_episodes_rendered > 0:
+        # L0546 声明“video_paths”的类型为 list[str]，创建列表，按给定顺序保留元素作为初始值。
+        video_paths: list[str] = []
+
+    # L0548 条件 save_predicted_video 成立时进入下方分支。
+    if save_predicted_video:
+        # L0549 条件 not videos_dir 成立时进入下方分支。
+        if not videos_dir:
+            # L0550 抛出 ValueError，中断当前路径并交给上层的异常处理。
+            raise ValueError("If save_predicted_video is True, videos_dir must be provided.")
+        # L0551 声明“predicted_video_paths”的类型为 list[str]，创建列表，按给定顺序保留元素作为初始值。
+        predicted_video_paths: list[str] = []
+        # L0552 使用字面值 0给 “n_predicted_rendered” 赋值。
+        n_predicted_rendered = 0
+
+    # L0554 原作者的注释。此处在讲按批次跑指定回合数，汇总奖励与成功。
+    # Collect predicted-video latents across a rollout (world-model policies only). The latents are
+    # L0555 原作者的注释。此处在讲按批次跑指定回合数，汇总奖励与成功。
+    # concatenated and decoded once after the rollout, matching upstream LingBot-VA's visualization path.
+    # L0556 定义函数 collect_predicted_latents。
+    def collect_predicted_latents(policy: PreTrainedPolicy):
+        # L0557 条件 _peft_available and isinstance(policy, PeftModel) 成立时进入下方分支。
+        if _peft_available and isinstance(policy, PeftModel):
+            # L0558 调用 policy.get_base_model，用它的结果给 “policy” 赋值。
+            policy = policy.get_base_model()
+        # L0559 调用 getattr，用它的结果给 “latents” 赋值。
+        latents = getattr(policy, "last_predicted_latents", None)
+        # L0560 条件 latents is not None 成立时进入下方分支。
+        if latents is not None:
+            # L0561 调用 pred_latents.append，在列表末尾追加一个元素。
+            pred_latents.append(
+                # L0562 延续上面的语句，latents.detach().to("cpu") if hasattr(latents, "detach") else torch.as_tensor(latents).cpu()。
+                latents.detach().to("cpu") if hasattr(latents, "detach") else torch.as_tensor(latents).cpu()
+            # L0563 闭合上方尚未结束的括号。
+            )
+            # L0564 设为空值 None给 “policy.last_predicted_latents” 赋值。
+            policy.last_predicted_latents = None
+
+    # L0566 条件 return_episode_data 成立时进入下方分支。
+    if return_episode_data:
+        # L0567 声明“episode_data”的类型为 dict | None，设为空值 None作为初始值。
+        episode_data: dict | None = None
+
+    # L0569 原作者的注释。此处在讲按批次跑指定回合数，汇总奖励与成功。
+    # we dont want progress bar when we use slurm, since it clutters the logs
+    # L0570 调用 trange，用它的结果给 “progbar” 赋值。
+    progbar = trange(n_batches, desc="Stepping through eval batches", disable=inside_slurm())
+    # L0571 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+    for batch_ix in progbar:
+        # L0572 原作者的注释。此处在讲按批次跑指定回合数，汇总奖励与成功。
+        # Cache frames for rendering videos. Each item will be (b, h, w, c), and the list indexes the rollout
+        # L0573 原作者的注释。此处在讲按批次跑指定回合数，汇总奖励与成功。
+        # step.
+        # L0574 条件 max_episodes_rendered > 0 成立时进入下方分支。
+        if max_episodes_rendered > 0:
+            # L0575 声明“ep_frames”的类型为 list[np.ndarray]，创建列表，按给定顺序保留元素作为初始值。
+            ep_frames: list[np.ndarray] = []
+
+        # L0577 条件 save_predicted_video 成立时进入下方分支。
+        if save_predicted_video:
+            # L0578 声明“pred_latents”的类型为 list[torch.Tensor]，创建列表，按给定顺序保留元素作为初始值。
+            pred_latents: list[torch.Tensor] = []
+
+        # L0580 条件 start_seed is None 成立时进入下方分支。
+        if start_seed is None:
+            # L0581 设为空值 None给 “seeds” 赋值。
+            seeds = None
+        # L0582 进入对应的另一条分支，注意用缩进找到配对的判断或异常块。
+        else:
+            # L0583 按起始种子和批次下标分配回合种子。本次单环境单回合得到 1000。
+            seeds = range(
+                # L0584 延续上面的语句，start_seed + (batch_ix * env.num_envs), start_seed + ((batch_ix + 1) * env.num_envs)。本段处理按批次跑指定回合数，汇总奖励与成功。
+                start_seed + (batch_ix * env.num_envs), start_seed + ((batch_ix + 1) * env.num_envs)
+            # L0585 闭合上方尚未结束的括号。
+            )
+        # L0586 将环境、策略、处理器与种子交给闭环执行函数 rollout。
+        rollout_data = rollout(
+            # L0587 为“env”提供这一项的值，注意它所在的参数表或外层表达式。
+            env=env,
+            # L0588 为“policy”提供这一项的值，注意它所在的参数表或外层表达式。
+            policy=policy,
+            # L0589 为“env_preprocessor”提供这一项的值，注意它所在的参数表或外层表达式。
+            env_preprocessor=env_preprocessor,
+            # L0590 为“env_postprocessor”提供这一项的值，注意它所在的参数表或外层表达式。
+            env_postprocessor=env_postprocessor,
+            # L0591 为“preprocessor”（策略前处理流水线）提供这一项的值，注意它所在的参数表或外层表达式。
+            preprocessor=preprocessor,
+            # L0592 为“postprocessor”（动作后处理流水线）提供这一项的值，注意它所在的参数表或外层表达式。
+            postprocessor=postprocessor,
+            # L0593 为“seeds”提供这一项的值，注意它所在的参数表或外层表达式。
+            seeds=list(seeds) if seeds else None,
+            # L0594 为“return_observations”提供这一项的值，注意它所在的参数表或外层表达式。
+            return_observations=return_episode_data,
+            # L0595 为“render_callback”提供这一项的值，注意它所在的参数表或外层表达式。
+            render_callback=render_frame if max_episodes_rendered > 0 else None,
+            # L0596 为“recording_dir”提供这一项的值，注意它所在的参数表或外层表达式。
+            recording_dir=recording_dir,
+            # L0597 为“env_features”提供这一项的值，注意它所在的参数表或外层表达式。
+            env_features=env_features,
+            # L0598 为“recording_repo_id”提供这一项的值，注意它所在的参数表或外层表达式。
+            recording_repo_id=recording_repo_id,
+            # L0599 为“recording_private”提供这一项的值，注意它所在的参数表或外层表达式。
+            recording_private=recording_private,
+            # L0600 为“predicted_latents_callback”提供这一项的值，注意它所在的参数表或外层表达式。
+            predicted_latents_callback=collect_predicted_latents if save_predicted_video else None,
+            # L0601 为“max_episode_steps”提供这一项的值，注意它所在的参数表或外层表达式。
+            max_episode_steps=max_episode_steps,
+        # L0602 闭合上方尚未结束的括号。
+        )
+
+        # L0604 原作者的注释。此处在讲按批次跑指定回合数，汇总奖励与成功。
+        # Figure out where in each rollout sequence the first done condition was encountered (results after
+        # L0605 原作者的注释。此处在讲按批次跑指定回合数，汇总奖励与成功。
+        # this won't be included).
+        # L0606 用方括号按键或索引读取 shape给 “n_steps” 赋值。
+        n_steps = rollout_data["done"].shape[1]
+        # L0607 原作者的注释。此处在讲按批次跑指定回合数，汇总奖励与成功。
+        # Note: this relies on a property of argmax: that it returns the first occurrence as a tiebreaker.
+        # L0608 对每条轨迹查找 done 第一次出现的位置，用于指标掩码。
+        done_indices = torch.argmax(rollout_data["done"].to(int), dim=1)
+
+        # L0610 张量形状或批次轴的说明。
+        # Make a mask with shape (batch, n_steps) to mask out rollout data after the first done
+        # L0611 原作者的注释。此处在讲按批次跑指定回合数，汇总奖励与成功。
+        # (batch-element-wise). Note the `done_indices + 1` to make sure to keep the data from the done step.
+        # L0612 创建 [B,步骤数] 的掩码，与后续的奖励、成功矩阵逐元素相乘。
+        mask = (torch.arange(n_steps) <= einops.repeat(done_indices + 1, "b -> b s", s=n_steps)).int()
+        # L0613 原作者的注释。此处在讲按批次跑指定回合数，汇总奖励与成功。
+        # Extend metrics.
+        # L0614 沿步骤轴汇总每个回合的奖励。
+        batch_sum_rewards = einops.reduce((rollout_data["reward"] * mask), "b n -> b", "sum")
+        # L0615 调用 sum_rewards.extend，将可迭代对象展开后追加到末尾。
+        sum_rewards.extend(batch_sum_rewards.tolist())
+        # L0616 调用 einops.reduce，用它的结果给 “batch_max_rewards” 赋值。
+        batch_max_rewards = einops.reduce((rollout_data["reward"] * mask), "b n -> b", "max")
+        # L0617 调用 max_rewards.extend，将可迭代对象展开后追加到末尾。
+        max_rewards.extend(batch_max_rewards.tolist())
+        # L0618 沿步骤轴检查一个回合是否出现过成功标志。
+        batch_successes = einops.reduce((rollout_data["success"] * mask), "b n -> b", "any")
+        # L0619 调用 all_successes.extend，将可迭代对象展开后追加到末尾。
+        all_successes.extend(batch_successes.tolist())
+        # L0620 条件 seeds 成立时进入下方分支。
+        if seeds:
+            # L0621 调用 all_seeds.extend，将可迭代对象展开后追加到末尾。
+            all_seeds.extend(seeds)
+        # L0622 进入对应的另一条分支，注意用缩进找到配对的判断或异常块。
+        else:
+            # L0623 调用 all_seeds.extend，将可迭代对象展开后追加到末尾。
+            all_seeds.extend([None] * env.num_envs)
+        # L0624 用字典推导式从可迭代对象逐项取值并构造结果给 “batch_metrics” 赋值。
+        batch_metrics = {
+            # L0625 延续上面的语句，name: values.gather(1, done_indices[:, None]).squeeze(1).tolist()。本段处理按批次跑指定回合数，汇总奖励与成功。
+            name: values.gather(1, done_indices[:, None]).squeeze(1).tolist()
+            # L0626 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+            for name, values in rollout_data.get("metrics", {}).items()
+        # L0627 闭合上方尚未结束的括号。
+        }
+        # L0628 调用 episode_metrics.extend，将可迭代对象展开后追加到末尾。
+        episode_metrics.extend(
+            # L0629 延续上面的语句，{name: values[index] for name, values in batch_metrics.items()} for index in range(env.num_envs)。本段处理按批次跑指定回合数，汇总奖励与成功。
+            {name: values[index] for name, values in batch_metrics.items()} for index in range(env.num_envs)
+        # L0630 闭合上方尚未结束的括号。
+        )
+
+        # L0632 作者留下待处理的实现备注。
+        # FIXME: episode_data is either None or it doesn't exist
+        # L0633 条件 return_episode_data 成立时进入下方分支。
+        if return_episode_data:
+            # L0634 调用 _compile_episode_data，用它的结果给 “this_episode_data” 赋值。
+            this_episode_data = _compile_episode_data(
+                # L0635 “rollout_data”是当前括号中的一项，逗号将它与下一项分开。
+                rollout_data,
+                # L0636 “done_indices”是当前括号中的一项，逗号将它与下一项分开。
+                done_indices,
+                # L0637 为“start_episode_index”提供这一项的值，注意它所在的参数表或外层表达式。
+                start_episode_index=batch_ix * env.num_envs,
+                # L0638 为“start_data_index”提供这一项的值，注意它所在的参数表或外层表达式。
+                start_data_index=(0 if episode_data is None else (episode_data["index"][-1].item() + 1)),
+                # L0639 为“fps”提供这一项的值，注意它所在的参数表或外层表达式。
+                fps=env.unwrapped.metadata["render_fps"],
+            # L0640 闭合上方尚未结束的括号。
+            )
+            # L0641 条件 episode_data is None 成立时进入下方分支。
+            if episode_data is None:
+                # L0642 引用已有的值 this_episode_data给 “episode_data” 赋值。
+                episode_data = this_episode_data
+            # L0643 进入对应的另一条分支，注意用缩进找到配对的判断或异常块。
+            else:
+                # L0644 原作者的注释。此处在讲按批次跑指定回合数，汇总奖励与成功。
+                # Some sanity checks to make sure we are correctly compiling the data.
+                # L0645 检查此条件，条件不成立时抛出 AssertionError。
+                assert episode_data["episode_index"][-1] + 1 == this_episode_data["episode_index"][0]
+                # L0646 检查此条件，条件不成立时抛出 AssertionError。
+                assert episode_data["index"][-1] + 1 == this_episode_data["index"][0]
+                # L0647 原作者的注释。此处在讲按批次跑指定回合数，汇总奖励与成功。
+                # Concatenate the episode data.
+                # L0648 用字典推导式从可迭代对象逐项取值并构造结果给 “episode_data” 赋值。
+                episode_data = {k: torch.cat([episode_data[k], this_episode_data[k]]) for k in episode_data}
+
+        # L0650 原作者的注释。此处在讲按批次跑指定回合数，汇总奖励与成功。
+        # Maybe render video for visualization.
+        # L0651 条件 max_episodes_rendered > 0 and len(ep_frames) > 0 成立时进入下方分支。
+        if max_episodes_rendered > 0 and len(ep_frames) > 0:
+            # L0652 调用 np.stack，用它的结果给 “batch_stacked_frames” 赋值。
+            batch_stacked_frames = np.stack(ep_frames, axis=1)  # (b, t, *)
+            # L0653 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+            for stacked_frames, done_index in zip(
+                # L0654 延续上面的语句，batch_stacked_frames, done_indices.flatten().tolist(), strict=False。本段处理按批次跑指定回合数，汇总奖励与成功。
+                batch_stacked_frames, done_indices.flatten().tolist(), strict=False
+            # L0655 闭合上方尚未结束的括号。
+            ):
+                # L0656 条件 n_episodes_rendered >= max_episodes_rendered 成立时进入下方分支。
+                if n_episodes_rendered >= max_episodes_rendered:
+                    # L0657 结束所在的最近一层循环。
+                    break
+                # L0658 条件 videos_dir is None: # already validated above 成立时进入下方分支。
+                if videos_dir is None:  # already validated above
+                    # L0659 抛出 ValueError，中断当前路径并交给上层的异常处理。
+                    raise ValueError("If max_episodes_rendered > 0, videos_dir must be provided.")
+
+                # L0661 调用 videos_dir.mkdir 执行操作。
+                videos_dir.mkdir(parents=True, exist_ok=True)
+                # L0662 计算右侧表达式 videos_dir / f"eval_episode_{n_episodes_rendered}.mp4"给 “video_path” 赋值。
+                video_path = videos_dir / f"eval_episode_{n_episodes_rendered}.mp4"
+                # L0663 调用 video_paths.append，在列表末尾追加一个元素。
+                video_paths.append(str(video_path))
+                # L0664 调用 threading.Thread，用它的结果给 “thread” 赋值。
+                thread = threading.Thread(
+                    # L0665 为“target”提供这一项的值，注意它所在的参数表或外层表达式。
+                    target=write_video,
+                    # L0666 为“args”（位置参数序列）提供这一项的值，注意它所在的参数表或外层表达式。
+                    args=(
+                        # L0667 延续上面的语句，str(video_path),。本段处理按批次跑指定回合数，汇总奖励与成功。
+                        str(video_path),
+                        # L0668 延续上面的语句，stacked_frames[: done_index + 1], # + 1 to capture the last observation。本段处理按批次跑指定回合数，汇总奖励与成功。
+                        stacked_frames[: done_index + 1],  # + 1 to capture the last observation
+                        # L0669 延续上面的语句，env.unwrapped.metadata["render_fps"],。本段处理按批次跑指定回合数，汇总奖励与成功。
+                        env.unwrapped.metadata["render_fps"],
+                    # L0670 闭合上方尚未结束的括号。末尾逗号可用于分隔外层的元素。
+                    ),
+                # L0671 闭合上方尚未结束的括号。
+                )
+                # L0672 调用 thread.start，启动线程或进程。
+                thread.start()
+                # L0673 调用 threads.append，在列表末尾追加一个元素。
+                threads.append(thread)
+                # L0674 用增量赋值更新 n_episodes_rendered，运算逻辑见左侧运算符。
+                n_episodes_rendered += 1
+
+        # L0676 原作者的注释。此处在讲按批次跑指定回合数，汇总奖励与成功。
+        # Maybe save the policy's predicted (imagined) video for this batch's rollout.
+        # L0677 条件 save_predicted_video and len(pred_latents) > 0 成立时进入下方分支。
+        if save_predicted_video and len(pred_latents) > 0:
+            # L0678 调用 torch.cat，用它的结果给 “predicted_latent” 赋值。
+            predicted_latent = torch.cat(pred_latents, dim=2)
+            # L0679 组合多个布尔判断，按 Python 的短路规则求值给 “decoder” 赋值。
+            decoder = getattr(policy, "decode_predicted_latents", None) or getattr(
+                # L0680 延续上面的语句，policy, "_decode_predicted_video", None。本段处理按批次跑指定回合数，汇总奖励与成功。
+                policy, "_decode_predicted_video", None
+            # L0681 闭合上方尚未结束的括号。
+            )
+            # L0682 条件 decoder is None 成立时进入下方分支。
+            if decoder is None:
+                # L0683 抛出 AttributeError，中断当前路径并交给上层的异常处理。
+                raise AttributeError(
+                    # L0684 字符串字面量，供上方的调用、容器或错误消息使用。
+                    "Policy config requested predicted-video saving, but the policy does not expose "
+                    # L0685 字符串字面量，供上方的调用、容器或错误消息使用。
+                    "`decode_predicted_latents` or `_decode_predicted_video`."
+                # L0686 闭合上方尚未结束的括号。
+                )
+            # L0687 调用 decoder，用它的结果给 “predicted_video” 赋值。
+            predicted_video = decoder(predicted_latent)
+            # L0688 条件 hasattr(predicted_video, "detach") 成立时进入下方分支。
+            if hasattr(predicted_video, "detach"):
+                # L0689 调用 numpy，用它的结果给 “predicted_video” 赋值。
+                predicted_video = predicted_video.detach().to("cpu").numpy()
+            # L0690 条件 videos_dir is None: # already validated above 成立时进入下方分支。
+            if videos_dir is None:  # already validated above
+                # L0691 抛出 ValueError，中断当前路径并交给上层的异常处理。
+                raise ValueError("If save_predicted_video is True, videos_dir must be provided.")
+            # L0692 调用 videos_dir.mkdir 执行操作。
+            videos_dir.mkdir(parents=True, exist_ok=True)
+            # L0693 计算右侧表达式 videos_dir / f"pred_episode_{n_predicted_rendered}.mp4"给 “predicted_video_path” 赋值。
+            predicted_video_path = videos_dir / f"pred_episode_{n_predicted_rendered}.mp4"
+            # L0694 调用 predicted_video_paths.append，在列表末尾追加一个元素。
+            predicted_video_paths.append(str(predicted_video_path))
+            # L0695 调用 threading.Thread，用它的结果给 “thread” 赋值。
+            thread = threading.Thread(
+                # L0696 为“target”提供这一项的值，注意它所在的参数表或外层表达式。
+                target=write_video,
+                # L0697 为“args”（位置参数序列）提供这一项的值，注意它所在的参数表或外层表达式。
+                args=(
+                    # L0698 延续上面的语句，str(predicted_video_path),。本段处理按批次跑指定回合数，汇总奖励与成功。
+                    str(predicted_video_path),
+                    # L0699 “predicted_video”是当前括号中的一项，逗号将它与下一项分开。
+                    predicted_video,
+                    # L0700 延续上面的语句，env.unwrapped.metadata["render_fps"],。本段处理按批次跑指定回合数，汇总奖励与成功。
+                    env.unwrapped.metadata["render_fps"],
+                # L0701 闭合上方尚未结束的括号。末尾逗号可用于分隔外层的元素。
+                ),
+            # L0702 闭合上方尚未结束的括号。
+            )
+            # L0703 调用 thread.start，启动线程或进程。
+            thread.start()
+            # L0704 调用 threads.append，在列表末尾追加一个元素。
+            threads.append(thread)
+            # L0705 用增量赋值更新 n_predicted_rendered，运算逻辑见左侧运算符。
+            n_predicted_rendered += 1
+
+        # L0707 调用 progbar.set_postfix 执行操作。
+        progbar.set_postfix(
+            # L0708 延续上面的语句，{"running_success_rate": f"{np.mean(all_successes[:n_episodes]).item() * 100:.1f}%"}。本段处理按批次跑指定回合数，汇总奖励与成功。
+            {"running_success_rate": f"{np.mean(all_successes[:n_episodes]).item() * 100:.1f}%"}
+        # L0709 闭合上方尚未结束的括号。
+        )
+
+    # L0711 原作者的注释。此处在讲按批次跑指定回合数，汇总奖励与成功。
+    # Wait till all video rendering threads are done.
+    # L0712 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+    for thread in threads:
+        # L0713 调用 thread.join，等待对应线程或进程结束。
+        thread.join()
+
+    # L0715 原作者的注释。此处在讲按批次跑指定回合数，汇总奖励与成功。
+    # Compile eval info.
+    # L0716 对实际请求的回合计算成功数量和置信区间等统计。
+    success_stats = success_summary(all_successes[:n_episodes])
+    # L0717 声明“info”（额外信息字典）的类型为 dict[str, Any]，创建字典，用键查找对应的值作为初始值。
+    info: dict[str, Any] = {
+        # L0718 字典项“per_episode”，冒号右边给出它的值。
+        "per_episode": [
+            # L0719 延续上面的语句，{。本段处理按批次跑指定回合数，汇总奖励与成功。
+            {
+                # L0720 字典项“episode_ix”，冒号右边给出它的值。
+                "episode_ix": i,
+                # L0721 字典项“sum_reward”，冒号右边给出它的值。
+                "sum_reward": sum_reward,
+                # L0722 字典项“max_reward”，冒号右边给出它的值。
+                "max_reward": max_reward,
+                # L0723 字典项“success”，冒号右边给出它的值。
+                "success": success,
+                # L0724 字典项“seed”（随机种子），冒号右边给出它的值。
+                "seed": seed,
+            # L0725 闭合上方尚未结束的括号。
+            }
+            # L0726 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+            for i, (sum_reward, max_reward, success, seed) in enumerate(
+                # L0727 延续上面的语句，zip(。本段处理按批次跑指定回合数，汇总奖励与成功。
+                zip(
+                    # L0728 延续上面的语句，sum_rewards[:n_episodes],。本段处理按批次跑指定回合数，汇总奖励与成功。
+                    sum_rewards[:n_episodes],
+                    # L0729 延续上面的语句，max_rewards[:n_episodes],。本段处理按批次跑指定回合数，汇总奖励与成功。
+                    max_rewards[:n_episodes],
+                    # L0730 延续上面的语句，all_successes[:n_episodes],。本段处理按批次跑指定回合数，汇总奖励与成功。
+                    all_successes[:n_episodes],
+                    # L0731 延续上面的语句，all_seeds[:n_episodes],。本段处理按批次跑指定回合数，汇总奖励与成功。
+                    all_seeds[:n_episodes],
+                    # L0732 为“strict”提供这一项的值，注意它所在的参数表或外层表达式。
+                    strict=True,
+                # L0733 闭合上方尚未结束的括号。
+                )
+            # L0734 闭合上方尚未结束的括号。
+            )
+        # L0735 闭合上方尚未结束的括号。末尾逗号可用于分隔外层的元素。
+        ],
+        # L0736 字典项“aggregated”，冒号右边给出它的值。
+        "aggregated": {
+            # L0737 字典项“avg_sum_reward”，冒号右边给出它的值。
+            "avg_sum_reward": float(np.nanmean(sum_rewards[:n_episodes])),
+            # L0738 字典项“avg_max_reward”，冒号右边给出它的值。
+            "avg_max_reward": float(np.nanmean(max_rewards[:n_episodes])),
+            # L0739 字典项“pc_success”，冒号右边给出它的值。
+            "pc_success": float(np.nanmean(all_successes[:n_episodes]) * 100),
+            # L0740 字典项“n_episodes”（评测回合数），冒号右边给出它的值。
+            "n_episodes": success_stats["n_episodes"],
+            # L0741 字典项“n_success”，冒号右边给出它的值。
+            "n_success": success_stats["n_success"],
+            # L0742 字典项“pc_success_ci95”，冒号右边给出它的值。
+            "pc_success_ci95": success_stats["pc_success_ci95"],
+            # L0743 字典项“eval_s”，冒号右边给出它的值。
+            "eval_s": time.time() - start,
+            # L0744 字典项“eval_ep_s”，冒号右边给出它的值。
+            "eval_ep_s": (time.time() - start) / n_episodes,
+        # L0745 闭合上方尚未结束的括号。末尾逗号可用于分隔外层的元素。
+        },
+    # L0746 闭合上方尚未结束的括号。
+    }
+
+    # L0748 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+    for episode, metrics in zip(info["per_episode"], episode_metrics[:n_episodes], strict=True):
+        # L0749 条件 metrics 成立时进入下方分支。
+        if metrics:
+            # L0750 引用已有的值 metrics给 “episode['metrics']” 赋值。
+            episode["metrics"] = metrics
+
+    # L0752 条件 return_episode_data 成立时进入下方分支。
+    if return_episode_data:
+        # L0753 引用已有的值 episode_data给 “info['episodes']” 赋值。
+        info["episodes"] = episode_data
+
+    # L0755 条件 max_episodes_rendered > 0 成立时进入下方分支。
+    if max_episodes_rendered > 0:
+        # L0756 引用已有的值 video_paths给 “info['video_paths']” 赋值。
+        info["video_paths"] = video_paths
+
+    # L0758 条件 save_predicted_video 成立时进入下方分支。
+    if save_predicted_video:
+        # L0759 引用已有的值 predicted_video_paths给 “info['predicted_video_paths']” 赋值。
+        info["predicted_video_paths"] = predicted_video_paths
+
+    # L0761 调用 policy.train 执行操作。
+    policy.train(was_training)
+
+    # L0763 引用已有的值 info作为当前调用的返回值。
+    return info
+
+
+# L0766 定义函数 _compile_episode_data。作用是把可保存的各回合步骤汇成回合数据。
+def _compile_episode_data(
+    # L0767 延续上面的语句，rollout_data: dict, done_indices: Tensor, start_episode_index: int, start_data_index: int, fps: float。本段处理把可保存的各回合步骤汇成回合数据。
+    rollout_data: dict, done_indices: Tensor, start_episode_index: int, start_data_index: int, fps: float
+# L0768 结束参数表。若箭头后有类型，它标注预期返回值，缩进块是函数体。
+) -> dict:
+    # L0769 原文档概述本段功能，把可保存的各回合步骤汇成回合数据。
+    """Convenience function for `eval_policy(return_episode_data=True)`
+
+    # L0771 原文档中的说明或续行。此段讲把可保存的各回合步骤汇成回合数据。
+    Compiles all the rollout data into a Hugging Face dataset.
+
+    # L0773 原文档中的说明或续行。此段讲把可保存的各回合步骤汇成回合数据。
+    Similar logic is implemented when datasets are pushed to hub (see: `push_to_hub`).
+    # L0774 文档字符串的边界。
+    """
+    # L0775 创建列表，按给定顺序保留元素给 “ep_dicts” 赋值。
+    ep_dicts = []
+    # L0776 使用字面值 0给 “total_frames” 赋值。
+    total_frames = 0
+    # L0777 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+    for ep_ix in range(rollout_data[ACTION].shape[0]):
+        # L0778 原作者的注释。此处在讲把可保存的各回合步骤汇成回合数据。
+        # + 2 to include the first done frame and the last observation frame.
+        # L0779 计算右侧表达式 done_indices[ep_ix].item() + 2给 “num_frames” 赋值。
+        num_frames = done_indices[ep_ix].item() + 2
+        # L0780 用增量赋值更新 total_frames，运算逻辑见左侧运算符。
+        total_frames += num_frames
+
+        # L0782 原作者的注释。此处在讲把可保存的各回合步骤汇成回合数据。
+        # Here we do `num_frames - 1` as we don't want to include the last observation frame just yet.
+        # L0783 创建字典，用键查找对应的值给 “ep_dict” 赋值。
+        ep_dict = {
+            # L0784 延续上面的语句，ACTION: rollout_data[ACTION][ep_ix, : num_frames - 1],。本段处理把可保存的各回合步骤汇成回合数据。
+            ACTION: rollout_data[ACTION][ep_ix, : num_frames - 1],
+            # L0785 字典项“episode_index”，冒号右边给出它的值。
+            "episode_index": torch.tensor([start_episode_index + ep_ix] * (num_frames - 1)),
+            # L0786 字典项“frame_index”，冒号右边给出它的值。
+            "frame_index": torch.arange(0, num_frames - 1, 1),
+            # L0787 字典项“timestamp”，冒号右边给出它的值。
+            "timestamp": torch.arange(0, num_frames - 1, 1) / fps,
+            # L0788 延续上面的语句，DONE: rollout_data["done"][ep_ix, : num_frames - 1],。本段处理把可保存的各回合步骤汇成回合数据。
+            DONE: rollout_data["done"][ep_ix, : num_frames - 1],
+            # L0789 字典项“next.success”，冒号右边给出它的值。
+            "next.success": rollout_data["success"][ep_ix, : num_frames - 1],
+            # L0790 延续上面的语句，REWARD: rollout_data["reward"][ep_ix, : num_frames - 1].type(torch.float32),。本段处理把可保存的各回合步骤汇成回合数据。
+            REWARD: rollout_data["reward"][ep_ix, : num_frames - 1].type(torch.float32),
+        # L0791 闭合上方尚未结束的括号。
+        }
+
+        # L0793 原作者的注释。此处在讲把可保存的各回合步骤汇成回合数据。
+        # For the last observation frame, all other keys will just be copy padded.
+        # L0794 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+        for k in ep_dict:
+            # L0795 调用 torch.cat，用它的结果给 “ep_dict[k]” 赋值。
+            ep_dict[k] = torch.cat([ep_dict[k], ep_dict[k][-1:]])
+
+        # L0797 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+        for key in rollout_data[OBS_STR]:
+            # L0798 按逗号区分的各轴分别切片，保留写成冒号的整轴给 “ep_dict[key]” 赋值。
+            ep_dict[key] = rollout_data[OBS_STR][key][ep_ix, :num_frames]
+
+        # L0800 调用 ep_dicts.append，在列表末尾追加一个元素。
+        ep_dicts.append(ep_dict)
+
+    # L0802 创建字典，用键查找对应的值给 “data_dict” 赋值。
+    data_dict = {}
+    # L0803 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+    for key in ep_dicts[0]:
+        # L0804 调用 torch.cat，用它的结果给 “data_dict[key]” 赋值。
+        data_dict[key] = torch.cat([x[key] for x in ep_dicts])
+
+    # L0806 调用 torch.arange，用它的结果给 “data_dict['index']” 赋值。
+    data_dict["index"] = torch.arange(start_data_index, start_data_index + total_frames, 1)
+
+    # L0808 引用已有的值 data_dict作为当前调用的返回值。
+    return data_dict
+
+
+# L0811 装饰器为 eval_main 外包一层参数解析。终端启动时由这层构造 cfg，再调用下面的函数体。
+@parser.wrap()
+# L0812 评测编排入口。cfg 是 EvalPipelineConfig 实例，后续代码用 cfg.env、cfg.policy 等属性。
+def eval_main(cfg: EvalPipelineConfig) -> None:
+    # L0813 把 dataclass 实例转成字典并打印。这是复现实际生效配置的日志入口。
+    logging.info(pformat(asdict(cfg)))
+
+    # L0815 条件 cfg.policy is None 成立时进入下方分支。
+    if cfg.policy is None:
+        # L0816 抛出 ValueError，中断当前路径并交给上层的异常处理。
+        raise ValueError(
+            # L0817 字符串字面量，供上方的调用、容器或错误消息使用。
+            "Evaluation requires a policy: pass --policy.path=<pretrained_dir> or --policy.type=<name>."
+        # L0818 闭合上方尚未结束的括号。
+        )
+    # L0819 条件 cfg.policy.device is None 成立时进入下方分支。
+    if cfg.policy.device is None:
+        # L0820 运算设备或数据传输的说明。
+        # PreTrainedConfig.__post_init__ always resolves the device, so reaching this is a programming error.
+        # L0821 抛出 ValueError，中断当前路径并交给上层的异常处理。
+        raise ValueError("Policy config has no device set.")
+    # L0822 条件 cfg.output_dir is None 成立时进入下方分支。
+    if cfg.output_dir is None:
+        # L0823 原作者的注释。此处在讲解析完成配置后组装环境、策略和流水线，再运行评测并写结果。
+        # EvalPipelineConfig.__post_init__ always assigns a default output_dir.
+        # L0824 抛出 ValueError，中断当前路径并交给上层的异常处理。
+        raise ValueError("EvalPipelineConfig.output_dir is not set.")
+
+    # L0826 运算设备或数据传输的说明。
+    # Check device is available
+    # L0827 把配置中的设备名解析为可用的 PyTorch 设备。
+    device = get_safe_torch_device(cfg.policy.device, log=True)
+
+    # L0829 使用布尔值 True给 “torch.backends.cudnn.benchmark” 赋值。
+    torch.backends.cudnn.benchmark = True
+    # L0830 条件 cfg.tf32 is not None 成立时进入下方分支。
+    if cfg.tf32 is not None:
+        # L0831 读取属性 cfg.tf32给 “torch.backends.cuda.matmul.allow_tf32” 赋值。
+        torch.backends.cuda.matmul.allow_tf32 = cfg.tf32
+        # L0832 读取属性 cfg.tf32给 “torch.backends.cudnn.allow_tf32” 赋值。
+        torch.backends.cudnn.allow_tf32 = cfg.tf32
+    # L0833 设置此次评测用的随机种子。
+    set_seed(cfg.seed)
+
+    # L0835 调用 logging.info 执行操作。
+    logging.info(colored("Output dir:", "yellow", attrs=["bold"]) + f" {cfg.output_dir}")
+
+    # L0837 调用 logging.info 执行操作。
+    logging.info(f"Making environment (batch_size={cfg.eval.batch_size}, async={cfg.eval.use_async_envs}).")
+    # L0838 按 cfg.env 创建环境字典，外层键是套件名，内层键是任务号。
+    envs = make_env(
+        # L0839 延续上面的语句，cfg.env,。本段处理解析完成配置后组装环境、策略和流水线，再运行评测并写结果。
+        cfg.env,
+        # L0840 测试命令 batch_size=1，使每个任务只启动一个环境实例。
+        n_envs=cfg.eval.batch_size,
+        # L0841 为“use_async_envs”提供这一项的值，注意它所在的参数表或外层表达式。
+        use_async_envs=cfg.eval.use_async_envs,
+    # L0842 闭合上方尚未结束的括号。
+    )
+
+    # L0844 原作者的注释。此处在讲解析完成配置后组装环境、策略和流水线，再运行评测并写结果。
+    # Environment-specific preprocessor and postprocessor (e.g. for LIBERO environments), built before
+    # L0845 原作者的注释。此处在讲解析完成配置后组装环境、策略和流水线，再运行评测并写结果。
+    # admission: a checkpoint is admitted on the observation and the action they produce.
+    # L0846 选择环境级的前处理和后处理。本次 LIBERO + SmolVLA 走环境配置提供的默认空步骤。
+    env_preprocessor, env_postprocessor = make_env_pre_post_processors(env_cfg=cfg.env, policy_cfg=cfg.policy)
+
+    # L0848 原作者的注释。此处在讲解析完成配置后组装环境、策略和流水线，再运行评测并写结果。
+    # Check the checkpoint against the sim before loading the policy. Hub-only and native-batch envs have
+    # L0849 原作者的注释。此处在讲解析完成配置后组装环境、策略和流水线，再运行评测并写结果。
+    # no descriptor.
+    # L0850 调用 next，用它的结果给 “first_env” 赋值。
+    first_env = next(env for tasks in envs.values() for env in tasks.values())
+    # L0851 调用 getattr，用它的结果给 “descriptor” 赋值。
+    descriptor = getattr(first_env, "descriptor", None)
+    # L0852 条件 descriptor is not None 成立时进入下方分支。
+    if descriptor is not None:
+        # L0853 原作者的注释。此处在讲解析完成配置后组装环境、策略和流水线，再运行评测并写结果。
+        # The policy and the recording datasets take the env's features; envs without a descriptor declare them.
+        # L0854 从仿真描述符生成特征定义，后面的兼容性检查和策略工厂会用到。
+        cfg.env.features = descriptor_features(descriptor)
+        # L0855 检查 checkpoint 输入输出与仿真是否兼容，包含图像键的重命名映射。
+        validate_checkpoint(
+            # L0856 “descriptor”是当前括号中的一项，逗号将它与下一项分开。
+            descriptor,
+            # L0857 延续上面的语句，cfg.policy,。本段处理解析完成配置后组装环境、策略和流水线，再运行评测并写结果。
+            cfg.policy,
+            # L0858 延续上面的语句，cfg.rename_map,。本段处理解析完成配置后组装环境、策略和流水线，再运行评测并写结果。
+            cfg.rename_map,
+            # L0859 为“env_preprocessor”提供这一项的值，注意它所在的参数表或外层表达式。
+            env_preprocessor=env_preprocessor,
+            # L0860 为“env_postprocessor”提供这一项的值，注意它所在的参数表或外层表达式。
+            env_postprocessor=env_postprocessor,
+        # L0861 闭合上方尚未结束的括号。
+        )
+
+    # L0863 调用 logging.info 执行操作。
+    logging.info("Making policy.")
+    # L0864 在环境配置和特征已确定后创建策略，预训练路径触发权重加载。
+    policy = make_policy(
+        # L0865 为“cfg”（配置对象）提供这一项的值，注意它所在的参数表或外层表达式。
+        cfg=cfg.policy,
+        # L0866 为“env_cfg”提供这一项的值，注意它所在的参数表或外层表达式。
+        env_cfg=cfg.env,
+        # L0867 为“rename_map”提供这一项的值，注意它所在的参数表或外层表达式。
+        rename_map=cfg.rename_map,
+    # L0868 闭合上方尚未结束的括号。
+    )
+
+    # L0870 把策略设置为评测模式。eval 控制模块行为，关闭梯度由后面的上下文控制。
+    policy.eval()
+
+    # L0872 运算设备或数据传输的说明。
+    # The inference device is automatically set to match the detected hardware, overriding any previous device settings from training to ensure compatibility.
+    # L0873 创建前处理覆盖项。此字典的键是已保存流水线中处理步骤的注册名。
+    preprocessor_overrides = {
+        # L0874 用实际策略设备覆盖已保存的 device_processor 配置。
+        "device_processor": {"device": str(policy.config.device)},
+        # L0875 用命令行 rename_map 覆盖相机键重命名处理器的映射。
+        "rename_observations_processor": {"rename_map": cfg.rename_map},
+    # L0876 闭合上方尚未结束的括号。
+    }
+
+    # L0878 从指定 checkpoint 版本恢复策略的前处理和后处理。
+    preprocessor, postprocessor = make_pre_post_processors(
+        # L0879 为“policy_cfg”提供这一项的值，注意它所在的参数表或外层表达式。
+        policy_cfg=cfg.policy,
+        # L0880 为“pretrained_path”提供这一项的值，注意它所在的参数表或外层表达式。
+        pretrained_path=cfg.policy.pretrained_path,
+        # L0881 为“pretrained_revision”提供这一项的值，注意它所在的参数表或外层表达式。
+        pretrained_revision=cfg.policy.pretrained_revision,
+        # L0882 为“preprocessor_overrides”提供这一项的值，注意它所在的参数表或外层表达式。
+        preprocessor_overrides=preprocessor_overrides,
+    # L0883 闭合上方尚未结束的括号。
+    )
+
+    # L0885 用条件表达式在 if 前与 else 后的两个值之间选择给 “recording_dir” 赋值。
+    recording_dir = Path(cfg.output_dir) / "recordings" if cfg.eval.recording else None
+    # L0886 用条件表达式在 if 前与 else 后的两个值之间选择给 “max_episodes_rendered” 赋值。
+    max_episodes_rendered = 0 if cfg.eval.recording else 10
+    # L0887 用条件表达式在 if 前与 else 后的两个值之间选择给 “videos_dir” 赋值。
+    videos_dir = None if cfg.eval.recording else Path(cfg.output_dir) / "videos"
+
+    # L0889 整个评测放在无梯度上下文中。use_amp 决定是否再进入自动混合精度，这次为 False。
+    with torch.no_grad(), torch.autocast(device_type=device.type) if cfg.policy.use_amp else nullcontext():
+        # L0890 运行各任务并汇总回合结果。
+        info = eval_policy_all(
+            # L0891 为“envs”提供这一项的值，注意它所在的参数表或外层表达式。
+            envs=envs,
+            # L0892 为“policy”提供这一项的值，注意它所在的参数表或外层表达式。
+            policy=policy,
+            # L0893 为“env_preprocessor”提供这一项的值，注意它所在的参数表或外层表达式。
+            env_preprocessor=env_preprocessor,
+            # L0894 为“env_postprocessor”提供这一项的值，注意它所在的参数表或外层表达式。
+            env_postprocessor=env_postprocessor,
+            # L0895 为“preprocessor”（策略前处理流水线）提供这一项的值，注意它所在的参数表或外层表达式。
+            preprocessor=preprocessor,
+            # L0896 为“postprocessor”（动作后处理流水线）提供这一项的值，注意它所在的参数表或外层表达式。
+            postprocessor=postprocessor,
+            # L0897 为“n_episodes”（评测回合数）提供这一项的值，注意它所在的参数表或外层表达式。
+            n_episodes=cfg.eval.n_episodes,
+            # L0898 为“max_episodes_rendered”提供这一项的值，注意它所在的参数表或外层表达式。
+            max_episodes_rendered=max_episodes_rendered,
+            # L0899 为“videos_dir”提供这一项的值，注意它所在的参数表或外层表达式。
+            videos_dir=videos_dir,
+            # L0900 为“return_episode_data”提供这一项的值，注意它所在的参数表或外层表达式。
+            return_episode_data=False,
+            # L0901 为“start_seed”提供这一项的值，注意它所在的参数表或外层表达式。
+            start_seed=cfg.seed,
+            # L0902 给调度器传入并行任务数上限。本次设为 1，走顺序执行分支。
+            max_parallel_tasks=cfg.env.max_parallel_tasks,
+            # L0903 为“recording_dir”提供这一项的值，注意它所在的参数表或外层表达式。
+            recording_dir=recording_dir,
+            # L0904 为“env_features”提供这一项的值，注意它所在的参数表或外层表达式。
+            env_features=cfg.env.features if cfg.eval.recording else None,
+            # L0905 为“recording_repo_id”提供这一项的值，注意它所在的参数表或外层表达式。
+            recording_repo_id=cfg.eval.recording_repo_id,
+            # L0906 为“recording_private”提供这一项的值，注意它所在的参数表或外层表达式。
+            recording_private=cfg.eval.recording_private,
+            # L0907 为“max_episode_steps”提供这一项的值，注意它所在的参数表或外层表达式。
+            max_episode_steps=cfg.eval.max_episode_steps,
+        # L0908 闭合上方尚未结束的括号。
+        )
+        # L0909 调用 logger.info 执行操作。
+        logger.info("Overall Aggregated Metrics:")
+        # L0910 调用 logger.info 执行操作。
+        logger.info(info["overall"])
+        # L0911 用方括号按键或索引读取 容器给 “(ci_low, ci_high)” 赋值。
+        ci_low, ci_high = info["overall"]["pc_success_ci95"]
+        # L0912 调用 logger.info 执行操作。
+        logger.info(
+            # L0913 字符串字面量，供上方的调用、容器或错误消息使用。
+            "Success rate %.1f%% (%d/%d episodes, 95%% Wilson interval %.1f%% to %.1f%%)",
+            # L0914 延续上面的语句，info["overall"]["pc_success"],。本段处理解析完成配置后组装环境、策略和流水线，再运行评测并写结果。
+            info["overall"]["pc_success"],
+            # L0915 延续上面的语句，info["overall"]["n_success"],。本段处理解析完成配置后组装环境、策略和流水线，再运行评测并写结果。
+            info["overall"]["n_success"],
+            # L0916 延续上面的语句，info["overall"]["n_episodes"],。本段处理解析完成配置后组装环境、策略和流水线，再运行评测并写结果。
+            info["overall"]["n_episodes"],
+            # L0917 “ci_low”是当前括号中的一项，逗号将它与下一项分开。
+            ci_low,
+            # L0918 “ci_high”是当前括号中的一项，逗号将它与下一项分开。
+            ci_high,
+        # L0919 闭合上方尚未结束的括号。
+        )
+
+        # L0921 原作者的注释。此处在讲解析完成配置后组装环境、策略和流水线，再运行评测并写结果。
+        # Print per-suite stats
+        # L0922 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+        for task_group, task_group_info in info.items():
+            # L0923 调用 logger.info 执行操作。
+            logger.info(f"\nAggregated Metrics for {task_group}:")
+            # L0924 调用 logger.info 执行操作。
+            logger.info(task_group_info)
+    # L0925 评测结束后负责清理环境。
+    # Close all vec envs
+    # L0926 调用 close_envs 执行操作。
+    close_envs(envs)
+
+    # L0928 原作者的注释。此处在讲解析完成配置后组装环境、策略和流水线，再运行评测并写结果。
+    # Save each task's language instruction next to the metrics; the benchmark CI report reads it.
+    # L0929 用字典推导式从可迭代对象逐项取值并构造结果给 “descriptions” 赋值。
+    descriptions = {
+        # L0930 f 字符串片段，花括号中的表达式会被求值并插入文本。
+        f"{group}_{task_id}": env.latest.task[0]
+        # L0931 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+        for group, tasks in envs.items()
+        # L0932 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+        for task_id, env in tasks.items()
+        # L0933 条件 getattr(env, "latest", None) is not None 成立时进入下方分支。
+        if getattr(env, "latest", None) is not None
+    # L0934 闭合上方尚未结束的括号。
+    }
+    # L0935 条件 descriptions 成立时进入下方分支。
+    if descriptions:
+        # L0936 把收集到的自然语言任务描述写成 JSON。
+        (Path(cfg.output_dir) / "task_descriptions.json").write_text(json.dumps(descriptions, indent=2))
+
+    # L0938 原作者的注释。此处在讲解析完成配置后组装环境、策略和流水线，再运行评测并写结果。
+    # Save info
+    # L0939 打开评测输出目录中的指标文件。
+    with open(Path(cfg.output_dir) / "eval_info.json", "w") as f:
+        # L0940 把汇总字典序列化为可读的 JSON。
+        json.dump(info, f, indent=2)
+
+    # L0942 调用 logging.info 执行操作。
+    logging.info("End of eval")
+
+
+# L0945 原作者对相邻代码的说明。
+# ---- typed payload returned by one task eval ----
+# L0946 定义类 TaskMetrics，括号列出基类 TypedDict。
+class TaskMetrics(TypedDict):
+    # L0947 声明“sum_rewards”的类型为 list[float]。
+    sum_rewards: list[float]
+    # L0948 声明“max_rewards”的类型为 list[float]。
+    max_rewards: list[float]
+    # L0949 声明“successes”的类型为 list[bool]。
+    successes: list[bool]
+    # L0950 声明“video_paths”的类型为 list[str]。
+    video_paths: list[str]
+    # L0951 声明“predicted_video_paths”的类型为 list[str]。
+    predicted_video_paths: list[str]
+    # L0952 原作者对相邻代码的说明。
+    # One entry per episode: seed, success, rewards, and info["metrics"] if the benchmark reports any.
+    # L0953 声明“per_episode”的类型为 list[dict[str, Any]]。
+    per_episode: list[dict[str, Any]]
+
+
+# L0956 打包成元组，元素顺序由逗号分隔的位置决定给 “ACC_KEYS” 赋值。
+ACC_KEYS = ("sum_rewards", "max_rewards", "successes", "video_paths", "predicted_video_paths")
+
+
+# L0959 定义函数 eval_one。作用是适配一个套件中一个任务的评测。
+def eval_one(
+    # L0960 “env”是当前括号中的一项，逗号将它与下一项分开。
+    env: gym.vector.VectorEnv,
+    # L0961 后续参数必须按名字传入。
+    *,
+    # L0962 “policy”是当前括号中的一项，逗号将它与下一项分开。
+    policy: PreTrainedPolicy,
+    # L0963 延续上面的语句，env_preprocessor: PolicyProcessorPipeline[dict[str, Any], dict[str, Any]],。本段处理适配一个套件中一个任务的评测。
+    env_preprocessor: PolicyProcessorPipeline[dict[str, Any], dict[str, Any]],
+    # L0964 延续上面的语句，env_postprocessor: PolicyProcessorPipeline[dict[str, Any], dict[str, Any]],。本段处理适配一个套件中一个任务的评测。
+    env_postprocessor: PolicyProcessorPipeline[dict[str, Any], dict[str, Any]],
+    # L0965 延续上面的语句，preprocessor: PolicyProcessorPipeline[dict[str, Any], dict[str, Any]],。本段处理适配一个套件中一个任务的评测。
+    preprocessor: PolicyProcessorPipeline[dict[str, Any], dict[str, Any]],
+    # L0966 延续上面的语句，postprocessor: PolicyProcessorPipeline[PolicyAction, PolicyAction],。本段处理适配一个套件中一个任务的评测。
+    postprocessor: PolicyProcessorPipeline[PolicyAction, PolicyAction],
+    # L0967 “n_episodes”（评测回合数）是当前括号中的一项，逗号将它与下一项分开。
+    n_episodes: int,
+    # L0968 “max_episodes_rendered”是当前括号中的一项，逗号将它与下一项分开。
+    max_episodes_rendered: int,
+    # L0969 “videos_dir”是当前括号中的一项，逗号将它与下一项分开。
+    videos_dir: Path | None,
+    # L0970 “return_episode_data”是当前括号中的一项，逗号将它与下一项分开。
+    return_episode_data: bool,
+    # L0971 “start_seed”是当前括号中的一项，逗号将它与下一项分开。
+    start_seed: int | None,
+    # L0972 为“recording_dir”提供这一项的值，注意它所在的参数表或外层表达式。
+    recording_dir: Path | None = None,
+    # L0973 为“env_features”提供这一项的值，注意它所在的参数表或外层表达式。
+    env_features: dict | None = None,
+    # L0974 为“recording_repo_id”提供这一项的值，注意它所在的参数表或外层表达式。
+    recording_repo_id: str | None = None,
+    # L0975 为“recording_private”提供这一项的值，注意它所在的参数表或外层表达式。
+    recording_private: bool = False,
+    # L0976 为“max_episode_steps”提供这一项的值，注意它所在的参数表或外层表达式。
+    max_episode_steps: int | None = None,
+# L0977 结束参数表。若箭头后有类型，它标注预期返回值，缩进块是函数体。
+) -> TaskMetrics:
+    # L0978 原文档概述本段功能，适配一个套件中一个任务的评测。
+    """Evaluates one task_id of one suite using the provided vec env."""
+
+    # L0980 引用已有的值 videos_dir给 “task_videos_dir” 赋值。
+    task_videos_dir = videos_dir
+
+    # L0982 把当前单个任务交给 eval_policy 评测一个或多个回合。
+    task_result = eval_policy(
+        # L0983 为“env”提供这一项的值，注意它所在的参数表或外层表达式。
+        env=env,
+        # L0984 为“policy”提供这一项的值，注意它所在的参数表或外层表达式。
+        policy=policy,
+        # L0985 为“env_preprocessor”提供这一项的值，注意它所在的参数表或外层表达式。
+        env_preprocessor=env_preprocessor,
+        # L0986 为“env_postprocessor”提供这一项的值，注意它所在的参数表或外层表达式。
+        env_postprocessor=env_postprocessor,
+        # L0987 为“preprocessor”（策略前处理流水线）提供这一项的值，注意它所在的参数表或外层表达式。
+        preprocessor=preprocessor,
+        # L0988 为“postprocessor”（动作后处理流水线）提供这一项的值，注意它所在的参数表或外层表达式。
+        postprocessor=postprocessor,
+        # L0989 为“n_episodes”（评测回合数）提供这一项的值，注意它所在的参数表或外层表达式。
+        n_episodes=n_episodes,
+        # L0990 为“max_episodes_rendered”提供这一项的值，注意它所在的参数表或外层表达式。
+        max_episodes_rendered=max_episodes_rendered,
+        # L0991 为“videos_dir”提供这一项的值，注意它所在的参数表或外层表达式。
+        videos_dir=task_videos_dir,
+        # L0992 为“return_episode_data”提供这一项的值，注意它所在的参数表或外层表达式。
+        return_episode_data=return_episode_data,
+        # L0993 为“start_seed”提供这一项的值，注意它所在的参数表或外层表达式。
+        start_seed=start_seed,
+        # L0994 为“recording_dir”提供这一项的值，注意它所在的参数表或外层表达式。
+        recording_dir=recording_dir,
+        # L0995 为“env_features”提供这一项的值，注意它所在的参数表或外层表达式。
+        env_features=env_features,
+        # L0996 为“recording_repo_id”提供这一项的值，注意它所在的参数表或外层表达式。
+        recording_repo_id=recording_repo_id,
+        # L0997 为“recording_private”提供这一项的值，注意它所在的参数表或外层表达式。
+        recording_private=recording_private,
+        # L0998 为“max_episode_steps”提供这一项的值，注意它所在的参数表或外层表达式。
+        max_episode_steps=max_episode_steps,
+    # L0999 闭合上方尚未结束的括号。
+    )
+
+    # L1001 用方括号按键或索引读取 task_result给 “per_episode” 赋值。
+    per_episode = task_result["per_episode"]
+    # L1002 调用 TaskMetrics，用它的结果给 “metrics” 赋值。
+    metrics = TaskMetrics(
+        # L1003 为“sum_rewards”提供这一项的值，注意它所在的参数表或外层表达式。
+        sum_rewards=[ep["sum_reward"] for ep in per_episode],
+        # L1004 为“max_rewards”提供这一项的值，注意它所在的参数表或外层表达式。
+        max_rewards=[ep["max_reward"] for ep in per_episode],
+        # L1005 为“successes”提供这一项的值，注意它所在的参数表或外层表达式。
+        successes=[ep["success"] for ep in per_episode],
+        # L1006 为“video_paths”提供这一项的值，注意它所在的参数表或外层表达式。
+        video_paths=task_result.get("video_paths", []),
+        # L1007 为“predicted_video_paths”提供这一项的值，注意它所在的参数表或外层表达式。
+        predicted_video_paths=task_result.get("predicted_video_paths", []),
+        # L1008 为“per_episode”提供这一项的值，注意它所在的参数表或外层表达式。
+        per_episode=per_episode,
+    # L1009 闭合上方尚未结束的括号。
+    )
+    # L1010 引用已有的值 metrics作为当前调用的返回值。
+    return metrics
+
+
+# L1013 定义函数 run_one。作用是把一个任务交给 eval_one，记录任务与结果的关系。
+def run_one(
+    # L1014 “task_group”（任务套件名）是当前括号中的一项，逗号将它与下一项分开。
+    task_group: str,
+    # L1015 “task_id”（套件内的任务编号）是当前括号中的一项，逗号将它与下一项分开。
+    task_id: int,
+    # L1016 “env”是当前括号中的一项，逗号将它与下一项分开。
+    env,
+    # L1017 后续参数必须按名字传入。
+    *,
+    # L1018 “policy”是当前括号中的一项，逗号将它与下一项分开。
+    policy,
+    # L1019 “env_preprocessor”是当前括号中的一项，逗号将它与下一项分开。
+    env_preprocessor,
+    # L1020 “env_postprocessor”是当前括号中的一项，逗号将它与下一项分开。
+    env_postprocessor,
+    # L1021 “preprocessor”（策略前处理流水线）是当前括号中的一项，逗号将它与下一项分开。
+    preprocessor,
+    # L1022 “postprocessor”（动作后处理流水线）是当前括号中的一项，逗号将它与下一项分开。
+    postprocessor,
+    # L1023 “n_episodes”（评测回合数）是当前括号中的一项，逗号将它与下一项分开。
+    n_episodes: int,
+    # L1024 “max_episodes_rendered”是当前括号中的一项，逗号将它与下一项分开。
+    max_episodes_rendered: int,
+    # L1025 “videos_dir”是当前括号中的一项，逗号将它与下一项分开。
+    videos_dir: Path | None,
+    # L1026 “return_episode_data”是当前括号中的一项，逗号将它与下一项分开。
+    return_episode_data: bool,
+    # L1027 “start_seed”是当前括号中的一项，逗号将它与下一项分开。
+    start_seed: int | None,
+    # L1028 为“recording_dir”提供这一项的值，注意它所在的参数表或外层表达式。
+    recording_dir: Path | None = None,
+    # L1029 为“env_features”提供这一项的值，注意它所在的参数表或外层表达式。
+    env_features: dict | None = None,
+    # L1030 为“recording_repo_id”提供这一项的值，注意它所在的参数表或外层表达式。
+    recording_repo_id: str | None = None,
+    # L1031 为“recording_private”提供这一项的值，注意它所在的参数表或外层表达式。
+    recording_private: bool = False,
+    # L1032 为“max_episode_steps”提供这一项的值，注意它所在的参数表或外层表达式。
+    max_episode_steps: int | None = None,
+# L1033 闭合上方尚未结束的括号。
+):
+    # L1034 文档字符串的边界。
+    """
+    # L1035 原文档中的说明或续行。此段讲把一个任务交给 eval_one，记录任务与结果的关系。
+    Run eval_one for a single (task_group, task_id, env).
+    # L1036 原文档中的说明或续行。此段讲把一个任务交给 eval_one，记录任务与结果的关系。
+    Returns (task_group, task_id, task_metrics_dict).
+    # L1037 原文档中的说明或续行。此段讲把一个任务交给 eval_one，记录任务与结果的关系。
+    This function is intentionally module-level to make it easy to test.
+    # L1038 文档字符串的边界。
+    """
+    # L1039 设为空值 None给 “task_videos_dir” 赋值。
+    task_videos_dir = None
+    # L1040 条件 videos_dir is not None 成立时进入下方分支。
+    if videos_dir is not None:
+        # L1041 计算右侧表达式 videos_dir / f"{task_group}_{task_id}"给 “task_videos_dir” 赋值。
+        task_videos_dir = videos_dir / f"{task_group}_{task_id}"
+        # L1042 调用 task_videos_dir.mkdir 执行操作。
+        task_videos_dir.mkdir(parents=True, exist_ok=True)
+
+    # L1044 设为空值 None给 “task_recording_dir” 赋值。
+    task_recording_dir = None
+    # L1045 设为空值 None给 “task_repo_id” 赋值。
+    task_repo_id = None
+    # L1046 条件 recording_dir is not None and env_features is not None 成立时进入下方分支。
+    if recording_dir is not None and env_features is not None:
+        # L1047 计算右侧表达式 recording_dir / f"{task_group}_{task_id}"给 “task_recording_dir” 赋值。
+        task_recording_dir = recording_dir / f"{task_group}_{task_id}"
+        # L1048 条件 recording_repo_id is not None 成立时进入下方分支。
+        if recording_repo_id is not None:
+            # L1049 计算此行的右侧表达式给 “task_repo_id” 赋值。
+            task_repo_id = f"{recording_repo_id}_{task_group}_{task_id}"
+
+    # L1051 把当前套件中的任务交给 eval_one。
+    metrics = eval_one(
+        # L1052 “env”是当前括号中的一项，逗号将它与下一项分开。
+        env,
+        # L1053 为“policy”提供这一项的值，注意它所在的参数表或外层表达式。
+        policy=policy,
+        # L1054 为“env_preprocessor”提供这一项的值，注意它所在的参数表或外层表达式。
+        env_preprocessor=env_preprocessor,
+        # L1055 为“env_postprocessor”提供这一项的值，注意它所在的参数表或外层表达式。
+        env_postprocessor=env_postprocessor,
+        # L1056 为“preprocessor”（策略前处理流水线）提供这一项的值，注意它所在的参数表或外层表达式。
+        preprocessor=preprocessor,
+        # L1057 为“postprocessor”（动作后处理流水线）提供这一项的值，注意它所在的参数表或外层表达式。
+        postprocessor=postprocessor,
+        # L1058 为“n_episodes”（评测回合数）提供这一项的值，注意它所在的参数表或外层表达式。
+        n_episodes=n_episodes,
+        # L1059 为“max_episodes_rendered”提供这一项的值，注意它所在的参数表或外层表达式。
+        max_episodes_rendered=max_episodes_rendered,
+        # L1060 为“videos_dir”提供这一项的值，注意它所在的参数表或外层表达式。
+        videos_dir=task_videos_dir,
+        # L1061 为“return_episode_data”提供这一项的值，注意它所在的参数表或外层表达式。
+        return_episode_data=return_episode_data,
+        # L1062 为“start_seed”提供这一项的值，注意它所在的参数表或外层表达式。
+        start_seed=start_seed,
+        # L1063 为“recording_dir”提供这一项的值，注意它所在的参数表或外层表达式。
+        recording_dir=task_recording_dir,
+        # L1064 为“env_features”提供这一项的值，注意它所在的参数表或外层表达式。
+        env_features=env_features,
+        # L1065 为“recording_repo_id”提供这一项的值，注意它所在的参数表或外层表达式。
+        recording_repo_id=task_repo_id,
+        # L1066 为“recording_private”提供这一项的值，注意它所在的参数表或外层表达式。
+        recording_private=recording_private,
+        # L1067 为“max_episode_steps”提供这一项的值，注意它所在的参数表或外层表达式。
+        max_episode_steps=max_episode_steps,
+    # L1068 闭合上方尚未结束的括号。
+    )
+
+    # L1070 条件 max_episodes_rendered > 0 成立时进入下方分支。
+    if max_episodes_rendered > 0:
+        # L1071 调用 metrics.setdefault 执行操作。
+        metrics.setdefault("video_paths", [])
+    # L1072 调用 metrics.setdefault 执行操作。
+    metrics.setdefault("predicted_video_paths", [])
+    # L1073 打包成元组，元素顺序由逗号分隔的位置决定作为当前调用的返回值。
+    return task_group, task_id, metrics
+
+
+# L1076 定义函数 _task_info。
+def _task_info(task_group: str, task_id: int, metrics: dict) -> dict:
+    # L1077 原文档中的说明或续行。
+    """One `per_task` entry: the raw per-episode metrics plus the task's success count and interval."""
+    # L1078 创建字典，用键查找对应的值作为当前调用的返回值。
+    return {
+        # L1079 字典项“task_group”（任务套件名），冒号右边给出它的值。
+        "task_group": task_group,
+        # L1080 字典项“task_id”（套件内的任务编号），冒号右边给出它的值。
+        "task_id": task_id,
+        # L1081 字典项“metrics”，冒号右边给出它的值。
+        "metrics": metrics,
+        # L1082 星号展开可迭代对象或关键字字典。若在函数签名中则收集额外参数。
+        **success_summary(metrics.get("successes") or []),
+    # L1083 闭合上方尚未结束的括号。
+    }
+
+
+# L1086 定义函数 eval_policy_all。作用是按任务调度评测，汇总套件和总体数据。
+def eval_policy_all(
+    # L1087 延续上面的语句，envs: dict[str, dict[int, gym.vector.VectorEnv]],。本段处理按任务调度评测，汇总套件和总体数据。
+    envs: dict[str, dict[int, gym.vector.VectorEnv]],
+    # L1088 “policy”是当前括号中的一项，逗号将它与下一项分开。
+    policy,
+    # L1089 延续上面的语句，env_preprocessor: PolicyProcessorPipeline[dict[str, Any], dict[str, Any]],。本段处理按任务调度评测，汇总套件和总体数据。
+    env_preprocessor: PolicyProcessorPipeline[dict[str, Any], dict[str, Any]],
+    # L1090 延续上面的语句，env_postprocessor: PolicyProcessorPipeline[dict[str, Any], dict[str, Any]],。本段处理按任务调度评测，汇总套件和总体数据。
+    env_postprocessor: PolicyProcessorPipeline[dict[str, Any], dict[str, Any]],
+    # L1091 延续上面的语句，preprocessor: PolicyProcessorPipeline[dict[str, Any], dict[str, Any]],。本段处理按任务调度评测，汇总套件和总体数据。
+    preprocessor: PolicyProcessorPipeline[dict[str, Any], dict[str, Any]],
+    # L1092 延续上面的语句，postprocessor: PolicyProcessorPipeline[PolicyAction, PolicyAction],。本段处理按任务调度评测，汇总套件和总体数据。
+    postprocessor: PolicyProcessorPipeline[PolicyAction, PolicyAction],
+    # L1093 “n_episodes”（评测回合数）是当前括号中的一项，逗号将它与下一项分开。
+    n_episodes: int,
+    # L1094 后续参数必须按名字传入。
+    *,
+    # L1095 为“max_episodes_rendered”提供这一项的值，注意它所在的参数表或外层表达式。
+    max_episodes_rendered: int = 0,
+    # L1096 为“recording_dir”提供这一项的值，注意它所在的参数表或外层表达式。
+    recording_dir: Path | None = None,
+    # L1097 为“env_features”提供这一项的值，注意它所在的参数表或外层表达式。
+    env_features: dict | None = None,
+    # L1098 为“recording_repo_id”提供这一项的值，注意它所在的参数表或外层表达式。
+    recording_repo_id: str | None = None,
+    # L1099 为“recording_private”提供这一项的值，注意它所在的参数表或外层表达式。
+    recording_private: bool = False,
+    # L1100 为“videos_dir”提供这一项的值，注意它所在的参数表或外层表达式。
+    videos_dir: Path | None = None,
+    # L1101 为“return_episode_data”提供这一项的值，注意它所在的参数表或外层表达式。
+    return_episode_data: bool = False,
+    # L1102 为“start_seed”提供这一项的值，注意它所在的参数表或外层表达式。
+    start_seed: int | None = None,
+    # L1103 为“max_parallel_tasks”提供这一项的值，注意它所在的参数表或外层表达式。
+    max_parallel_tasks: int = 1,
+    # L1104 为“max_episode_steps”提供这一项的值，注意它所在的参数表或外层表达式。
+    max_episode_steps: int | None = None,
+# L1105 结束参数表。若箭头后有类型，它标注预期返回值，缩进块是函数体。
+) -> dict:
+    # L1106 文档字符串的边界。
+    """
+    # L1107 原文档中的说明或续行。此段讲按任务调度评测，汇总套件和总体数据。
+    Evaluate a nested `envs` dict: {task_group: {task_id: vec_env}}.
+    # L1108 原文档中的说明或续行。此段讲按任务调度评测，汇总套件和总体数据。
+    This implementation flattens tasks, runs them sequentially or via ThreadPoolExecutor,
+    # L1109 原文档中的说明或续行。此段讲按任务调度评测，汇总套件和总体数据。
+    accumulates per-group and overall statistics, and returns the same aggregate metrics
+    # L1110 原文档中的说明或续行。此段讲按任务调度评测，汇总套件和总体数据。
+    schema as the single-env evaluator (avg_sum_reward / avg_max_reward / pc_success / timings)
+    # L1111 原文档中的说明或续行。此段讲按任务调度评测，汇总套件和总体数据。
+    plus per-task infos.
+    # L1112 文档字符串的边界。
+    """
+    # L1113 调用 time.time，用它的结果给 “start_t” 赋值。
+    start_t = time.time()
+
+    # L1115 原作者的注释。此处在讲按任务调度评测，汇总套件和总体数据。
+    # Flatten envs into list of (task_group, task_id, env)
+    # L1116 用列表推导式从可迭代对象逐项取值并构造结果给 “tasks” 赋值。
+    tasks = [(tg, tid, vec) for tg, group in envs.items() for tid, vec in group.items()]
+
+    # L1118 原作者的注释。此处在讲按任务调度评测，汇总套件和总体数据。
+    # accumulators: track metrics at both per-group level and across all groups
+    # L1119 声明“group_acc”的类型为 dict[str, dict[str, list]]，调用 defaultdict，用它的结果作为初始值。
+    group_acc: dict[str, dict[str, list]] = defaultdict(lambda: {k: [] for k in ACC_KEYS})
+    # L1120 声明“overall”的类型为 dict[str, list]，用字典推导式从可迭代对象逐项取值并构造结果作为初始值。
+    overall: dict[str, list] = {k: [] for k in ACC_KEYS}
+    # L1121 声明“per_task_infos”的类型为 list[dict]，创建列表，按给定顺序保留元素作为初始值。
+    per_task_infos: list[dict] = []
+
+    # L1123 原作者的注释。此处在讲按任务调度评测，汇总套件和总体数据。
+    # small inline helper to accumulate one task's metrics into accumulators
+    # L1124 定义函数 _accumulate_to。
+    def _accumulate_to(group: str, metrics: dict):
+        # L1125 原作者对相邻代码的说明。
+        # metrics expected to contain 'sum_rewards', 'max_rewards', 'successes', optionally 'video_paths'
+        # L1126 原作者对相邻代码的说明。
+        # but eval_one may store per-episode lists; we assume metrics uses scalars averaged per task as before.
+        # L1127 原作者对相邻代码的说明。
+        # To be robust, accept scalars or lists.
+        # L1128 定义函数 _append。
+        def _append(key, value):
+            # L1129 条件 value is None 成立时进入下方分支。
+            if value is None:
+                # L1130 退出当前调用并返回 None。
+                return
+            # L1131 条件 isinstance(value, list) 成立时进入下方分支。
+            if isinstance(value, list):
+                # L1132 调用 extend 执行操作。
+                group_acc[group][key].extend(value)
+                # L1133 调用 extend 执行操作。
+                overall[key].extend(value)
+            # L1134 进入对应的另一条分支，注意用缩进找到配对的判断或异常块。
+            else:
+                # L1135 调用 append 执行操作。
+                group_acc[group][key].append(value)
+                # L1136 调用 append 执行操作。
+                overall[key].append(value)
+
+        # L1138 调用 _append 执行操作。
+        _append("sum_rewards", metrics.get("sum_rewards"))
+        # L1139 调用 _append 执行操作。
+        _append("max_rewards", metrics.get("max_rewards"))
+        # L1140 调用 _append 执行操作。
+        _append("successes", metrics.get("successes"))
+        # L1141 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+        for key in ("video_paths", "predicted_video_paths"):
+            # L1142 调用 metrics.get，用它的结果给 “paths” 赋值。
+            paths = metrics.get(key, [])
+            # L1143 条件 paths 成立时进入下方分支。
+            if paths:
+                # L1144 调用 extend 执行操作。
+                group_acc[group][key].extend(paths)
+                # L1145 调用 extend 执行操作。
+                overall[key].extend(paths)
+
+    # L1147 原作者的注释。此处在讲按任务调度评测，汇总套件和总体数据。
+    # Choose runner (sequential vs threaded)
+    # L1148 partial 先固定 run_one 的一组共享参数，调度时再传入任务名、编号和环境。
+    task_runner = partial(
+        # L1149 “run_one”是当前括号中的一项，逗号将它与下一项分开。
+        run_one,
+        # L1150 为“policy”提供这一项的值，注意它所在的参数表或外层表达式。
+        policy=policy,
+        # L1151 为“env_preprocessor”提供这一项的值，注意它所在的参数表或外层表达式。
+        env_preprocessor=env_preprocessor,
+        # L1152 为“env_postprocessor”提供这一项的值，注意它所在的参数表或外层表达式。
+        env_postprocessor=env_postprocessor,
+        # L1153 为“preprocessor”（策略前处理流水线）提供这一项的值，注意它所在的参数表或外层表达式。
+        preprocessor=preprocessor,
+        # L1154 为“postprocessor”（动作后处理流水线）提供这一项的值，注意它所在的参数表或外层表达式。
+        postprocessor=postprocessor,
+        # L1155 为“n_episodes”（评测回合数）提供这一项的值，注意它所在的参数表或外层表达式。
+        n_episodes=n_episodes,
+        # L1156 为“max_episodes_rendered”提供这一项的值，注意它所在的参数表或外层表达式。
+        max_episodes_rendered=max_episodes_rendered,
+        # L1157 为“videos_dir”提供这一项的值，注意它所在的参数表或外层表达式。
+        videos_dir=videos_dir,
+        # L1158 为“return_episode_data”提供这一项的值，注意它所在的参数表或外层表达式。
+        return_episode_data=return_episode_data,
+        # L1159 为“start_seed”提供这一项的值，注意它所在的参数表或外层表达式。
+        start_seed=start_seed,
+        # L1160 为“recording_dir”提供这一项的值，注意它所在的参数表或外层表达式。
+        recording_dir=recording_dir,
+        # L1161 为“env_features”提供这一项的值，注意它所在的参数表或外层表达式。
+        env_features=env_features,
+        # L1162 为“recording_repo_id”提供这一项的值，注意它所在的参数表或外层表达式。
+        recording_repo_id=recording_repo_id,
+        # L1163 为“recording_private”提供这一项的值，注意它所在的参数表或外层表达式。
+        recording_private=recording_private,
+        # L1164 为“max_episode_steps”提供这一项的值，注意它所在的参数表或外层表达式。
+        max_episode_steps=max_episode_steps,
+    # L1165 闭合上方尚未结束的括号。
+    )
+
+    # L1167 原作者的注释。此处在讲按任务调度评测，汇总套件和总体数据。
+    # Set the shared policy's mode before launching any workers. Restoring it
+    # L1168 训练路径的说明。
+    # inside individual tasks would let one task enable training mode while
+    # L1169 原作者的注释。此处在讲按任务调度评测，汇总套件和总体数据。
+    # another task is still evaluating.
+    # L1170 读取属性 policy.training给 “was_training” 赋值。
+    was_training = policy.training
+    # L1171 调用 policy.eval，切换 PyTorch 模块到评测模式。
+    policy.eval()
+    # L1172 开始执行可能抛出异常的代码，后续 except 或 finally 提供处理。
+    try:
+        # L1173 并行任务上限为 1 时走顺序分支，本次运行进入此处。
+        if max_parallel_tasks <= 1:
+            # L1174 回合重置、初始化或状态清理的说明。
+            # Each task builds its simulator on its first reset, in this thread, after the previous
+            # L1175 运算设备或数据传输的说明。
+            # task's env is closed: consecutive tasks never hold the GPU at once, and simulators
+            # L1176 原作者的注释。此处在讲按任务调度评测，汇总套件和总体数据。
+            # that must run on the main thread (e.g. Isaac Sim) are built there.
+            # L1177 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+            for task_group, task_id, env in tasks:
+                # L1178 开始执行可能抛出异常的代码，后续 except 或 finally 提供处理。
+                try:
+                    # L1179 调用预先绑定好公共参数的 run_one。
+                    tg, tid, metrics = task_runner(task_group, task_id, env)
+                    # L1180 调用 _accumulate_to 执行操作。
+                    _accumulate_to(tg, metrics)
+                    # L1181 调用 per_task_infos.append，在列表末尾追加一个元素。
+                    per_task_infos.append(_task_info(tg, tid, metrics))
+                # L1182 离开 try 时执行这里的清理，即使前面的路径发生异常。
+                finally:
+                    # L1183 当前任务执行完或抛出异常后关闭该任务的环境。
+                    env.close()
+        # L1184 进入对应的另一条分支，注意用缩进找到配对的判断或异常块。
+        else:
+            # L1185 进入上下文管理器，缩进块结束时由它处理退出动作。
+            with cf.ThreadPoolExecutor(max_workers=max_parallel_tasks) as executor:
+                # L1186 创建字典，用键查找对应的值给 “fut2meta” 赋值。
+                fut2meta = {}
+                # L1187 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+                for task_group, task_id, env in tasks:
+                    # L1188 调用 executor.submit，用它的结果给 “fut” 赋值。
+                    fut = executor.submit(task_runner, task_group, task_id, env)
+                    # L1189 打包成元组，元素顺序由逗号分隔的位置决定给 “fut2meta[fut]” 赋值。
+                    fut2meta[fut] = (task_group, task_id, env)
+                # L1190 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+                for fut in cf.as_completed(fut2meta):
+                    # L1191 用方括号按键或索引读取 fut2meta给 “(tg, tid, env)” 赋值。
+                    tg, tid, env = fut2meta[fut]
+                    # L1192 开始执行可能抛出异常的代码，后续 except 或 finally 提供处理。
+                    try:
+                        # L1193 调用 fut.result，用它的结果给 “(tg, tid, metrics)” 赋值。
+                        tg, tid, metrics = fut.result()
+                        # L1194 调用 _accumulate_to 执行操作。
+                        _accumulate_to(tg, metrics)
+                        # L1195 调用 per_task_infos.append，在列表末尾追加一个元素。
+                        per_task_infos.append(_task_info(tg, tid, metrics))
+                    # L1196 离开 try 时执行这里的清理，即使前面的路径发生异常。
+                    finally:
+                        # L1197 调用 env.close，关闭对象或释放关联资源。
+                        env.close()
+    # L1198 离开 try 时执行这里的清理，即使前面的路径发生异常。
+    finally:
+        # L1199 调用 policy.train 执行操作。
+        policy.train(was_training)
+
+    # L1201 原作者的注释。此处在讲按任务调度评测，汇总套件和总体数据。
+    # compute aggregated metrics helper (robust to lists/scalars)
+    # L1202 定义函数 _agg_from_list。
+    def _agg_from_list(xs):
+        # L1203 条件 not xs 成立时进入下方分支。
+        if not xs:
+            # L1204 调用 float，用它的结果作为当前调用的返回值。
+            return float("nan")
+        # L1205 调用 np.array，用它的结果给 “arr” 赋值。
+        arr = np.array(xs, dtype=float)
+        # L1206 调用 float，用它的结果作为当前调用的返回值。
+        return float(np.nanmean(arr))
+
+    # L1208 原作者的注释。此处在讲按任务调度评测，汇总套件和总体数据。
+    # compute per-group aggregates
+    # L1209 创建字典，用键查找对应的值给 “groups_aggregated” 赋值。
+    groups_aggregated = {}
+    # L1210 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+    for group, acc in group_acc.items():
+        # L1211 调用 success_summary，用它的结果给 “group_success” 赋值。
+        group_success = success_summary(acc["successes"])
+        # L1212 创建字典，用键查找对应的值给 “groups_aggregated[group]” 赋值。
+        groups_aggregated[group] = {
+            # L1213 字典项“avg_sum_reward”，冒号右边给出它的值。
+            "avg_sum_reward": _agg_from_list(acc["sum_rewards"]),
+            # L1214 字典项“avg_max_reward”，冒号右边给出它的值。
+            "avg_max_reward": _agg_from_list(acc["max_rewards"]),
+            # L1215 字典项“pc_success”，冒号右边给出它的值。
+            "pc_success": _agg_from_list(acc["successes"]) * 100 if acc["successes"] else float("nan"),
+            # L1216 字典项“n_episodes”（评测回合数），冒号右边给出它的值。
+            "n_episodes": len(acc["sum_rewards"]),
+            # L1217 字典项“n_success”，冒号右边给出它的值。
+            "n_success": group_success["n_success"],
+            # L1218 字典项“pc_success_ci95”，冒号右边给出它的值。
+            "pc_success_ci95": group_success["pc_success_ci95"],
+            # L1219 字典项“video_paths”，冒号右边给出它的值。
+            "video_paths": list(acc["video_paths"]),
+            # L1220 字典项“predicted_video_paths”，冒号右边给出它的值。
+            "predicted_video_paths": list(acc["predicted_video_paths"]),
+        # L1221 闭合上方尚未结束的括号。
+        }
+
+    # L1223 原作者的注释。此处在讲按任务调度评测，汇总套件和总体数据。
+    # overall aggregates
+    # L1224 对所有任务合并后的成功布尔值做汇总。
+    overall_success = success_summary(overall["successes"])
+    # L1225 创建字典，用键查找对应的值给 “overall_agg” 赋值。
+    overall_agg = {
+        # L1226 字典项“avg_sum_reward”，冒号右边给出它的值。
+        "avg_sum_reward": _agg_from_list(overall["sum_rewards"]),
+        # L1227 字典项“avg_max_reward”，冒号右边给出它的值。
+        "avg_max_reward": _agg_from_list(overall["max_rewards"]),
+        # L1228 字典项“pc_success”，冒号右边给出它的值。
+        "pc_success": _agg_from_list(overall["successes"]) * 100 if overall["successes"] else float("nan"),
+        # L1229 字典项“n_episodes”（评测回合数），冒号右边给出它的值。
+        "n_episodes": len(overall["sum_rewards"]),
+        # L1230 字典项“n_success”，冒号右边给出它的值。
+        "n_success": overall_success["n_success"],
+        # L1231 字典项“pc_success_ci95”，冒号右边给出它的值。
+        "pc_success_ci95": overall_success["pc_success_ci95"],
+        # L1232 字典项“eval_s”，冒号右边给出它的值。
+        "eval_s": time.time() - start_t,
+        # L1233 字典项“eval_ep_s”，冒号右边给出它的值。
+        "eval_ep_s": (time.time() - start_t) / max(1, len(overall["sum_rewards"])),
+        # L1234 字典项“video_paths”，冒号右边给出它的值。
+        "video_paths": list(overall["video_paths"]),
+        # L1235 字典项“predicted_video_paths”，冒号右边给出它的值。
+        "predicted_video_paths": list(overall["predicted_video_paths"]),
+    # L1236 闭合上方尚未结束的括号。
+    }
+
+    # L1238 创建字典，用键查找对应的值作为当前调用的返回值。
+    return {
+        # L1239 字典项“per_task”，冒号右边给出它的值。
+        "per_task": per_task_infos,
+        # L1240 字典项“per_group”，冒号右边给出它的值。
+        "per_group": groups_aggregated,
+        # L1241 字典项“overall”，冒号右边给出它的值。
+        "overall": overall_agg,
+    # L1242 闭合上方尚未结束的括号。
+    }
+
+
+# L1245 定义终端命令 lerobot-eval 导入的 main 函数。
+def main():
+    # L1246 初始化日志格式与输出。
+    init_logging()
+    # L1247 注册评测可以发现的第三方插件。
+    register_third_party_plugins()
+    # L1248 执行 eval_main 的包装器，由它解析参数后进入评测编排。
+    eval_main()
+
+
+# L1251 当文件直接作为主程序运行时，Python 将其模块名设为 __main__。
+if __name__ == "__main__":
+    # L1252 直接运行模块时也走相同 main 入口。安装的命令由独立启动脚本导入并调用 main。
+    main()

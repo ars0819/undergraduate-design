@@ -1,0 +1,300 @@
+Imitation Learning on Real-World Robots · Hugging Face
+Hugging Face
+Models
+Datasets
+Spaces
+Buckets
+Docs
+Enterprise
+Pricing
+Website
+Tasks
+HuggingChat
+Collections
+Languages
+Organizations
+Community
+Blog
+Posts
+Daily Papers
+Hardware
+Learn
+Discord
+Forum
+GitHub
+Solutions
+Team & Enterprise
+Hugging Face PRO
+Enterprise Support
+Inference Providers
+Inference Endpoints
+Storage Buckets
+Log In
+Sign Up
+LeRobot documentation
+Imitation Learning on Real-World Robots
+LeRobot
+🏡 View all docsAWS Trainium & InferentiaAccelerateBitsandbytesCLIChat UIDataset viewerDatasetsDeploying on AWSDiffusersGoogle CloudGoogle TPUsGradioHubHub Python LibraryHuggingface.jsInference Endpoints (dedicated)Inference ProvidersKernelsLeRobotLeaderboardsLightevalMicrosoft AzureOpenEnvOptimumPEFTReachy MiniSafetensorsSentence TransformersTRLTasksText Embeddings InferenceTokenizersTrackioTransformersTransformers.jsXetsmolagentstimm
+Search documentation
+mainv0.6.1v0.5.1v0.4.4 EN
+Get started
+LeRobotInstallationCheat sheet
+Tutorials
+Imitation Learning for RobotsLeLab - Lerobot GUIAdding a PolicyBring Your Own HardwareTrain a Robot with RLTrain RL in SimulationMulti GPU trainingHuman In the Loop Data CollectionTraining with PEFT (e.g., LoRA)Using Rename Map and Empty Cameras
+Compute & Hardware
+Compute Hardware GuidePyTorch accelerators
+Datasets
+Using LeRobotDatasetPorting Large DatasetsUsing the Dataset ToolsLanguage Columns and RecipesToolsAnnotation PipelineVideo encoding parametersStreaming Video Encoding
+Policies
+ACTSmolVLAπ₀ (Pi0)π₀-FAST (Pi0Fast)π₀.₅ (Pi05)MolmoAct2VLA-JEPAEO-1LingBot-VAFastWAMEVO1NVIDIA GR00TX-VLAMultitask DiT PolicyWALL-OSS
+Reward Models
+SARMROBOMETERTOPReward
+Inference
+Policy Deployment (lerobot-rollout)Use Async InferenceReal-Time Chunking (RTC)
+Simulation
+Environments from the HubControl & Train Robots in Sim (LeIsaac)
+Benchmarks
+Adding a New BenchmarkLIBEROLIBERO-plusMeta-WorldRoboTwin 2.0RoboCasa365RoboCerebraRoboMMENVIDIA IsaacLab Arena EnvironmentsVLABench
+Robot Processors
+Introduction to Robot ProcessorsDebug your processor pipelineImplement your own processorProcessors for Robots and TeleoperatorsEnvironment ProcessorsAction Representations
+Robots
+SO-101SO-100Koch v1.1LeKiwiHope JrReachy 2Unitree G1Earth Rover MiniOMXOpenArmreBot B601-DMThird-Party Robots & Teleoperators
+Teleoperators
+PhoneIsaac Teleop
+Sensors
+CamerasThird-Party Cameras & Sensors
+Resources
+NotebooksUpdating Feetech FirmwareDamiao Motors and CAN Bus
+About
+Contribute to LeRobotBackward compatibility
+Join the Hugging Face community
+and get access to the augmented documentation experience
+Collaborate on models, datasets and Spaces
+Faster examples with accelerated inference
+Switch between documentation themes
+Sign Up
+to get started
+Copy page
+Imitation Learning on Real-World Robots
+This tutorial will explain how to train a neural network to control a real robot autonomously.
+You’ll learn:
+How to record and visualize your dataset.
+How to train a policy using your data and prepare it for evaluation.
+How to evaluate your policy and visualize the results.
+By following these steps, you’ll be able to replicate tasks, such as picking up a Lego block and placing it in a bin with a high success rate, as shown in the video below.
+Video: pickup lego block task
+This tutorial isn’t tied to a specific robot: we walk you through the commands and API snippets you can adapt for any supported platform.
+During data collection, you’ll use a “teloperation” device, such as a leader arm or keyboard to teleoperate the robot and record its motion trajectories.
+Once you’ve gathered enough trajectories, you’ll train a neural network to imitate these trajectories and deploy the trained model so your robot can perform the task autonomously.
+If you run into any issues at any point, jump into our Discord community for support.
+Want to quickly get the right commands for your setup? The quickstart notebook lets you configure your robot once and generates all the commands below ready to paste.
+Set up and Calibrate
+If you haven’t yet set up and calibrated your robot and teleop device, please do so by following the robot-specific tutorial.
+Teleoperate
+In this example, we’ll demonstrate how to teleoperate the SO101 robot. For each command, we also provide a corresponding API example.
+Note that the id associated with a robot is used to store the calibration file. It’s important to use the same id when teleoperating, recording, and evaluating when using the same setup.
+Command
+API example
+Copied
+lerobot-teleoperate \
+--robot.type=so101_follower \
+--robot.port=/dev/tty.usbmodem58760431541 \
+--robot.id=my_awesome_follower_arm \
+--teleop.type=so101_leader \
+--teleop.port=/dev/tty.usbmodem58760431551 \
+--teleop.id=my_awesome_leader_arm
+The teleoperate command will automatically:
+Identify any missing calibrations and initiate the calibration procedure.
+Connect the robot and teleop device and start teleoperation.
+Cameras
+To add cameras to your setup, follow this Guide.
+Teleoperate with cameras
+With rerun, you can teleoperate again while simultaneously visualizing the camera feeds and joint positions. In this example, we’re using the Koch arm.
+Command
+API example
+Copied
+lerobot-teleoperate \
+--robot.type=so101_follower \
+--robot.port=/dev/tty.usbmodem5AB90687491 \
+--robot.id=my_follower_arm \
+--robot.cameras="{front: {type: opencv, index_or_path: 0, width: 640, height: 480, fps: 30}}" \
+--teleop.type=so101_leader \
+--teleop.port=/dev/tty.usbmodem5AB90689011 \
+--teleop.id=my_leader_arm \
+--display_data=true
+Record a dataset
+Once you’re familiar with teleoperation, you can record your first dataset.
+We use the Hugging Face hub features for uploading your dataset. If you haven’t previously used the Hub, make sure you can login via the cli using a write-access token, this token can be generated from the Hugging Face settings.
+Add your token to the CLI by running this command:
+Copied
+hf auth login --token ${HUGGINGFACE_TOKEN} --add-to-git-credential
+Then store your Hugging Face repository name in a variable:
+Copied
+HF_USER=$(NO_COLOR=1 hf auth whoami | awk -F': *' 'NR==1 {print $2}')
+echo $HF_USER
+Now you can record a dataset. To record 5 episodes and upload your dataset to the hub, adapt the code below for your robot and execute the command or API example.
+Command
+API example
+Copied
+lerobot-record \
+--robot.type=so101_follower \
+--robot.port=/dev/tty.usbmodem585A0076841 \
+--robot.id=my_awesome_follower_arm \
+--robot.cameras="{ front: {type: opencv, index_or_path: 0, width: 1920, height: 1080, fps: 30}}" \
+--teleop.type=so101_leader \
+--teleop.port=/dev/tty.usbmodem58760431551 \
+--teleop.id=my_awesome_leader_arm \
+--display_data=true \
+--dataset.repo_id=${HF_USER}/record-test \
+--dataset.num_episodes=5 \
+--dataset.single_task="Grab the black cube" \
+--dataset.streaming_encoding=true \
+# --dataset.rgb_encoder.vcodec=auto \
+--dataset.encoder_threads=2
+Dataset upload
+Locally, your dataset is stored in this folder: ~/.cache/huggingface/lerobot/{repo-id}. At the end of data recording, your dataset will be uploaded on your Hugging Face page (e.g. https://huggingface.co/datasets/${HF_USER}/so101_test) that you can obtain by running:
+Copied
+echo https://huggingface.co/datasets/${HF_USER}/so101_test
+Your dataset will be automatically tagged with LeRobot for the community to find it easily, and you can also add custom tags (in this case tutorial for example).
+You can look for other LeRobot datasets on the hub by searching for LeRobot tags.
+You can also push your local dataset to the Hub manually, running:
+Copied
+hf upload ${HF_USER}/record-test ~/.cache/huggingface/lerobot/{repo-id} --repo-type dataset
+Record function
+The record function provides a suite of tools for capturing and managing data during robot operation:
+1. Data Storage
+Data is stored using the LeRobotDataset format and is stored on disk during recording.
+By default, the dataset is pushed to your Hugging Face page after recording.
+To disable uploading, use --dataset.push_to_hub=False.
+2. Checkpointing and Resuming
+Checkpoints are automatically created during recording.
+If an issue occurs or you want to record additional episodes in the same dataset, you can resume by re-running the same command with --resume=true. When resuming a recording, --dataset.num_episodes must be set to the number of additional episodes to be recorded, and not to the targeted total number of episodes in the dataset! Make sure that you also set --dataset.root="local_path", it’s a local path to save the new part of the dataset and is required to resume.
+To start recording from scratch, manually delete the dataset directory.
+3. Recording Parameters
+Set the flow of data recording using command-line arguments:
+--dataset.episode_time_s=60 Duration of each data recording episode (default: 60 seconds).
+--dataset.reset_time_s=60 Duration for resetting the environment after each episode (default: 60 seconds).
+--dataset.num_episodes=50 Total number of episodes to record (default: 50).
+4. Keyboard Controls During Recording
+Control the data recording flow using keyboard shortcuts:
+Press Right Arrow (→) or n: Early stop the current episode or reset time and move to the next.
+Press Left Arrow (←) or r: Cancel the current episode and re-record it.
+Press Escape (ESC) or q: Immediately stop the session, encode videos, and upload the dataset.
+These control-flow shortcuts work on X11, Wayland, and headless/SSH sessions. When a global keyboard backend isn’t available (Wayland, a headless machine, or macOS without Accessibility permission), lerobot-record automatically reads the same keys from the terminal — launch it from an interactive terminal and keep it focused. You can also use the letter equivalents n (next, same as →), r (re-record, same as ←) and q (quit, same as ESC). No $DISPLAY setup is required.
+This applies to the recording control flow only. Keyboard teleoperation (driving the robot with the keyboard) still needs a global key backend, so it works only on an X11 session, a Windows desktop, or macOS with Accessibility/Input Monitoring granted — not on Wayland or headless sessions.
+Tips for gathering data
+Once you’re comfortable with data recording, you can create a larger dataset for training. A good starting task is grasping an object at different locations and placing it in a bin. We suggest recording at least 50 episodes, with 10 episodes per location. Keep the cameras fixed and maintain consistent grasping behavior throughout the recordings. Also make sure the object you are manipulating is visible on the camera’s. A good rule of thumb is you should be able to do the task yourself by only looking at the camera images.
+In the following sections, you’ll train your neural network. After achieving reliable grasping performance, you can start introducing more variations during data collection, such as additional grasp locations, different grasping techniques, and altering camera positions.
+Avoid adding too much variation too quickly, as it may hinder your results.
+If you want to dive deeper into this important topic, you can check out the blog post we wrote on what makes a good dataset.
+Troubleshooting:
+On Linux, the recording control-flow keys (arrow keys, Escape) work on X11, Wayland, and headless/SSH sessions as long as lerobot-record runs in an interactive terminal — no $DISPLAY setup is needed. If the keys have no effect, make sure you are in an interactive (TTY) terminal, not a piped/non-TTY session, and that it is focused; the letter equivalents n / r / q also work. Keyboard teleoperation (as opposed to the recording control flow) still requires a global key backend — an X11 session, a Windows desktop, or macOS with Accessibility/Input Monitoring granted — and is unavailable on Wayland or headless machines. See pynput limitations.
+Visualize a dataset
+If you uploaded your dataset to the hub with --control.push_to_hub=true, you can visualize your dataset online by copy pasting your repo id given by:
+Copied
+echo ${HF_USER}/so101_test
+Replay an episode
+A useful feature is the replay function, which allows you to replay any episode that you’ve recorded or episodes from any dataset out there. This function helps you test the repeatability of your robot’s actions and assess transferability across robots of the same model.
+You can replay the first episode on your robot with either the command below or with the API example:
+Command
+API example
+Copied
+lerobot-replay \
+--robot.type=so101_follower \
+--robot.port=/dev/tty.usbmodem58760431541 \
+--robot.id=my_awesome_follower_arm \
+--dataset.repo_id=${HF_USER}/record-test \
+--dataset.episode=0 # choose the episode you want to replay
+Your robot should replicate movements similar to those you recorded. For example, check out this video where we use replay on a Aloha robot from Trossen Robotics.
+Train a policy
+To train a policy to control your robot, use the lerobot-train script. A few arguments are required. Here is an example command:
+Copied
+lerobot-train \
+--dataset.repo_id=${HF_USER}/so101_test \
+--policy.type=act \
+--output_dir=outputs/train/act_so101_test \
+--job_name=act_so101_test \
+--policy.device=cuda \
+--wandb.enable=true \
+--policy.repo_id=${HF_USER}/my_policy
+Let’s explain the command:
+We provided the dataset as argument with --dataset.repo_id=${HF_USER}/so101_test.
+We provided the policy with policy.type=act. This loads configurations from configuration_act.py. Importantly, this policy will automatically adapt to the number of motor states, motor actions and cameras of your robot (e.g. laptop and phone) which have been saved in your dataset.
+We provided policy.device=cuda since we are training on a Nvidia GPU, but you could use policy.device=mps to train on Apple silicon.
+We provided wandb.enable=true to use Weights and Biases for visualizing training plots. This is optional but if you use it, make sure you are logged in by running wandb login.
+Training should take several hours. You will find checkpoints in outputs/train/act_so101_test/checkpoints.
+To resume training from a checkpoint, below is an example command to resume from last checkpoint of the act_so101_test policy:
+Copied
+lerobot-train \
+--config_path=outputs/train/act_so101_test/checkpoints/last/pretrained_model/train_config.json \
+--resume=true
+--config_path also accepts a Hub repo id: if a run pushed its checkpoints to the Hub (with --save_checkpoint_to_hub=true), you can resume straight from the repo — its latest checkpoint is downloaded and training continues, restoring the optimizer, scheduler, step counter and data order:
+Copied
+lerobot-train --config_path=${HF_USER}/my_policy --resume=true
+If you do not want to push your model to the hub after training use --policy.push_to_hub=false.
+Additionally you can provide extra tags or specify a license for your model or make the model repo private by adding this: --policy.private=true --policy.tags=\[ppo,rl\] --policy.license=mit
+Train using Google Colab
+If your local computer doesn’t have a powerful GPU you could utilize Google Colab to train your model by following the ACT training notebook.
+Train using Hugging Face Jobs
+Hugging Face jobs let’s you easily select hardware and run the training in the cloud. So if you don’t have a powerful GPU or you need more VRAM or just want to train a model much faster use HF Jobs! It’s pay as you go and you simply pay for each second of use, you can see the pricing and additional information here.
+lerobot-train runs locally by default. To run on a HuggingFace GPU, pass --job.target with a hardware flavor name:
+Copied
+lerobot-train \
+--dataset.repo_id=${HF_USER}/so101_test \
+--policy.type=act \
+--policy.repo_id=${HF_USER}/my_policy \
+--job.target=a10g-small
+List available flavors and pricing with hf jobs hardware. The run streams its logs to your terminal; press Ctrl-C to detach (the job keeps running in the cloud). Re-attach or cancel with:
+Copied
+hf jobs logs <job-id>
+hf jobs cancel <job-id>
+If your dataset exists only locally (not yet on the Hub), it is automatically pushed to a private Hub repo so the job can download it by repo_id (nothing is made public). The trained model is pushed to the model repo at the end of the run. To also push every intermediate checkpoint to the Hub as it is saved (so you can monitor progress mid-run), add --save_checkpoint_to_hub=true — this requires a runtime image that includes this feature.
+Every job (and any dataset pushed by the run) is tagged lerobot so it’s easy to find on the Hub. Add your own with --job.tags '["my-tag"]'.
+By default the job is capped at 2d (48h) of wall-clock. Override it with an HF Jobs duration string, e.g. --job.timeout=4h to fail faster or --job.timeout=7d for a longer run.
+Note: the model repo is created up front (it holds the staged training config the job runs from). If a run fails before the model is pushed, that repo is left on the Hub so you can inspect it — it is not deleted automatically, so repeated failures can leave empty repos behind. Remove one with hf repo delete <repo-id>.
+Prerequisites: run hf auth login before submitting. For Weights & Biases integration, run wandb login or set WANDB_API_KEY on your machine — the key is forwarded to the job automatically.
+Resuming on a job. Adding --job.target to a resume command runs the resume in the cloud — the same command works locally or remotely. The checkpoint repo is the source of truth, and new checkpoints continue the lineage in the same repo:
+Copied
+# resume a Hub run on a job (its checkpoints are already on the Hub)
+lerobot-train --config_path=${HF_USER}/my_policy --resume=true --job.target=a10g-small
+# resume a LOCAL run on a job — the checkpoint is uploaded to a private Hub repo first,
+# then the job resumes from it (a local-only dataset is uploaded the same way)
+lerobot-train \
+--config_path=outputs/train/act_so101_test/checkpoints/last/pretrained_model/train_config.json \
+--resume=true \
+--job.target=a10g-small
+Job settings come from the current command, so override --job.target, --job.timeout, etc. as needed; for the resumed run to itself be resumable later, keep --save_checkpoint_to_hub=true.
+Upload policy checkpoints
+Once training is done, upload the latest checkpoint with:
+Copied
+hf upload ${HF_USER}/act_so101_test \
+outputs/train/act_so101_test/checkpoints/last/pretrained_model
+You can also upload intermediate checkpoints with:
+Copied
+CKPT=010000
+hf upload ${HF_USER}/act_so101_test${CKPT} \
+outputs/train/act_so101_test/checkpoints/${CKPT}/pretrained_model
+Run inference and evaluate your policy
+Use lerobot-rollout to deploy a trained policy on your robot. You can choose different strategies depending on your needs:
+The examples below load the model from --policy.path. To pin a specific pushed version — useful once --save_checkpoint_to_hub=true has committed several checkpoints — add --policy.pretrained_revision with a commit hash, branch, or tag. Each pushed checkpoint is tagged with its step (e.g. --policy.pretrained_revision=010000), so you can recover a checkpoint by step without looking up its commit sha.
+Base mode (no recording)
+Sentry mode (with recording)
+Copied
+lerobot-rollout \
+--strategy.type=base \
+--policy.path=${HF_USER}/my_policy \
+--robot.type=so100_follower \
+--robot.port=/dev/ttyACM1 \
+--robot.cameras="{ up: {type: opencv, index_or_path: /dev/video10, width: 640, height: 480, fps: 30}, side: {type: intelrealsense, serial_number_or_name: 233522074606, width: 640, height: 480, fps: 30}}" \
+--task="Put lego brick into the transparent box" \
+--duration=60
+The --strategy.type flag selects the execution mode:
+base: Autonomous rollout with no data recording (useful for quick evaluation)
+sentry: Continuous recording with auto-upload (useful for large-scale evaluation)
+highlight: Ring buffer recording with keystroke save (useful for capturing interesting events)
+dagger: Human-in-the-loop data collection (see HIL Data Collection)
+episodic: Episode-oriented policy recording with reset phases between episodes
+All strategies support --inference.type=rtc for smooth execution with slow VLA models (Pi0, Pi0.5, SmolVLA).
+Update on GitHub
+←Cheat sheet LeLab - Lerobot GUI→
+Imitation Learning on Real-World RobotsSet up and CalibrateTeleoperateCamerasTeleoperate with camerasRecord a datasetDataset uploadRecord function1. Data Storage2. Checkpointing and Resuming3. Recording Parameters4. Keyboard Controls During RecordingTips for gathering dataTroubleshooting:Visualize a datasetReplay an episodeTrain a policyTrain using Google ColabTrain using Hugging Face JobsUpload policy checkpointsRun inference and evaluate your policy

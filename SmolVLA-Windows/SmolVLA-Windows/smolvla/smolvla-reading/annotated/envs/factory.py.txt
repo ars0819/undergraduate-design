@@ -1,0 +1,505 @@
+# 原文件 lerobot/src/lerobot/envs/factory.py
+# 原行范围 1–272
+# L 后是官方源码或本机文件的原行号。每条中文注释对应紧随其后的原文。
+# 这是静态阅读副本。请在编辑器中阅读。空行保留，节选之间标出跳过的范围。
+# L0001 原作者对相邻代码的说明。
+#!/usr/bin/env python
+
+# L0003 原版权或开源许可声明。
+# Copyright 2024 The HuggingFace Inc. team. All rights reserved.
+# L0004 原作者对相邻代码的说明。
+#
+# L0005 原版权或开源许可声明。
+# Licensed under the Apache License, Version 2.0 (the "License");
+# L0006 原版权或开源许可声明。
+# you may not use this file except in compliance with the License.
+# L0007 原版权或开源许可声明。
+# You may obtain a copy of the License at
+# L0008 原作者对相邻代码的说明。
+#
+# L0009 原版权或开源许可声明。
+#     http://www.apache.org/licenses/LICENSE-2.0
+# L0010 原作者对相邻代码的说明。
+#
+# L0011 原作者对相邻代码的说明。
+# Unless required by applicable law or agreed to in writing, software
+# L0012 原版权或开源许可声明。
+# distributed under the License is distributed on an "AS IS" BASIS,
+# L0013 原版权或开源许可声明。
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# L0014 原版权或开源许可声明。
+# See the License for the specific language governing permissions and
+# L0015 原版权或开源许可声明。
+# limitations under the License.
+# L0016 从模块 __future__ 导入 annotations。
+from __future__ import annotations
+
+# L0018 导入模块 logging。
+import logging
+# L0019 从模块 collections.abc 导入 Callable。
+from collections.abc import Callable
+# L0020 从模块 functools 导入 partial。
+from functools import partial
+# L0021 从模块 typing 导入 TYPE_CHECKING、Any。
+from typing import TYPE_CHECKING, Any
+
+# L0023 导入模块 gymnasium，简称 gym。
+import gymnasium as gym
+
+# L0025 从模块 lerobot.configs 导入 FeatureType、PolicyFeature。
+from lerobot.configs import FeatureType, PolicyFeature
+# L0026 从模块 lerobot.sim 导入 EnvDescriptor、LocalVectorEnv。
+from lerobot.sim import EnvDescriptor, LocalVectorEnv
+# L0027 从模块 lerobot.sim.integrations 导入 envhub。
+from lerobot.sim.integrations import envhub
+# L0028 从模块 lerobot.utils.constants 导入 ACTION、OBS_ENV_STATE。
+from lerobot.utils.constants import ACTION, OBS_ENV_STATE
+
+# L0030 从模块 .configs 导入 EnvConfig、HubEnvConfig、LiberoEnvConfig。
+from .configs import EnvConfig, HubEnvConfig, LiberoEnvConfig
+
+# L0032 条件 TYPE_CHECKING 成立时进入下方分支。
+if TYPE_CHECKING:
+    # L0033 从模块 lerobot.env_server 导入 RemoteVectorEnv。
+    from lerobot.env_server import RemoteVectorEnv
+
+# L0035 调用 logging.getLogger，用它的结果给 “logger” 赋值。
+logger = logging.getLogger(__name__)
+
+# L0037 原作者对相邻代码的说明。
+# Timeout of each request to a served env.
+# L0038 使用字面值 120.0给 “SERVED_TIMEOUT_S” 赋值。
+SERVED_TIMEOUT_S = 120.0
+
+
+# L0041 定义函数 make_env_config。
+def make_env_config(env_type: str, **kwargs) -> EnvConfig:
+    # L0042 开始执行可能抛出异常的代码，后续 except 或 finally 提供处理。
+    try:
+        # L0043 调用 EnvConfig.get_choice_class，用它的结果给 “cls”（当前类） 赋值。
+        cls = EnvConfig.get_choice_class(env_type)
+    # L0044 捕获这里列出的异常类型，然后执行下方的处理逻辑。
+    except KeyError as err:
+        # L0045 抛出 ValueError，中断当前路径并交给上层的异常处理。
+        raise ValueError(
+            # L0046 f 字符串片段，花括号中的表达式会被求值并插入文本。
+            f"Environment type '{env_type}' is not registered. "
+            # L0047 f 字符串片段，花括号中的表达式会被求值并插入文本。
+            f"Available: {list(EnvConfig.get_known_choices().keys())}"
+        # L0048 延续上面的语句，) from err。
+        ) from err
+    # L0049 调用 cls，用它的结果作为当前调用的返回值。
+    return cls(**kwargs)
+
+
+# L0052 选择环境侧的前后处理接口。它与 checkpoint 的策略处理器是两组独立接口。
+def make_env_pre_post_processors(
+    # L0053 “env_cfg”是当前括号中的一项，逗号将它与下一项分开。
+    env_cfg: EnvConfig,
+    # L0054 “policy_cfg”是当前括号中的一项，逗号将它与下一项分开。
+    policy_cfg: Any,
+# L0055 结束参数表。若箭头后有类型，它标注预期返回值，缩进块是函数体。
+) -> tuple[Any, Any]:
+    # L0056 文档字符串的边界。
+    """
+    # L0057 原文档中的说明或续行。
+    Create preprocessor and postprocessor pipelines for environment observations.
+
+    # L0059 原文档中的说明或续行。
+    Returns a tuple of (preprocessor, postprocessor). By default, delegates to
+    # L0060 原文档中的说明或续行。
+    ``env_cfg.get_env_processors()``.  The XVLAConfig and Cosmos3Config overrides for LIBERO environments
+    # L0061 原文档中的说明或续行。
+    stay here because they depend on the *policy* config, not the env config.
+    # L0062 文档字符串的边界。
+    """
+    # L0063 从模块 lerobot.policies.cosmos3.configuration_cosmos3 导入 Cosmos3Config。
+    from lerobot.policies.cosmos3.configuration_cosmos3 import Cosmos3Config
+    # L0064 从模块 lerobot.policies.xvla.configuration_xvla 导入 XVLAConfig。
+    from lerobot.policies.xvla.configuration_xvla import XVLAConfig
+
+    # L0066 条件 isinstance(policy_cfg, XVLAConfig) and isinstance(env_cfg, LiberoEnvConfig) 成立时进入下方分支。
+    if isinstance(policy_cfg, XVLAConfig) and isinstance(env_cfg, LiberoEnvConfig):
+        # L0067 从模块 lerobot.policies.xvla.processor_xvla 导入 make_xvla_libero_pre_post_processors。
+        from lerobot.policies.xvla.processor_xvla import make_xvla_libero_pre_post_processors
+
+        # L0069 调用 make_xvla_libero_pre_post_processors，用它的结果作为当前调用的返回值。
+        return make_xvla_libero_pre_post_processors()
+
+    # L0071 条件 isinstance(policy_cfg, Cosmos3Config) and isinstance(env_cfg, LiberoEnvConfig) 成立时进入下方分支。
+    if isinstance(policy_cfg, Cosmos3Config) and isinstance(env_cfg, LiberoEnvConfig):
+        # L0072 从模块 lerobot.policies.cosmos3.processor_cosmos3 导入 make_cosmos3_libero_pre_post_processors。
+        from lerobot.policies.cosmos3.processor_cosmos3 import make_cosmos3_libero_pre_post_processors
+
+        # L0074 调用 make_cosmos3_libero_pre_post_processors，用它的结果作为当前调用的返回值。
+        return make_cosmos3_libero_pre_post_processors()
+
+    # L0076 SmolVLA 走环境配置的默认处理器，此处返回两条空步骤流水线。
+    return env_cfg.get_env_processors()
+
+
+# L0079 创建按套件和任务 ID 索引的环境字典，每个条目包装一批环境。
+def make_env(
+    # L0080 “cfg”（配置对象）是当前括号中的一项，逗号将它与下一项分开。
+    cfg: EnvConfig,
+    # L0081 为“n_envs”（环境实例数）提供这一项的值，注意它所在的参数表或外层表达式。
+    n_envs: int = 1,
+    # L0082 为“use_async_envs”提供这一项的值，注意它所在的参数表或外层表达式。
+    use_async_envs: bool = False,
+# L0083 结束参数表。若箭头后有类型，它标注预期返回值，缩进块是函数体。
+) -> dict[str, dict[int, gym.vector.VectorEnv]]:
+    # L0084 原文档概述本段功能，创建指定套件与任务的向量环境。
+    """Build the vector envs of a config.
+
+    # L0086 以下列出调用参数及其含义。
+    Args:
+        # L0087 原文档中的说明或续行。此段讲创建指定套件与任务的向量环境。
+        cfg (`EnvConfig`):
+            # L0088 原文档中的说明或续行。此段讲创建指定套件与任务的向量环境。
+            The env config. An EnvHub repository is `HubEnvConfig(hub_path="user/repo", trust_remote_code=True)`.
+        # L0089 原文档中的说明或续行。此段讲创建指定套件与任务的向量环境。
+        n_envs (`int`, *optional*, defaults to `1`):
+            # L0090 原文档中的说明或续行。此段讲创建指定套件与任务的向量环境。
+            Number of envs in each vector env.
+        # L0091 原文档中的说明或续行。此段讲创建指定套件与任务的向量环境。
+        use_async_envs (`bool`, *optional*, defaults to `False`):
+            # L0092 原文档中的说明或续行。此段讲创建指定套件与任务的向量环境。
+            Run each env in its own worker process.
+
+    # L0094 以下说明调用者接收到的结果。
+    Returns:
+        # L0095 原文档中的说明或续行。此段讲创建指定套件与任务的向量环境。
+        `dict[str, dict[int, gym.vector.VectorEnv]]`: The vector envs, as `{suite: {task_id: env}}`. A
+        # L0096 原文档中的说明或续行。此段讲创建指定套件与任务的向量环境。
+        single-task env has one suite, with task ID 0.
+
+    # L0098 以下说明异常条件。
+    Raises:
+        # L0099 原文档对“ValueError”的说明。此段讲创建指定套件与任务的向量环境。
+        ValueError: If `n_envs` is below 1.
+        # L0100 原文档对“RuntimeError”的说明。此段讲创建指定套件与任务的向量环境。
+        RuntimeError: If an EnvHub repo's code would run without its config's `trust_remote_code`.
+        # L0101 原文档对“ModuleNotFoundError”的说明。此段讲创建指定套件与任务的向量环境。
+        ModuleNotFoundError: If the simulator, or a package the repo's `env.py` needs, is not installed.
+    # L0102 文档字符串的边界。
+    """
+    # L0103 条件 n_envs < 1 成立时进入下方分支。
+    if n_envs < 1:
+        # L0104 抛出 ValueError，中断当前路径并交给上层的异常处理。
+        raise ValueError("`n_envs` must be at least 1")
+    # L0105 条件 isinstance(cfg, str) 成立时进入下方分支。
+    if isinstance(cfg, str):
+        # L0106 抛出 TypeError，中断当前路径并交给上层的异常处理。
+        raise TypeError(
+            # L0107 字符串字面量，供上方的调用、容器或错误消息使用。
+            "make_env() no longer takes a Hub repo ID. The equivalent is "
+            # L0108 f 字符串片段，花括号中的表达式会被求值并插入文本。
+            f'make_env(HubEnvConfig(hub_path="{cfg}", trust_remote_code=True, use_native_batch=True), n_envs=...). '
+            # L0109 字符串字面量，供上方的调用、容器或错误消息使用。
+            "Without use_native_batch, LeRobot builds the envs itself, as lerobot-eval and the env server do."
+        # L0110 闭合上方尚未结束的括号。
+        )
+    # L0111 条件 type(cfg).create_envs is not EnvConfig.create_envs 成立时进入下方分支。
+    if type(cfg).create_envs is not EnvConfig.create_envs:
+        # L0112 抛出 TypeError，中断当前路径并交给上层的异常处理。
+        raise TypeError(
+            # L0113 f 字符串片段，花括号中的表达式会被求值并插入文本。
+            f"{type(cfg).__name__} overrides EnvConfig.create_envs(), which make_env no longer calls: make_env "
+            # L0114 字符串字面量，供上方的调用、容器或错误消息使用。
+            "builds every env from its config's sim_settings(). Return the simulator and its options from "
+            # L0115 字符串字面量，供上方的调用、容器或错误消息使用。
+            "sim_settings() instead, as described in https://huggingface.co/docs/lerobot/adding_benchmarks"
+        # L0116 闭合上方尚未结束的括号。
+        )
+    # L0117 条件 isinstance(cfg, HubEnvConfig) and cfg.use_native_batch 成立时进入下方分支。
+    if isinstance(cfg, HubEnvConfig) and cfg.use_native_batch:
+        # L0118 调用 _make_native_batch，用它的结果作为当前调用的返回值。
+        return _make_native_batch(cfg, n_envs, use_async_envs)
+    # L0119 获取环境描述符和可创建指定套件任务的闭包。
+    descriptor, make = _env_factory(cfg, n_envs, use_async_envs)
+    # L0120 用条件表达式在 if 前与 else 后的两个值之间选择给 “groups” 赋值。
+    groups = [task.strip() for task in cfg.task.split(",")] if cfg.task else list(descriptor.tasks)
+    # L0121 用字典推导式从可迭代对象逐项取值并构造结果作为当前调用的返回值。
+    return {
+        # L0122 用字典推导式组合任务套件与环境实例。
+        group: {task_id: make(group, task_id) for task_id in _suite(descriptor, group)} for group in groups
+    # L0123 闭合上方尚未结束的括号。
+    }
+
+
+# L0126 定义函数 make_task_env。
+def make_task_env(
+    # L0127 “cfg”（配置对象）是当前括号中的一项，逗号将它与下一项分开。
+    cfg: EnvConfig,
+    # L0128 为“task_group”（任务套件名）提供这一项的值，注意它所在的参数表或外层表达式。
+    task_group: str | None = None,
+    # L0129 为“task_id”（套件内的任务编号）提供这一项的值，注意它所在的参数表或外层表达式。
+    task_id: int | None = None,
+    # L0130 为“n_envs”（环境实例数）提供这一项的值，注意它所在的参数表或外层表达式。
+    n_envs: int = 1,
+    # L0131 为“use_async_envs”提供这一项的值，注意它所在的参数表或外层表达式。
+    use_async_envs: bool = False,
+# L0132 结束参数表。若箭头后有类型，它标注预期返回值，缩进块是函数体。
+) -> LocalVectorEnv | RemoteVectorEnv:
+    # L0133 原文档中的说明或续行。
+    """Build the local or served vector env of one task; no `task_id` means the suite's first task."""
+    # L0134 调用 _env_factory，用它的结果给 “(descriptor, make)” 赋值。
+    descriptor, make = _env_factory(cfg, n_envs, use_async_envs, task_group, task_id)
+    # L0135 组合多个布尔判断，按 Python 的短路规则求值给 “group” 赋值。
+    group = task_group or next(iter(descriptor.tasks))
+    # L0136 调用 _suite，用它的结果给 “task_ids” 赋值。
+    task_ids = _suite(descriptor, group)
+    # L0137 条件 task_id is None 成立时进入下方分支。
+    if task_id is None:
+        # L0138 用方括号按键或索引读取 task_ids给 “task_id”（套件内的任务编号） 赋值。
+        task_id = task_ids[0]
+    # L0139 条件 task_id not in task_ids 成立时进入下方分支。
+    if task_id not in task_ids:
+        # L0140 抛出 ValueError，中断当前路径并交给上层的异常处理。
+        raise ValueError(f"Unknown task ID {task_id} for {group!r}; this suite has {sorted(task_ids)}")
+    # L0141 调用 make，用它的结果作为当前调用的返回值。
+    return make(group, task_id)
+
+
+# L0144 定义函数 _make_native_batch。
+def _make_native_batch(
+    # L0145 延续上面的语句，cfg: HubEnvConfig, n_envs: int, use_async_envs: bool。
+    cfg: HubEnvConfig, n_envs: int, use_async_envs: bool
+# L0146 结束参数表。若箭头后有类型，它标注预期返回值，缩进块是函数体。
+) -> dict[str, dict[int, gym.vector.VectorEnv]]:
+    # L0147 原文档中的说明或续行。
+    """Return an EnvHub repo's own vector envs (e.g. GPU batches) unchanged."""
+    # L0148 条件 cfg.server is not None 成立时进入下方分支。
+    if cfg.server is not None:
+        # L0149 抛出 ValueError，中断当前路径并交给上层的异常处理。
+        raise ValueError("use_native_batch runs locally; it cannot use an env server")
+    # L0150 条件 not cfg.hub_path 成立时进入下方分支。
+    if not cfg.hub_path:
+        # L0151 抛出 ValueError，中断当前路径并交给上层的异常处理。
+        raise ValueError("--env.hub_path is required for an EnvHub environment")
+    # L0152 原作者对相邻代码的说明。
+    # Provider configs (Isaac Lab Arena, Unitree G1) subclass HubEnvConfig and also pass themselves as `cfg`,
+    # L0153 原作者对相邻代码的说明。
+    # since their options are config fields.
+    # L0154 用条件表达式在 if 前与 else 后的两个值之间选择给 “provider” 赋值。
+    provider = None if type(cfg) is HubEnvConfig else cfg
+    # L0155 调用 envhub.make_envs，用它的结果作为当前调用的返回值。
+    return envhub.make_envs(
+        # L0156 延续上面的语句，cfg.hub_path, n_envs, use_async_envs, cfg.trust_remote_code, cfg=provider, **cfg.make_env_kwargs。
+        cfg.hub_path, n_envs, use_async_envs, cfg.trust_remote_code, cfg=provider, **cfg.make_env_kwargs
+    # L0157 闭合上方尚未结束的括号。
+    )
+
+
+# L0160 统一选择环境构建路径。原评测使用本机仿真。
+def _env_factory(
+    # L0161 “cfg”（配置对象）是当前括号中的一项，逗号将它与下一项分开。
+    cfg: EnvConfig,
+    # L0162 “n_envs”（环境实例数）是当前括号中的一项，逗号将它与下一项分开。
+    n_envs: int,
+    # L0163 “use_async_envs”是当前括号中的一项，逗号将它与下一项分开。
+    use_async_envs: bool,
+    # L0164 为“task_group”（任务套件名）提供这一项的值，注意它所在的参数表或外层表达式。
+    task_group: str | None = None,
+    # L0165 为“task_id”（套件内的任务编号）提供这一项的值，注意它所在的参数表或外层表达式。
+    task_id: int | None = None,
+# L0166 结束参数表。若箭头后有类型，它标注预期返回值，缩进块是函数体。
+) -> tuple[EnvDescriptor, Callable[[str, int], LocalVectorEnv | RemoteVectorEnv]]:
+    # L0167 原文档概述本段功能，选择本地或远程环境创建方式并生成任务构造器。
+    """Return the env's descriptor, and a function building the vector env of one of its tasks."""
+    # L0168 向环境配置读取具体仿真设置。
+    settings = cfg.sim_settings()
+    # L0169 读取属性 cfg.server给 “server” 赋值。
+    server = cfg.server
+    # L0170 条件 server is not None 成立时进入下方分支。
+    if server is not None:
+        # L0171 从模块 lerobot.env_server 导入 EnvClient、RemoteVectorEnv。
+        from lerobot.env_server import EnvClient, RemoteVectorEnv
+
+        # L0173 条件 cfg.max_parallel_tasks != 1 成立时进入下方分支。
+        if cfg.max_parallel_tasks != 1:
+            # L0174 抛出 ValueError，中断当前路径并交给上层的异常处理。
+            raise ValueError("A served environment runs one task at a time")
+        # L0175 调用 partial，用它的结果给 “connect” 赋值。
+        connect = partial(
+            # L0176 “EnvClient”是当前括号中的一项，逗号将它与下一项分开。
+            EnvClient,
+            # L0177 延续上面的语句，server.endpoint,。本段处理选择本地或远程环境创建方式并生成任务构造器。
+            server.endpoint,
+            # L0178 延续上面的语句，server.deployment or cfg.type,。本段处理选择本地或远程环境创建方式并生成任务构造器。
+            server.deployment or cfg.type,
+            # L0179 “SERVED_TIMEOUT_S”是当前括号中的一项，逗号将它与下一项分开。
+            SERVED_TIMEOUT_S,
+            # L0180 为“handshake_timeout_s”提供这一项的值，注意它所在的参数表或外层表达式。
+            handshake_timeout_s=server.handshake_timeout_s,
+            # L0181 为“zenoh_config_path”提供这一项的值，注意它所在的参数表或外层表达式。
+            zenoh_config_path=server.zenoh_config_path,
+            # L0182 为“max_payload_bytes”提供这一项的值，注意它所在的参数表或外层表达式。
+            max_payload_bytes=server.max_payload_bytes,
+        # L0183 闭合上方尚未结束的括号。
+        )
+        # L0184 调用 connect，用它的结果给 “probe” 赋值。
+        probe = connect()
+        # L0185 开始执行可能抛出异常的代码，后续 except 或 finally 提供处理。
+        try:
+            # L0186 调用 probe.describe，用它的结果给 “descriptor” 赋值。
+            descriptor = probe.describe()
+        # L0187 离开 try 时执行这里的清理，即使前面的路径发生异常。
+        finally:
+            # L0188 调用 probe.close，关闭对象或释放关联资源。
+            probe.close()
+        # L0189 调用 check_served 执行操作。
+        check_served(descriptor.config, settings, server.endpoint)
+
+        # L0191 定义函数 make。
+        def make(group: str, task_id: int) -> LocalVectorEnv | RemoteVectorEnv:
+            # L0192 调用 RemoteVectorEnv，用它的结果作为当前调用的返回值。
+            return RemoteVectorEnv(
+                # L0193 延续上面的语句，connect(encoding=server.encoding, jpeg_quality=server.jpeg_quality),。
+                connect(encoding=server.encoding, jpeg_quality=server.jpeg_quality),
+                # L0194 “n_envs”（环境实例数）是当前括号中的一项，逗号将它与下一项分开。
+                n_envs,
+                # L0195 “group”是当前括号中的一项，逗号将它与下一项分开。
+                group,
+                # L0196 “task_id”（套件内的任务编号）是当前括号中的一项，逗号将它与下一项分开。
+                task_id,
+                # L0197 延续上面的语句，use_async_envs and n_envs > 1,。
+                use_async_envs and n_envs > 1,
+                # L0198 “descriptor”是当前括号中的一项，逗号将它与下一项分开。
+                descriptor,
+            # L0199 闭合上方尚未结束的括号。
+            )
+
+        # L0201 打包成元组，元素顺序由逗号分隔的位置决定作为当前调用的返回值。
+        return descriptor, make
+
+    # L0203 把配置解析为 SimConfig，以便动态定位 LIBERO 接入模块。
+    sim = cfg.sim_config()
+    # L0204 仅在显式选择异步且环境多于一个时使用异步路径。
+    parallel = use_async_envs and n_envs > 1
+    # L0205 原作者的注释。此处在讲选择本地或远程环境创建方式并生成任务构造器。
+    # Reuse the env built to read the descriptor for its own task instead of building it twice.
+    # L0206 构造第一个 LocalVectorEnv，以获取任务和特征描述符并尽量复用环境。
+    first = [LocalVectorEnv(sim, n_envs, task_group, task_id, parallel)]
+    # L0207 读取属性 descriptor给 “descriptor” 赋值。
+    descriptor = first[0].descriptor
+
+    # L0209 定义函数 make_local。
+    def make_local(group: str, task_id: int) -> LocalVectorEnv | RemoteVectorEnv:
+        # L0210 条件 first 成立时进入下方分支。
+        if first:
+            # L0211 调用 first.pop，用它的结果给 “env” 赋值。
+            env = first.pop()
+            # L0212 条件 (group, task_id) == (env.task_group, env.task_id) 成立时进入下方分支。
+            if (group, task_id) == (env.task_group, env.task_id):
+                # L0213 引用已有的值 env作为当前调用的返回值。
+                return env
+            # L0214 调用 env.close，关闭对象或释放关联资源。
+            env.close()
+        # L0215 原作者对相邻代码的说明。
+        # With the descriptor given, the other tasks build their sims on first use.
+        # L0216 调用 LocalVectorEnv，用它的结果作为当前调用的返回值。
+        return LocalVectorEnv(sim, n_envs, group, task_id, parallel, descriptor)
+
+    # L0218 打包成元组，元素顺序由逗号分隔的位置决定作为当前调用的返回值。
+    return descriptor, make_local
+
+
+# L0221 定义函数 _suite。
+def _suite(descriptor: EnvDescriptor, group: str) -> list[int]:
+    # L0222 原文档中的说明或续行。
+    """Return the task IDs of one suite of the env, or raise naming the suites it has."""
+    # L0223 条件 group not in descriptor.tasks 成立时进入下方分支。
+    if group not in descriptor.tasks:
+        # L0224 抛出 ValueError，中断当前路径并交给上层的异常处理。
+        raise ValueError(f"Unknown task {group!r}; this environment has {sorted(descriptor.tasks)}")
+    # L0225 用方括号按键或索引读取 descriptor.tasks作为当前调用的返回值。
+    return descriptor.tasks[group]
+
+
+# L0228 将仿真描述符的输入输出维度转换成策略工厂认识的特征定义。
+def descriptor_features(descriptor: EnvDescriptor) -> dict[str, PolicyFeature]:
+    # L0229 原文档中的说明或续行。
+    """Return an env's observation and action features, typed as for a dataset; images stay channel last."""
+    # L0230 创建字典，用键查找对应的值给 “features” 赋值。
+    features = {}
+    # L0231 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+    for spec in descriptor.features:
+        # L0232 条件 spec.kind == "rgb" 成立时进入下方分支。
+        if spec.kind == "rgb":
+            # L0233 读取属性 FeatureType.VISUAL给 “kind” 赋值。
+            kind = FeatureType.VISUAL
+        # L0234 进入对应的另一条分支，注意用缩进找到配对的判断或异常块。
+        else:
+            # L0235 用条件表达式在 if 前与 else 后的两个值之间选择给 “kind” 赋值。
+            kind = FeatureType.ENV if spec.name == OBS_ENV_STATE else FeatureType.STATE
+        # L0236 调用 PolicyFeature，用它的结果给 “features[spec.name]” 赋值。
+        features[spec.name] = PolicyFeature(type=kind, shape=spec.shape)
+    # L0237 调用 PolicyFeature，用它的结果给 “features[ACTION]” 赋值。
+    features[ACTION] = PolicyFeature(type=FeatureType.ACTION, shape=descriptor.action_feature.shape)
+    # L0238 引用已有的值 features作为当前调用的返回值。
+    return features
+
+
+# L0241 定义函数 check_served。
+def check_served(served: dict[str, Any], expected: dict[str, Any], endpoint: str) -> None:
+    # L0242 原文档中的说明或续行。
+    """Raise if the server runs a different env than ``expected``; warn if only its kwargs differ."""
+
+    # L0244 定义函数 plain。
+    def plain(value: Any) -> Any:
+        # L0245 原作者对相邻代码的说明。
+        # Make YAML, wire and dataclass values comparable: tuples become lists, recursively.
+        # L0246 条件 isinstance(value, dict) 成立时进入下方分支。
+        if isinstance(value, dict):
+            # L0247 用字典推导式从可迭代对象逐项取值并构造结果作为当前调用的返回值。
+            return {key: plain(item) for key, item in value.items()}
+        # L0248 条件 isinstance(value, (list, tuple)) 成立时进入下方分支。
+        if isinstance(value, (list, tuple)):
+            # L0249 用列表推导式从可迭代对象逐项取值并构造结果作为当前调用的返回值。
+            return [plain(item) for item in value]
+        # L0250 引用已有的值 value作为当前调用的返回值。
+        return value
+
+    # L0252 原作者对相邻代码的说明。
+    # A server opens any of the tasks it configures (all of them for an empty list), so the requested tasks
+    # L0253 原作者对相邻代码的说明。
+    # are checked against the descriptor's task list instead.
+    # L0254 用列表推导式从可迭代对象逐项取值并构造结果给 “errors” 赋值。
+    errors = [
+        # L0255 f 字符串片段，花括号中的表达式会被求值并插入文本。
+        f"{key}: server {served.get(key)!r}, expected {value!r}"
+        # L0256 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+        for key, value in expected.items()
+        # L0257 条件 key not in ("kwargs", "task") and value is not None and plain(value) != plain(served.get(key)) 成立时进入下方分支。
+        if key not in ("kwargs", "task") and value is not None and plain(value) != plain(served.get(key))
+    # L0258 闭合上方尚未结束的括号。
+    ]
+    # L0259 组合多个布尔判断，按 Python 的短路规则求值给 “served_kwargs” 赋值。
+    served_kwargs = served.get("kwargs") or {}
+    # L0260 原作者对相邻代码的说明。
+    # hub_path and trust_remote_code may differ: the env server loads EnvHub repos from its own image.
+    # L0261 用列表推导式从可迭代对象逐项取值并构造结果给 “differences” 赋值。
+    differences = [
+        # L0262 f 字符串片段，花括号中的表达式会被求值并插入文本。
+        f"kwargs.{key}: server {served_kwargs.get(key)!r}, expected {value!r}"
+        # L0263 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+        for key, value in (expected.get("kwargs") or {}).items()
+        # L0264 条件 key not in ("hub_path", "trust_remote_code") and plain(value) != plain(served_kwargs.get(key)) 成立时进入下方分支。
+        if key not in ("hub_path", "trust_remote_code") and plain(value) != plain(served_kwargs.get(key))
+    # L0265 闭合上方尚未结束的括号。
+    ]
+    # L0266 条件 errors 成立时进入下方分支。
+    if errors:
+        # L0267 抛出 ValueError，中断当前路径并交给上层的异常处理。
+        raise ValueError(
+            # L0268 f 字符串片段，花括号中的表达式会被求值并插入文本。
+            f"The env server at {endpoint} runs another environment than this command describes "
+            # L0269 f 字符串片段，花括号中的表达式会被求值并插入文本。
+            f"({'; '.join(errors)}). Pass the same --env options as the server's configuration."
+        # L0270 闭合上方尚未结束的括号。
+        )
+    # L0271 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+    for difference in differences:
+        # L0272 调用 logger.warning 执行操作。
+        logger.warning("The env server at %s differs in %s", endpoint, difference)

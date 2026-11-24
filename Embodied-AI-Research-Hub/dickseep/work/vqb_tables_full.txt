@@ -1,0 +1,443 @@
+wrote 35 tables -> D:\Desktop\dickseep\work\vqb_tables_full.txt
+n LIBERO (success %). Each setting uses 200 episodes, except X-VLA with 190. All formats use the grids in Section 3. Bold entries are below 50%; this visual threshold is not a significance test.
+  Model | Suite | Baseline | W3 | W4 | W8 | W4A4 | W4A8 | W8A8
+  π0.5\pi_{0.5} | Spatial | 99.0 | 99.0 | 97.5 | 98.5 | 0.0 | 99.0 | 98.5
+  Object | 99.0 | 100.0 | 99.0 | 99.0 | 0.0 | 100.0 | 99.0
+  Goal | 94.0 | 95.5 | 96.5 | 96.0 | 0.0 | 96.5 | 97.0
+  Long (10) | 95.0 | 94.5 | 94.0 | 96.5 | 0.0 | 96.5 | 93.5
+  π0\pi_{0} | Spatial | 78.0 | 71.0 | 69.0 | 77.5 | 61.0 | 64.5 | 74.5
+  Object | 87.5 | 76.0 | 90.5 | 86.5 | 74.0 | 88.5 | 88.5
+  Goal | 84.5 | 64.5 | 79.0 | 83.0 | 58.0 | 79.0 | 81.0
+  Long (10) | 48.5 | 40.0 | 41.0 | 47.5 | 31.0 | 41.0 | 45.0
+  OpenVLA-OFT | Spatial | 100.0 | 78.0 | 96.0 | 99.5 | 0.0 | 21.5 | 36.0
+  Object | 97.5 | 74.5 | 93.5 | 98.0 | 0.0 | 2.5 | 2.5
+  Goal | 96.0 | 71.5 | 82.0 | 97.5 | 0.0 | 2.0 | 13.0
+  Long (10) | 92.5 | 8.0 | 88.5 | 93.5 | 0.0 | 76.0 | 64.0
+  X-VLA | Spatial | 96.8 | 96.8 | 95.8 | 97.4 | 0.0 | 96.3 | 96.3
+  Object | 97.9 | 96.8 | 97.9 | 97.9 | 0.0 | 98.4 | 97.9
+  Goal | 97.4 | 97.4 | 96.8 | 96.3 | 0.0 | 97.9 | 96.3
+  Long (10) | 97.9 | 94.7 | 95.8 | 97.4 | 0.0 | 96.8 | 98.4
+
+=== Table 2 (id=S5.T2) ===
+CAPTION: Table 2: X-VLA beyond LIBERO. SIMPLER-VM averages variants within task families and then averages families (864 episodes per setting). CALVIN reports completed subtasks out of five (1,000 chains, or 300 for W4A4). VLABench reports mean progress in percent with the budgets in App. B. Unequal-coverage SIMPLER-VA runs are excluded.
+  Benchmark (metric) | Baseline | W3 | W4 | W8 | W4A4 | W4A8 | W8A8
+  SIMPLER-VM (SR %) | 67.6 | 64.6 | 65.6 | 67.5 | 3.9 | 67.7 | 67.1
+  CALVIN ABC→\rightarrowD (Avg. Len.) | 4.28 | 4.13 | 4.20 | 4.25 | 0.00 | 4.20 | 4.27
+  VLABench (Avg. PS %) | 35.0 | 33.1 | 32.7 | 34.8 | 0.0 | 34.0 | 33.6
+
+=== Table 3 (id=S5.T3) ===
+CAPTION: Table 3: Component-only W4A4 on LIBERO-Spatial (success %). Only the indicated component is quantized; baseline denotes the released-precision policy.
+  Model | Baseline | VE | LLM | AH
+  π0.5\pi_{0.5} | 99.0 | 37.0 | 0.0 | 70.5
+  π0\pi_{0} | 78.0 | 76.5 | 72.0 | 58.0
+  OpenVLA-OFT | 100.0 | 0.0 | 0.0 | 0.0
+  X-VLA | 96.8 | 67.9 | 96.3 | 0.0
+
+=== Table 4 (id=S5.T4) ===
+CAPTION: Table 4: π0.5\pi_{0.5}-Spatial W4A4 scope controls (SR %, 200 episodes; Wilson intervals). New isolated/union/126-layer calibrations use task-0 states 20–21; the full-head calibrated cell is reused from the original states-0–1 experiment. Smoothing and clipping act on selected AH layers at α=0.5\alpha=0.5. The two split rows add either 36 gate/up projections or five conditioning/input/output projections to the same 126-layer subset. Replay columns describe the uncalibrated configurations only; dashes denote unmeasured entries. The 131-layer split differs from the 131-layer “all but adaRMS scope in Table eftab:lattice.
+  AH subset | #L | RTN | Calibrated | Exec. MAE | Gripper bias
+  full precision | 0 | 99.0 [96,100] | – | – | –
+  attention | 72 | 98.0 [95,99] | 98.5 [96,99] | 0.012 | +0.005
+  adaRMS | 36 | 93.5 [89,96] | 97.5 [94,99] | 0.037 | +0.007
+  attention + adaRMS | 108 | 1.5 [1,4] | 97.5 [94,99] | 0.125 | +0.073
+  + down_proj | 126 | 7.0 [4,11] | 99.0 [96,100] | 0.138 | -0.057
+  126 + gate/up | 162 | 26.5 [21,33] | – | 0.129 | +0.051
+  126 + five other layers | 131 | 78.5 [72,84] | – | 0.089 | -0.019
+  full action head | 167 | 70.5 [64,76] | 98.5 [96,99] | 0.089 | -0.004
+
+=== Table 5 (id=S5.T5) ===
+CAPTION: Table 5: Layer-group interventions on LIBERO-Spatial. Parameters count selected linear weights; Δ\Delta is the success change from the corresponding baseline in pp. OFT and π0.5\pi_{0.5} use 200 episodes; X-VLA uses 190, except its MLP fc2 group with 191. Differences are computed from unrounded success rates before rounding to one decimal place.
+  Quantized layers | Params | SR % | Δ\Delta
+  OpenVLA-OFT, W4A8, baseline 100.0%
+  fc1 | 117.4M | 99.0 | -1.0
+  residual blocks (2) | 33.6M | 99.5 | -0.5
+  fc2 | 28.7K | 18.0 | -82.0
+  all four layers | 151.0M | 20.5 | -79.5
+  X-VLA, W4A4, baseline 96.8%
+  attn.qkv (24) | 75.5M | 11.6 | -85.3
+  attn.proj (24) | 25.2M | 96.3 | -0.5
+  mlp.fc1 (24) | 100.7M | 66.3 | -30.5
+  mlp.fc2 (24) | 100.7M | 94.2 | -2.6
+  all 98 layers | 304.1M | 0.0 | -96.8
+  π0.5\pi_{0.5}, W4A4, baseline 99.0%
+  action_out_proj | 32.8K | 97.0 | -2.0
+
+=== Table 6 (id=S5.T6) ===
+CAPTION: Table 6: OFT-Long W3 localization (success %, 200 episodes per cell; 95% Wilson intervals). W3 uses asymmetric group-128 weights unless specified. The final three rows protect only the action head’s output projection among eligible linear layers: 441 layers remain quantized. Other non-linear/excluded operations retain released precision. Layer counts are checked against run metadata.
+  Quantized scope | Grid | #L | Params | SR % [CI]
+  none (baseline) | – | 0 | – | 92.5 [88,95]
+  end-to-end | W3 | 442 | 7.44B | 8.0 [5,13]
+  LLM only | W3 | 224 | 6.48B | 92.5 [88,95]
+  VE only | W3 | 209 | 728M | 95.5 [92,98]
+  VE + MP + LLM (all but the AH) | W3 | 438 | 7.29B | 95.0 [91,97]
+  AH only | W3 | 4 | 151.0M | 9.5 [6,14]
+  fc1 only | W3 | 1 | 117.4M | 94.0 [90,97]
+  residual blocks only | W3 | 2 | 33.6M | 94.0 [90,97]
+  fc2 only | W3 | 1 | 28.7K | 12.5 [9,18]
+  fc2 only, evaluation seed 1 | W3 | 1 | 28.7K | 10.5 [7,16]
+  AH only | W3, group 64 | 4 | 151.0M | 12.5 [9,18]
+  AH only | W3, group 32 | 4 | 151.0M | 17.5 [13,23]
+  all but AH fc2 (441/442 layers) | W3 | 441 | 7.44B | 93.5 [89,96]
+  evaluation seed 1 | W3 | 441 | 7.44B | 91.5 [87,95]
+  evaluation seed 2 | W3 | 441 | 7.44B | 91.0 [86,94]
+
+=== Table 7 (id=S5.T7) ===
+CAPTION: Table 7: OFT protected-output comparisons (SR %, 200 episodes; Wilson intervals for protected cells). Both weights and input activations of the AH output projection remain at released precision; 441 other eligible linear layers are quantized (VE 209, MP 5, LLM 224, AH 3). Protected scores are within 2.5 pp of the respective baselines across the tested formats and suites. The W3 Long assignment yields 93.5/91.5/91.0% across three seeds.
+   |  | W4A8 | W8A8
+  Suite | Baseline | All layers | Protect fc2 | All layers | Protect fc2
+  Spatial | 100.0 | 21.5 | 97.5 [94,99] | 36.0 | 99.0 [96,100]
+  Object | 97.5 | 2.5 | 97.0 [94,99] | 2.5 | 97.5 [94,99]
+  Goal | 96.0 | 2.0 | 98.0 [95,99] | 13.0 | 97.5 [94,99]
+  Long | 92.5 | 76.0 | 94.0 [90,97] | 64.0 | 93.5 [89,96]
+
+=== Table 8 (id=S5.T8) ===
+CAPTION: Table 8: Weight-grid controls for end-to-end π0.5\pi_{0.5} on LIBERO-Spatial (success %, 200 episodes). Sym./Asym. denote symmetric/asymmetric grids. Asymmetric group-128 entries are the main presets from Table 1, reused here rather than newly measured. W4 point estimates span 97–98%.
+  Bits | Granularity | Sym. | Asym.
+  W3 | per-channel | 0.0 | 20.0
+  group-64 | 97.5 | 97.0
+  group-128 | 96.0 | 99.0
+  W4 | per-channel | 98.0 | 97.5
+  group-64 | 97.0 | 97.5
+  group-128 | 98.0 | 97.5
+
+=== Table 9 (id=S5.T9) ===
+CAPTION: Table 9: W4A4 smoothing-and-clipping controls on LIBERO-Spatial (SR %, 200 episodes). Component-only settings use α=0.5\alpha=0.5; the final two rows specify end-to-end strength. New cells use task-0 states 20–21. The π0.5\pi_{0.5} LLM/AH/end-to-end calibrated values reuse the original states-0–1 cells; its VE result (80.0%) is new. MP is not calibrated for the π\pi models; OFT end-to-end includes MP and observes 204/209 VE layers. Coverage and disjoint-set controls are detailed in App. C.
+   | π0.5\pi_{0.5} (99.0) | π0\pi_{0} (78.0) | OFT (100.0)
+  Quantized scope | RTN | calibrated | RTN | calibrated | RTN | calibrated
+  VE only | 37.0 | 80.0 | 76.5 | 72.0 | 0.0 | 0.0
+  LLM only | 0.0 | 70.5 | 72.0 | 11.0 | 0.0 | 33.0
+  AH only | 70.5 | 98.5 | 58.0 | 39.5 | 0.0 | 38.5
+  end-to-end, α\alpha=0.5 | 0.0 | 0.0 | 61.0 | 10.5 | 0.0 | 0.0
+  end-to-end, α\alpha=0.75 | 0.0 | 91.5 | 61.0 | 8.0 | 0.0 | 9.5
+
+=== Table 10 (id=S5.T10) ===
+CAPTION: Table 10: Real-kernel measurements on OpenVLA-OFT (LLM only, RTX 4090, batch size one, 20 LIBERO episodes). Memory is peak CUDA allocation. Timings are medians of episode means. Control calls include cached actions; full inference generates a new action chunk. See App. F for timer definitions.
+  Method | Memory (GiB) | Control call (ms) | Full inference (ms)
+  BF16 | 15.0 | 18.8 | 139.9
+  AWQ | 6.1 | 24.1 | 181.1
+  NF4 | 6.3 | 20.2 | 152.6
+  LLM.int8() | 9.0 | 48.3 | 379.5
+  SmoothQuant | 9.0 | 23.8 | 181.8
+
+=== Table 11 (id=S5.T11) ===
+CAPTION: Table 11: Franka Research 3 task success (%), 50 rollouts per condition. Each model is separately fine-tuned for the robot study; these are within-robot precision comparisons.
+  Task | Model | SR (%)
+  BF16 | W3 | W4 | W8 | W4A8 | W8A8
+  Pick | OpenVLA-OFT | 88.0 | 12.0 | 54.0 | 82.0 | 14.0 | 86.0
+  π0.5\pi_{0.5} | 84.0 | 10.0 | 62.0 | 86.0 | 22.0 | 80.0
+  Pick-and-Place | OpenVLA-OFT | 74.0 | 6.0 | 34.0 | 74.0 | 16.0 | 70.0
+  π0.5\pi_{0.5} | 80.0 | 16.0 | 56.0 | 76.0 | 32.0 | 82.0
+
+=== Table 12 (id=A1.T12) ===
+CAPTION: Table 12: Main RTN presets. W2 uses the W3/W4 weight-grid convention. Additional activation widths and alternative weight grids are restricted to the corresponding ablations.
+  Preset | Weight bits | Weight grid | Activation grid
+  W3 | 3 | Asymmetric, group 128 | Released precision
+  W4 | 4 | Asymmetric, group 128 | Released precision
+  W8 | 8 | Symmetric, per output channel | Released precision
+  W4A4 | 4 | Asymmetric, group 128 | 4-bit symmetric, per token
+  W4A8 | 4 | Asymmetric, group 128 | 8-bit symmetric, per token
+  W8A8 | 8 | Symmetric, per output channel | 8-bit symmetric, per token
+
+=== Table 13 (id=A1.T13) ===
+CAPTION: Table 13: Selected linear-layer counts / weight parameters in millions for the LIBERO-Spatial W4 end-to-end scopes. Excluded modules are not counted. These are quantized linear weights, not total model parameters or memory measurements. Zero denotes an empty separate scope.
+  Model | VE | MP | LLM | AH
+  π0.5\pi_{0.5} | 162 / 411.1 | 1 / 2.4 | 126 / 1981.8 | 167 / 430.0
+  π0\pi_{0} | 162 / 411.1 | 1 / 2.4 | 126 / 1981.8 | 131 / 314.7
+  OpenVLA-OFT | 209 / 728.3 | 5 / 88.2 | 224 / 6476.0 | 4 / 151.0
+  X-VLA | 96 / 335.0 | 0 / 0.0 | 72 / 151.0 | 98 / 304.1
+
+=== Table 14 (id=A2.T14) ===
+CAPTION: Table 14: Checkpoint identifiers recorded for the main simulation sweeps. Each π\pi checkpoint and the X-VLA LIBERO checkpoint are shared across their four suites. The lower block gives revisions recorded by the four LIBERO diagnostic recollections.
+  Model / setting | Checkpoint identifier
+  OFT / Spatial | moojink/openvla-7b-oft-finetuned-libero-spatial
+  OFT / Object | moojink/openvla-7b-oft-finetuned-libero-object
+  OFT / Goal | moojink/openvla-7b-oft-finetuned-libero-goal
+  OFT / Long | moojink/openvla-7b-oft-finetuned-libero-10
+  π0\pi_{0} / LIBERO | lerobot/pi0_libero_finetuned_v044
+  π0.5\pi_{0.5} / LIBERO | lerobot/pi05_libero_finetuned_v044
+  X-VLA / LIBERO | 2toINF/X-VLA-Libero
+  X-VLA / SIMPLER-VM | 2toINF/X-VLA-Google-Robot
+  X-VLA / CALVIN | 2toINF/X-VLA-Calvin-ABC_D
+  X-VLA / VLABench | 2toINF/X-VLA-VLABench
+  Recollection checkpoints: recorded revision
+  OFT / Spatial | 6d0231af0e48c5985f1ff86908f4674b84bc049b
+  π0\pi_{0} / LIBERO | 45dcc8fc0e02601c8ccf0554fbd1d26a55070c1f
+  π0.5\pi_{0.5} / LIBERO | 8e174154ef5f6c60a8da12ae99c303d8963138c1
+  X-VLA / LIBERO | 129e71460678b7236cee6fc9707f09d9fa0c3590
+
+=== Table 15 (id=A3.T15) ===
+CAPTION: Table 15: Calibration scope and strength for π0.5\pi_{0.5}-Spatial at W4A4 (200 evaluation episodes). Statistics use two unquantized-policy episodes, with smoothing strength α=0.5\alpha=0.5 unless noted and 99.9th-percentile clipping. VE+LLM+AH excludes the quantized projector. These are calibration controls, not an optimized SmoothQuant comparison.
+  Quantized scope | Calibrated | SR %
+  AH only | none | 70.5
+   | AH | 98.5
+  LLM only | none | 0.0
+   | LLM | 70.5
+  end-to-end | none | 0.0
+   | AH | 0.0
+   | LLM | 0.0
+   | VE+LLM+AH | 0.0
+   | VE+LLM+AH, α=0.75\alpha{=}0.75 | 91.5
+
+=== Table 16 (id=A3.T16) ===
+CAPTION: Table 16: Calibration-set stability for π0.5\pi_{0.5}-Spatial at W4A4 (SR %, 200 evaluation episodes on init states 0–19 per cell). Each column calibrates on a different two-episode set; the 0–1 column is the original run, whose calibration episodes overlap the evaluation states, and the three others are disjoint from them and from each other. The 95% Wilson intervals for the disjoint sets are: AH only, [93.6, 98.6] for each set; end-to-end, [85.6, 93.8], [82.8, 91.8], [85.6, 93.8].
+   | calibration init states (task 0)
+  Configuration | 0–1 | 20–21 | 22–23 | 24–25
+  AH only, α=0.5\alpha{=}0.5 | 98.5 | 97.0 | 97.0 | 97.0
+  end-to-end VE+LLM+AH, α=0.75\alpha{=}0.75 | 91.5 | 90.5 | 88.0 | 90.5
+
+=== Table 17 (id=A3.T17) ===
+CAPTION: Table 17: π0\pi_{0}-Spatial W4A4 calibration controls (SR %, 200 episodes). Two unquantized episodes at task-0 states 20–21 provide statistics; MP is not calibrated. Dashes denote unmeasured settings. Calibration lowers the measured success point estimates at every scope; the smoothing-strength sweep does not recover the end-to-end baseline.
+  Quantized scope | RTN W4A4 | calibrated α\alpha=0.25 | α\alpha=0.5 | α\alpha=0.75
+  VE only | 76.5 | – | 72.0 | –
+  LLM only | 72.0 | – | 11.0 | –
+  AH only | 58.0 | – | 39.5 | –
+  end-to-end | 61.0 | 9.0 | 10.5 | 8.0
+
+=== Table 18 (id=A4.T18) ===
+CAPTION: Table 18: Selected independent evaluation-seed replications on LIBERO-Spatial. Each run uses 200 episodes, or 190 for X-VLA. These repetitions do not vary the training checkpoint or calibration-data selection.
+  Cell | SR % across seeds
+  π0.5\pi_{0.5} attn++adaRMS (W4A4) | 1.5 / 4.0 / 2.5
+  π0.5\pi_{0.5} all-AH (W4A4) | 70.5 / 70.5 / 68.5
+  π0.5\pi_{0.5} down_proj (W4A4) | 83.5 / 86.0
+  π0.5\pi_{0.5} attention (W4A4) | 98.0 / 98.5
+  π0.5\pi_{0.5} adaRMS (W4A4) | 93.5 / 95.5
+  X-VLA attention (W4A4) | 13.2 / 13.7
+  X-VLA qkv (W4A4) | 11.6 / 14.7
+  OFT fc2 (W4A8) | 18.0 / 17.0
+
+=== Table 19 (id=A4.T19) ===
+CAPTION: Table 19: Task-clustered uncertainty for selected contrasts. A and B are success rates (%); Δ=A−B\Delta=A-B in pp. Intervals are two-stage bootstrap percentiles (5,000 draws): task identities are paired across cells, but episodes within each selected task are resampled independently. The procedure does not preserve paired initial-state outcomes.
+  Contrast | A | B | Δ\Delta | 95% interval
+  π0.5\pi_{0.5} Spatial W4A4: attention vs. baseline | 98.0 | 99.0 | -1.0 | [-4.0, +1.0]
+  π0.5\pi_{0.5} Spatial W4A4: adaRMS vs. baseline | 93.5 | 99.0 | -5.5 | [-11.5, -1.0]
+  π0.5\pi_{0.5} Spatial W4A4: attention+adaRMS vs. baseline | 1.5 | 99.0 | -97.5 | [-100.0, -93.0]
+  π0.5\pi_{0.5} Spatial W4A4: full head (167) vs. 126-layer subset | 70.5 | 7.0 | +63.5 | [+46.0, +80.5]
+  π0.5\pi_{0.5} Spatial W4A4: 126 + five conditioning layers (131) vs. 126 | 78.5 | 7.0 | +71.5 | [+51.0, +90.5]
+  π0.5\pi_{0.5} Spatial W4A4: 126 + gate/up (162) vs. 126 | 26.5 | 7.0 | +19.5 | [+6.5, +34.5]
+  π0.5\pi_{0.5} Spatial W4A4: full head vs. baseline | 70.5 | 99.0 | -28.5 | [-46.5, -11.5]
+  π0.5\pi_{0.5} Spatial W4A4, AH-calibrated: attention+adaRMS vs. baseline | 97.5 | 99.0 | -1.5 | [-5.0, +1.5]
+  π0.5\pi_{0.5} Spatial W4A4, AH-calibrated: 126-layer subset vs. baseline | 99.0 | 99.0 | +0.0 | [-2.5, +2.5]
+  π0.5\pi_{0.5} Spatial W4A4, calibrated end-to-end (α\alpha=0.75) vs. baseline | 91.5 | 99.0 | -7.5 | [-16.5, +0.0]
+  π0.5\pi_{0.5} Object W4A4: full head vs. 126-layer subset | 60.0 | 1.0 | +59.0 | [+37.5, +78.0]
+  X-VLA Spatial W4A4: MLP fc1+fc2 vs. baseline | 24.2 | 96.8 | -72.6 | [-91.6, -49.5]
+  OFT Spatial W4A8: fc2 only vs. residual blocks only | 18.0 | 99.5 | -81.5 | [-92.5, -68.0]
+  OFT Spatial W4A8: end-to-end vs. baseline | 21.5 | 100.0 | -78.5 | [-91.5, -64.5]
+  OFT Spatial W4A8: all but fc2 vs. baseline | 97.5 | 100.0 | -2.5 | [-6.0, +0.0]
+  OFT Object W4A8: all but fc2 vs. baseline | 97.0 | 97.5 | -0.5 | [-5.0, +4.0]
+  OFT Goal W4A8: all but fc2 vs. baseline | 98.0 | 96.0 | +2.0 | [-2.5, +8.0]
+  OFT Long W4A8: all but fc2 vs. baseline | 94.0 | 92.5 | +1.5 | [-6.0, +10.0]
+  OFT Long W3: end-to-end vs. baseline | 8.0 | 92.5 | -84.5 | [-96.5, -66.5]
+  OFT Long W3: fc2 only vs. baseline | 12.5 | 92.5 | -80.0 | [-92.5, -63.5]
+  OFT Long W3: all but fc2 (441 layers) vs. baseline | 93.5 | 92.5 | +1.0 | [-9.5, +11.5]
+  OFT Goal W4: end-to-end vs. baseline | 82.0 | 96.0 | -14.0 | [-27.0, -2.0]
+  π0\pi_{0} Spatial W4: end-to-end vs. baseline | 69.0 | 78.0 | -9.0 | [-20.0, +2.5]
+  π0\pi_{0} Spatial W4A4: end-to-end vs. baseline | 61.0 | 78.0 | -17.0 | [-31.5, -3.5]
+  π0\pi_{0} Spatial W4A4, calibrated end-to-end (α\alpha=0.5) vs. uncalibrated | 10.5 | 61.0 | -50.5 | [-66.0, -31.5]
+  π0\pi_{0} Spatial W4A4, AH-calibrated AH-only vs. uncalibrated AH-only | 39.5 | 58.0 | -18.5 | [-31.5, -5.5]
+  π0\pi_{0} Spatial W4A4, LLM-calibrated LLM-only vs. uncalibrated LLM-only | 11.0 | 72.0 | -61.0 | [-75.5, -45.0]
+  π0.5\pi_{0.5} Spatial W4A4, 126 + five conditioning layers vs. full head | 78.5 | 70.5 | +8.0 | [-5.0, +23.0]
+  OFT Spatial W4A4, LLM-calibrated LLM-only vs. uncalibrated LLM-only | 33.0 | 0.0 | +33.0 | [+12.0, +55.5]
+  OFT Spatial W4A4, AH-calibrated AH-only vs. uncalibrated AH-only | 38.5 | 0.0 | +38.5 | [+27.5, +49.5]
+
+=== Table 20 (id=A5.T20) ===
+CAPTION: Table 20: Exploratory Spearman correlations between saved layer-averaged diagnostics and success loss. Average ranks handle ties; repeated seeds are excluded. Scope sets overlap and per-model samples are small, limiting interpretation; a separately documented recollection reproduces the kurtosis correlations to the reported precision.
+  Model | Scopes | Kurtosis | Output error | Activation error | Dispersion
+  π0.5\pi_{0.5} | 19 | +0.35 | +0.31 | +0.46 | -0.04
+  π0\pi_{0} | 4 | -1.00 | -0.40 | -0.40 | -0.80
+  OpenVLA-OFT | 4 | -0.20 | +0.40 | -0.20 | -0.40
+  X-VLA | 8 | -0.16 | +0.26 | +0.02 | -0.29
+
+=== Table 21 (id=A6.T21) ===
+CAPTION: Table 21: Real-kernel measurements of Table 10 (ref.) and three further independent profiling sessions (s1–s3), each a fresh process with the five methods interleaved, 20 LIBERO episodes per entry; same GPU and definitions. Across s1–s3, the largest within-method ranges are approximately 0.38 ms (control call) and 3.00 ms (full inference); memory variation is below 0.01 GiB. Ranges are calculated across s1–s3 only.
+   | Memory (GiB) | Control call (ms) | Full inference (ms)
+  Method | ref. | s1 | s2 | s3 | ref. | s1 | s2 | s3 | ref. | s1 | s2 | s3
+  BF16 | 14.98 | 14.98 | 14.98 | 14.98 | 18.8 | 18.6 | 18.5 | 18.6 | 139.9 | 138.1 | 137.7 | 137.7
+  AWQ | 6.07 | 6.07 | 6.07 | 6.07 | 24.1 | 24.2 | 23.9 | 23.9 | 181.1 | 181.4 | 179.9 | 179.8
+  NF4 | 6.31 | 6.31 | 6.31 | 6.31 | 20.2 | 20.3 | 20.4 | 20.7 | 152.6 | 152.2 | 153.0 | 154.4
+  LLM.int8() | 8.97 | 8.97 | 8.97 | 8.97 | 48.3 | 47.9 | 47.9 | 47.9 | 379.5 | 376.8 | 375.8 | 376.0
+  SmoothQuant | 8.95 | 8.95 | 8.95 | 8.95 | 23.8 | 23.9 | 24.2 | 23.8 | 181.8 | 181.7 | 183.3 | 180.3
+
+=== Table 22 (id=A7.T22) ===
+CAPTION: Table 22: LLM-only PTQ on OpenVLA-OFT, LIBERO-Spatial (baseline 100%; 200 episodes per setting). Brackets give 95% Wilson intervals. The near-ceiling setting limits resolution of small method differences.
+  Bits | Method | SR % [CI]
+  W3 | RTN | 100.0 [98,100]
+  AWQ | 98.5 [96,99]
+  W4 | RTN | 98.0 [95,99]
+  AWQ | 99.0 [96,100]
+  NF4 | 98.0 [95,99]
+  W8 | RTN | 99.0 [96,100]
+  LLM.int8() | 98.5 [96,99]
+  W8A8 | RTN | 100.0 [98,100]
+  SmoothQuant | 99.0 [96,100]
+
+=== Table 23 (id=A7.T23) ===
+CAPTION: Table 23: Action-space fidelity on paired observations (OpenVLA-OFT, LLM-only quantization). One held-out LIBERO-Spatial episode (task 0, init state 20, 80 steps) is rolled out at full precision and its observation sequence is replayed open-loop through each quantized policy; the entry is the mean over steps and the seven action dimensions of the absolute deviation from the reference actions, in the environment’s unnormalized action units (App. G). The full-precision replay has zero measured deviation on this trajectory.
+  Bits | Method | mean |Δ​a||\Delta a|
+  – | full precision (replay of the reference) | 0.00000
+  W4 | RTN | 0.00752
+  AWQ | 0.00521
+  W3 | RTN | 0.01616
+  AWQ | 0.01411
+
+=== Table 24 (id=A7.T24) ===
+CAPTION: Table 24: Per-coordinate action deviations on the same held-out OFT trajectory as Table 23. Values are multiplied by 10310^{3} for readability. Signed error is quantized minus reference action; absolute error is averaged after taking magnitudes. Coordinates follow the client order (three translations, three rotations, gripper); scales are not pooled across coordinates. There are 80 control calls, including actions served from the chunk cache. Full-precision replay is zero in every coordinate.
+  Method | Statistic | a1a_{1} | a2a_{2} | a3a_{3} | a4a_{4} | a5a_{5} | a6a_{6} | a7a_{7}
+  RTN W4 | Signed | -1.03 | -1.05 | -7.08 | -0.30 | 2.74 | 1.66 | 0.00
+  RTN W4 | Absolute | 17.90 | 9.57 | 14.96 | 1.71 | 5.45 | 3.06 | 0.00
+  AWQ W4 | Signed | 1.46 | 2.93 | -1.77 | 0.28 | -0.39 | 0.66 | 0.00
+  AWQ W4 | Absolute | 9.80 | 10.62 | 10.24 | 1.34 | 2.86 | 1.63 | 0.00
+  RTN W3 | Signed | -1.14 | -7.49 | -12.37 | -0.15 | 0.75 | 3.90 | 0.00
+  RTN W3 | Absolute | 48.15 | 18.02 | 27.21 | 4.53 | 9.07 | 6.15 | 0.00
+  AWQ W3 | Signed | -8.40 | -1.72 | -5.16 | 1.38 | 1.83 | 3.21 | 0.00
+  AWQ W3 | Absolute | 35.06 | 21.41 | 24.72 | 4.14 | 8.65 | 4.79 | 0.00
+
+=== Table 25 (id=A8.T25) ===
+CAPTION: Table 25: Hyperparameters for LoRA fine-tuning of π0.5\pi_{0.5}.
+  Parameter | Value
+  policy.type | pi05
+  policy.pretrained_path | lerobot/pi05_base
+  policy.freeze_vision_encoder | true
+  peft.method_type | LORA
+  peft.r | 16
+  policy.optimizer_lr | 5×10−55\times 10^{-5}
+  batch_size | 8
+  steps | 30,000
+  policy.scheduler_warmup_steps | 1,000
+  policy.scheduler_decay_steps | 30,000
+  policy.scheduler_decay_lr | 5×10−65\times 10^{-6}
+  policy.dtype | bfloat16
+  policy.gradient_checkpointing | true
+  policy.compile_model | false
+
+=== Table 26 (id=A8.T26) ===
+CAPTION: Table 26: Hyperparameters for LoRA fine-tuning of OpenVLA-OFT.
+  Parameter | Value
+  vla_path | openvla/openvla-7b
+  use_lora | True
+  lora_rank | 16
+  use_l1_regression | True
+  use_diffusion | False
+  use_film | False
+  num_images_in_input | 2
+  use_proprio | True
+  learning_rate | 5×10−55\times 10^{-5}
+  batch_size | 8
+  max_steps | 100,000
+  image_aug | True
+  NUM_ACTIONS_CHUNK† | 10
+
+=== Table 27 (id=A10.T27) ===
+CAPTION: Table 27: Component-only quantization on LIBERO-Spatial. The weight-only floor is the lowest tested width among W2/W3/W4 whose success point estimate is within 10 pp of baseline. W4A4 columns quantize only the named component. These thresholds do not establish statistical equivalence.
+   | Weight-only floor | W4A4 (SR %)
+  Model | VE | LLM | AH | VE | LLM | AH
+  π0.5\pi_{0.5} | 2 | 3 | 3 | 37.0 | 0.0 | 70.5
+  π0\pi_{0} | 2 | 3 | 3 | 76.5 | 72.0 | 58.0
+  OpenVLA-OFT | 3 | 3 | 4 | 0.0 | 0.0 | 0.0
+  X-VLA | 2 | 2 | 2 | 67.9 | 96.3 | 0.0
+
+=== Table 28 (id=A10.T28) ===
+CAPTION: Table 28: Component-only activation precision with W4 weights (LIBERO-Spatial success %). Budget denotes the lowest tested activation width within 5 pp of the model baseline; none retains released activation precision. Dashes denote unmeasured settings or no qualifying budget. The criterion uses point estimates and does not guarantee joint performance.
+  Model | Comp. | A4 | A5 | A6 | A8 | none | Budget
+  π0.5\pi_{0.5} | VE | 37.0 | – | 98.5 | 98.0 | 98.0 | A6
+  LLM | 0.0 | 0.0 | 97.5 | 96.0 | 97.5 | A6
+  AH | 70.5 | 87.0 | 97.0 | 97.5 | 97.5 | A6
+  π0\pi_{0} | VE | 76.5 | – | 75.5 | 75.0 | 76.5 | A4
+  LLM | 72.0 | – | 72.0 | 76.0 | 76.0 | A8
+  AH | 58.0 | – | 71.5 | 67.0 | 68.5 | –
+  OpenVLA-OFT | VE | 0.0 | – | 99.5 | 99.0 | 99.5 | A6
+  LLM | 0.0 | – | 98.0 | 98.5 | 98.0 | A6
+  AH | 0.0 | – | 17.0 | 20.5 | 97.0 | none
+  X-VLA | VE | 67.9 | – | 97.9 | 97.4 | 97.4 | A6
+  LLM | 96.3 | – | 97.9 | 96.3 | 95.8 | A4
+  AH | 0.0 | 36.8 | 91.1 | 96.8 | 97.4 | A8
+
+=== Table 29 (id=A11.T29) ===
+CAPTION: Table 29: Action-head subsets under W4A4 on π0.5\pi_{0.5}-Spatial (baseline 99.0%; 200 episodes per setting). Brackets give 95% Wilson intervals; Δ\Delta is the change from baseline in pp. The 167-layer head contains the 126-layer subset. Selected seed replications appear in App. D.
+  Quantized subset (of the AH) | #L | SR % [CI] | Δ\Delta
+  attention | 72 | 98.0 [95,99] | -1.0
+  adaRMS | 36 | 93.5 [89,96] | -5.5
+  attention ++ adaRMS | 108 | 1.5 [1,4] | -97.5
+  gate_proj | 18 | 99.0 [96,100] | +0.0
+  up_proj | 18 | 98.5 [96,99] | -0.5
+  down_proj | 18 | 83.5 [78,88] | -15.5
+  MLP (gate++up++down) | 54 | 88.0 [83,92] | -11.0
+  MLP ++ adaRMS | 90 | 88.5 [83,92] | -10.5
+  down++attn | 90 | 80.0 [74,85] | -19.0
+  down++attn++adaRMS | 126 | 7.0 [4,11] | -92.0
+  all but adaRMS | 131 | 84.5 [79,89] | -14.5
+  action_out_proj | 1 | 97.0 [94,99] | -2.0
+  all but action_out_proj | 166 | 72.0 [65,78] | -27.0
+  all 167 layers | 167 | 70.5 [64,76] | -28.5
+
+=== Table 30 (id=A11.T30) ===
+CAPTION: Table 30: The six-setting comparison of Table 29 repeated on LIBERO-Object at three evaluation seeds (π0.5\pi_{0.5}, W4A4 on subsets of the action head; SR %, 200 episodes per cell). Non-additivity (the 108-layer union) and recovery (126 to 167 layers) both replicate at every seed.
+  Quantized subset (of the AH) | #L | seed 0 | seed 1 | seed 2
+  full precision | 0 | 99.0 | 98.5 | 99.5
+  attention | 72 | 98.5 | 98.5 | 97.5
+  adaRMS | 36 | 95.0 | 96.0 | 97.0
+  attention ++ adaRMS | 108 | 2.0 | 2.0 | 2.5
+  ++ down_proj | 126 | 1.0 | 0.0 | 2.0
+  full action head | 167 | 60.0 | 63.0 | 61.0
+
+=== Table 31 (id=A11.T31) ===
+CAPTION: Table 31: Supporting scope, format, and flow-step controls. All entries use evaluation seed 0. The source manifest records the exact result files; no new rollouts are introduced by this consolidation.
+  Model | Suite | Format | Intervention | nn | SR (%)
+  π0.5\pi_{0.5} | Spatial | W4A4 | Attention + pre-attention modulation | 200 | 0.0
+  π0.5\pi_{0.5} | Spatial | W4A4 | Attention + post-attention modulation | 200 | 94.0
+  π0.5\pi_{0.5} | Spatial | W4A4 | q + adaRMS | 200 | 72.0
+  π0.5\pi_{0.5} | Spatial | W4A4 | k + adaRMS | 200 | 88.5
+  π0.5\pi_{0.5} | Spatial | W4A4 | v + adaRMS | 200 | 89.5
+  π0.5\pi_{0.5} | Spatial | W4A4 | o + adaRMS | 200 | 96.5
+  π0.5\pi_{0.5} | Spatial | W4A6 | Attention + adaRMS | 200 | 98.0
+  π0.5\pi_{0.5} | Spatial | W4A8 | Attention + adaRMS | 200 | 98.0
+  π0.5\pi_{0.5} | Long | W4A4 | Attention + adaRMS | 200 | 0.0
+  X-VLA | Spatial | W4A4 | Both MLP projections | 190 | 24.2
+  π0.5\pi_{0.5} | Spatial | BF16 | Baseline, 1 flow step | 200 | 98.5
+  π0.5\pi_{0.5} | Spatial | W4A4 | Output projection, 1 flow step | 200 | 98.0
+  π0.5\pi_{0.5} | Spatial | BF16 | Baseline, 2 flow steps | 200 | 97.0
+  π0.5\pi_{0.5} | Spatial | W4A4 | Output projection, 2 flow steps | 200 | 99.0
+
+=== Table 32 (id=A12.T32) ===
+CAPTION: Table 32: Matched action-head scopes on π0.5\pi_{0.5}-Spatial (success %, 200 episodes per cell; brackets: 95% Wilson intervals). The six W4/W4A8 settings are within 1.5 pp of the full-precision baseline. W4A4 repeats the reference cells from Table 29.
+  Quantized subset (of the AH) | #L | W4 | W4A8 | W4A4
+  full precision | 0 | 99.0 [96,100] | 99.0 [96,100] | 99.0 [96,100]
+  attention | 72 | 100.0 [98,100] | 99.0 [96,100] | 98.0 [95,99]
+  adaRMS | 36 | 99.5 [97,100] | 98.5 [96,99] | 93.5 [89,96]
+  attention + adaRMS | 108 | 99.0 [96,100] | 98.0 [95,99] | 1.5 [1,4]
+  + down_proj | 126 | 99.0 [96,100] | 98.5 [96,99] | 7.0 [4,11]
+  full action head | 167 | 97.5 [94,99] | 97.5 [94,99] | 70.5 [64,76]
+
+=== Table 33 (id=A12.T33) ===
+CAPTION: Table 33: Replay composition statistics over 219 chunks. Norm ratio is ‖eA∪B‖2/(‖eA‖2+‖eB‖2)\|e_{A\cup B}\|_{2}/(\|e_{A}\|_{2}+\|e_{B}\|_{2}); residual is ‖eA∪B−eA−eB‖2/‖eA∪B‖2\|e_{A\cup B}-e_{A}-e_{B}\|_{2}/\|e_{A\cup B}\|_{2}; cosine compares eA∪Be_{A\cup B} with eA+eBe_{A}+e_{B}. These columns report medians. MAE is averaged over normalized chunk coordinates and chunks.
+  Format | Norm ratio | Residual | Cosine | MAE: 126 / 167 | 167 lower (%)
+  W4 | 0.80 | 0.17 | 0.99 | 0.014 / 0.023 | 0.0
+  W4A8 | 0.80 | 0.20 | 0.98 | 0.015 / 0.024 | 0.0
+  W4A4 | 2.90 | 0.82 | 0.73 | 0.514 / 0.390 | 99.1
+
+=== Table 34 (id=A12.T34) ===
+CAPTION: Table 34: Replay across formats on the same 20 held-out trajectories. Executed-action MAE uses environment units; chunk MAE uses the full normalized 50-step output. State MAE is measured before the tenth flow update. SR comes from separate closed-loop evaluations (200 episodes per cell), not the replay trajectories. Definitions and weighting follow App. L.
+  Format | Scope | #L | SR (%) | Exec. MAE | Chunk MAE | State MAE
+  W4A4 | Attention | 72 | 98.0 | 0.0118 | 0.066 | 0.019
+   | adaRMS | 36 | 93.5 | 0.0373 | 0.114 | 0.083
+   | Union | 108 | 1.5 | 0.1247 | 0.547 | 0.176
+   | + down | 126 | 7.0 | 0.1379 | 0.514 | 0.217
+   | Full head | 167 | 70.5 | 0.0889 | 0.390 | 0.145
+  W4 | Attention | 72 | 100.0 | 0.0018 | 0.012 | 0.004
+   | adaRMS | 36 | 99.5 | 0.0010 | 0.004 | 0.002
+   | Union | 108 | 99.0 | 0.0020 | 0.012 | 0.004
+   | + down | 126 | 99.0 | 0.0023 | 0.014 | 0.006
+   | Full head | 167 | 97.5 | 0.0048 | 0.023 | 0.018
+  W4A8 | Attention | 72 | 99.0 | 0.0018 | 0.012 | 0.004
+   | adaRMS | 36 | 98.5 | 0.0011 | 0.004 | 0.002
+   | Union | 108 | 98.0 | 0.0020 | 0.012 | 0.004
+   | + down | 126 | 98.5 | 0.0027 | 0.015 | 0.006
+   | Full head | 167 | 97.5 | 0.0051 | 0.024 | 0.018
+
+=== Table 35 (id=A12.T35) ===
+CAPTION: Table 35: W4A4 signed action deviations (quantized minus full precision, environment units) and down-projection input summaries. Coordinates follow client order: translation, rotation, gripper. The full-precision input summaries are 15.23 for token-absmax P99 and 315.0 for absolute-value kurtosis. These are averages of per-call statistics, not quantiles of all concatenated tokens.
+  Scope | a1a_{1} | a2a_{2} | a3a_{3} | a4a_{4} | a5a_{5} | a6a_{6} | a7a_{7} | Absmax P99 | |x||x| kurt.
+  Attention | -0.005 | -0.002 | 0.004 | 0.000 | 0.000 | -0.000 | 0.005 | 14.99 | 303.0
+  adaRMS | -0.026 | -0.011 | 0.010 | 0.003 | 0.002 | 0.001 | 0.007 | 15.25 | 213.4
+  Union | -0.039 | -0.023 | 0.044 | 0.005 | 0.009 | 0.000 | 0.073 | 13.06 | 145.9
+  126 layers | -0.059 | -0.037 | 0.039 | 0.006 | 0.008 | 0.002 | -0.057 | 14.30 | 157.8
+  167 layers | -0.032 | -0.017 | 0.008 | 0.002 | 0.005 | 0.001 | -0.004 | 14.18 | 170.9

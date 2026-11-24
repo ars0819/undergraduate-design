@@ -1,0 +1,1097 @@
+﻿VLAQuantBench: Closed-Loop Evaluation of Post-Training Quantization for Vision-Language-Action Models
+Skip to main content
+Report GitHub Issue
+Title:
+Content selection saved. Describe the issue below:
+Description:
+Submit without GitHub
+Submit in GitHub
+Why HTML?
+Report Issue
+Back to Abstract
+Download PDF
+Contents
+Reading mode
+Colour theme
+Abstract
+Introduction
+Related Work
+Generalist robot policies.
+Post-training quantization.
+Efficient VLA models.
+Benchmark Design
+Models and scopes.
+Numerical formats.
+Coverage and native metrics.
+Uncertainty and reproducibility.
+Public artifacts and extensions.
+Experimental Setup
+Policies.
+Experiment groups.
+Alternative quantizers and calibration.
+Deployment and physical execution.
+Results
+5.1
+Eight-bit activations can cause severe task losses
+Component sensitivity.
+5.2
+Quantizing more layers can improve success
+Isolated losses also underestimate joint failure.
+The reversal depends on the quantization recipe.
+Numerical interaction before environment feedback.
+Five additional layers recover more than the gate/up group.
+Diagnostics narrow the explanations.
+5.3
+Small projections and local proxies hide task sensitivity
+Protecting one layer recovers end-to-end W3 performance.
+Nearly identical kurtosis, sharply different outcomes.
+5.4
+Calibration is part of the configuration
+The recipe does not transfer uniformly across models.
+Uncertainty in the large contrasts.
+5.5
+Near-ceiling tasks leave action-fidelity differences unresolved
+5.6
+Memory reduction does not imply lower latency
+5.7
+Physical-robot precision comparisons
+Evaluation-Stack Checks
+Simulator version.
+Executed action chunks.
+Activation coverage.
+Limitations
+Conclusion
+References
+Quantization Definitions and Implementation
+A.1
+Round-to-nearest grids
+A.2
+Granularity, scope, and exclusions
+A.3
+Alternative quantizers
+Benchmark Coverage and Record Selection
+LIBERO.
+SIMPLER.
+CALVIN.
+VLABench.
+Evaluation seeds.
+Inventory and provenance.
+Calibration Details
+Calibration episodes and provenance.
+Model-specific coverage in the new controls.
+Replication and Uncertainty
+Diagnostic Reanalysis
+Deployment Measurement Definitions
+Action-Fidelity Measurement
+Physical-Robot Setup
+H.1
+Hardware and control
+H.2
+Fine-tuning and evaluation
+Implementation Checks
+Descriptive Precision Screening
+Complete Action-Head Interventions
+Matched-Format Replay and Numerical Diagnostics
+Records and matched inputs.
+Error definitions and aggregation.
+Flow states and input statistics.
+License: arXiv.org perpetual non-exclusive license
+arXiv:2609.25376v1 [cs.RO] 21 Sep 2026
+VLAQuantBench: Closed-Loop Evaluation of Post-Training Quantization for Vision-Language-Action Models
+Jiuyi Xu
+Affiliation:
+Colorado School of Mines
+Qing Jin
+Affiliation:
+Independent Researcher
+Meida Chen
+Affiliation:
+University of Central Florida
+Song Wang
+Affiliation:
+USC Institute for Creative Technologies
+Yang Sui
+Affiliation:
+Microsoft AI
+Yangming Shi
+Affiliation:
+Colorado School of Mines
+Abstract
+Post-training quantization reduces the memory requirements of vision-language-action (VLA) models, but precision selection must account for the interaction between layer scope, numerical format, and calibration. We introduce
+VLAQuantBench
+, a controlled evaluation with 409 runs and 94,574 simulation episodes: four models on LIBERO, with X-VLA additionally evaluated on three simulation benchmark families. Under uncalibrated W4A4 round-to-nearest quantization, expanding a [MATH] action-head subset from 126 to 167 layers raises success from 7.0% to 70.5%. Fixed-observation replay confirms a corresponding numerical recovery. Two-episode calibration removes the severe joint failures in the tested subsets, whereas the same smoothing-and-clipping recipe lowers [MATH] success and does not recover OpenVLA-OFT end-to-end. For OpenVLA-OFT, protecting one 28,672-parameter output projection instead restores near-baseline success: the remaining 441 eligible linear layers retain W3 on LIBERO-Long or eight-bit activations across all four suites. Task-clustered intervals support the large failure and recovery contrasts. These results establish recipe-dependent interactions and identify concrete precision assignments, rather than universal layer-sensitivity rules. Real-kernel and physical-robot measurements complement the accuracy analysis. Code, configurations, and episode records are publicly available.
+Introduction
+Vision-language-action (VLA) models extend pretrained visual and language representations to robot control
+Kim et al., 2025b
+Black et al., 2025b
+Zheng et al., 2026a
+. Their memory requirements motivate post-training quantization (PTQ), which lowers numerical precision without retraining the full policy. However, the relevant deployment result is task completion over an execution trajectory. Each action changes the environment and the observations used to choose subsequent actions. A small numerical perturbation can therefore have consequences that are not apparent from an individual forward pass. Therefore, different action sequences can complete the same task.
+Figure 1:
+Uncalibrated RTN W4A4 action-head interventions in [MATH] . (a) Spatial success for isolated groups and their union; whiskers are 95% Wilson intervals over 200 episodes. (b) Success along nested scopes. Filled markers show seed 0; open markers show available seed 1/2 repeats. Dashed lines mark the seed-0 baseline (99%). The 126-to-167-layer expansion improves Spatial success by 63.5 pp, while remaining below baseline. Full subset results are shown in App.
+PTQ methods improve low-precision representations through weight reconstruction, activation-aware scaling, and sensitivity-guided precision allocation
+Frantar et al., 2023
+Lin et al., 2024
+Xiao et al., 2023
+Dong et al., 2019
+. Recent approaches adapt quantization to VLA policies and evaluate their final systems in closed loop
+Xu et al., 2026
+Yan et al., 2026
+Zhang et al., 2026
+Zheng et al., 2026b
+. These advances raise a complementary evaluation question: which effects follow from the numerical format and the selected layers, and which depend on the quantizer’s calibration or optimization? Comparing systems that change checkpoints, scopes, and algorithms together cannot isolate these factors.
+A second question concerns the composition of precision decisions. Measuring each layer group separately is an appealing way to screen a large configuration space. Yet an isolated success-rate loss does not necessarily equal that group’s marginal effect after other layers have also been quantized. A useful benchmark must therefore include both isolated interventions and their unions. Testing isolated groups alongside their unions directly measures when those sensitivities predict a joint configuration.
+We introduce
+VLAQuantBench
+, which uses a shared round-to-nearest (RTN) quantizer to compare numerical formats and quantization scopes while retaining each model’s released inference conventions. OpenVLA-OFT
+Kim et al., 2025a
+, [MATH]
+Black et al., 2025b
+, [MATH]
+Black et al., 2025a
+, and X-VLA
+Zheng et al., 2026a
+are evaluated on LIBERO
+Liu et al., 2023
+. X-VLA additionally covers SIMPLER
+Li et al., 2025
+, CALVIN
+Mees et al., 2022
+, and VLABench
+Zhang et al., 2025
+. The benchmark comprises 409 evaluation runs and 94,574 simulation episodes, with coverage reported per model and benchmark. VLAQuantBench is also supplemented by layer-group ablations, calibration controls, alternative LLM quantizers, actual kernel measurements, and a real-robot study.
+Our main finding is that quantizing additional layers can improve task success and reduce replay error. Format and calibration controls delimit this effect. A complementary intervention makes precision selection constructive: protecting OpenVLA-OFT’s output projection recovers failed W3 and A8 configurations.
+Our contributions are:
+A released evaluation framework.
+Model adapters, explicit quantization scopes, benchmark evaluators, and episode records support controlled comparisons and extensions to new policies and quantizers.
+https://github.com/jiuyixu25/VLAQuantBench
+Non-monotone and non-additive task sensitivity.
+Nested action-head interventions expose recovery and joint failures that isolated tests miss. Held-out replay verifies corresponding numerical effects, while format and calibration controls establish their recipe dependence.
+A targeted remedy for W3 failure.
+Keeping one OpenVLA-OFT output projection at released precision restores near-baseline W3 success on Long and A8 success across four suites and local activation statistics alone miss the projection’s sensitivity.
+Controls for practical precision selection.
+Three-model calibration tests, task-clustered uncertainty, kernel measurements, and physical execution expose choices that change the performance of a precision configuration.
+Related Work
+Generalist robot policies.
+RT-1 and RT-2 investigate large-scale language-conditioned robot policies and transfer from web representations
+Brohan et al., 2023
+Zitkovich et al., 2023
+. Open X-Embodiment and Octo further support transfer across robot datasets and embodiments
+O’Neill et al., 2024
+Ghosh et al., 2024
+. OpenVLA, the [MATH] family, and X-VLA provide different ways to connect pretrained multimodal representations to action generation
+Kim et al., 2025b
+Black et al., 2025b
+Black et al., 2025a
+Zheng et al., 2026a
+. We evaluate released checkpoints with continuous regression or flow-matching action generation. The present experiments do not include an autoregressive action-token policy.
+Post-training quantization.
+Integer inference relies on explicit choices of scale, zero point, and quantization granularity
+Jacob et al., 2018
+Krishnamoorthi, 2018
+. Weight equalization, adaptive rounding, block reconstruction, and stochastic activation quantization improve low-bit approximation
+Nagel et al., 2019
+Nagel et al., 2020
+Li et al., 2021
+Wei et al., 2022
+. GPTQ uses approximate second-order reconstruction for large transformers
+Frantar et al., 2023
+. AWQ uses activation-aware weight scaling
+Lin et al., 2024
+. SmoothQuant redistributes channel scales between activations and weights
+Xiao et al., 2023
+. LLM.int8() uses mixed-precision treatment of outliers
+Dettmers et al., 2022
+, while QLoRA introduces NF4 for normally distributed weights in a fine-tuning framework
+Dettmers et al., 2023
+. Our NF4 experiments evaluate the inference representation, not QLoRA training. HAWQ uses sensitivity-guided mixed precision
+Dong et al., 2019
+, while CLADO explicitly models cross-layer dependencies through integer quadratic programming
+Deng et al., 2025
+. Cross-layer dependence is therefore already a concern in mixed-precision optimization. Our focus is the non-monotone closed-loop success of nested RTN interventions in robot policies, where the task metric also depends on the execution trajectory.
+Efficient VLA models.
+TinyVLA and SmolVLA reduce deployment cost through compact policies
+Wen et al., 2025
+Shukor et al., 2025
+, while BitVLA investigates native low-bit models
+Wang et al., 2025
+. SQAP-VLA combines quantization and pruning
+Fang et al., 2025
+. VLA-specific PTQ includes channel-sensitive quantization in QVLA
+Xu et al., 2026
+, policy-aware low-bit treatment in HBVLA
+Yan et al., 2026
+, scale calibration in QuantVLA
+Zhang et al., 2026
+, and temporal precision adaptation in DyQ-VLA
+Zheng et al., 2026b
+. These works already evaluate closed-loop task performance. VLAQuantBench complements them by holding an anchor quantizer fixed and varying numerical format and layer scope. Matched implementations of those methods remain outside the present comparison.
+Benchmark Design
+The benchmark separates three questions: whether a quantized policy completes tasks, which selected layers account for a change in performance, and whether an implementation saves memory or time. Task metrics are primary outcomes, while action deviations and activation statistics are auxiliary diagnostics. Figure
+in App.
+summarizes the evaluation axes.
+Models and scopes.
+We partition each policy into a vision encoder (VE), multimodal projector (MP) where present, language backbone (LLM), and action head (AH). Explicit module-root lists and exclusion patterns define disjoint component scopes. Finer scopes select named layer groups or projections. Each result file records the checkpoint, quantization configuration, selected scope, and quantized layer and parameter counts. These records allow numerical results to be traced to the applied intervention. Count checks are supplemented by inspection of activation-hook coverage: a correct weight-layer count alone does not establish that activations were quantized.
+Numerical formats.
+[MATH] denotes [MATH] -bit linear weights and [MATH] -bit linear-input activations. Omitting A retains the released activation precision. W2–W4 use asymmetric weight grids with groups of 128 input features per output channel. W8 uses symmetric per-output-channel grids. Short final groups receive their own scale without zero padding. Activations use dynamic symmetric per-token absmax quantization. The six main settings are W3, W4, W8, W4A4, W4A8, and W8A8.
+Targeted studies add W2, A5/A6, and alternative weight configurations. The unquantized baseline is a separate configuration.
+RTN accuracy experiments round and dequantize weights in place and quantize linear inputs through forward pre-hooks. Computation remains floating point. Embeddings, biases, normalization, attention matrix products, and the vocabulary head are excluded. X-VLA’s embedding-style action decoder is also excluded, while the AH scope covers its quantizable linear layers. These experiments estimate accuracy effects rather than integer-kernel speed or packed-model memory. Actual-kernel measurements are reported separately in §
+5.6
+Coverage and native metrics.
+The corpus contains 409 evaluation runs and 94,574 simulation episodes under the selection rule of App.
+, including ablations and seed replications. Twenty additional full-precision trajectories are collected for paired-observation replay and reported separately from this closed-loop evaluation count. All four models cover all four evaluated LIBERO suites. X-VLA, whose single LIBERO checkpoint serves every suite, additionally covers the three other benchmark families. LIBERO uses official initial states and the released clients’ control conventions, with 200 episodes per configuration or normally 190 for X-VLA. Cross-model baselines retain their own checkpoints and inference settings, so the analysis concerns quantization changes relative to each model’s baseline.
+SIMPLER visual matching uses 864 episodes per setting. Success is averaged first within each variant, then across variants within a task family, and finally across task families. Available variant-aggregation runs have unequal coverage and are excluded from direct precision comparisons. CALVIN reports completed subtasks per five-task chain over 1,000 chains, reduced to 300 for W4A4. VLABench reports pooled episode progress across five tracks, with 50 episodes per task for baseline/W4/W8, 20 for W3/W4A8/W8A8, and 10 for W4A4; consistently uncompiled scenes are omitted. These metrics are not interchangeable, and we do not combine them into a cross-benchmark average.
+Uncertainty and reproducibility.
+Success-rate differences are expressed in percentage points (pp). Reported 95% Wilson intervals summarize binomial episode-sampling uncertainty, and they do not include uncertainty from training, checkpoint choice, or task clustering. For selected contrasts, we additionally use 5,000 two-stage bootstrap draws, pairing the resampled task identities but resampling episodes independently within each cell and task (App.
+). This captures task clustering without preserving episode-level pairing. Interval overlap is not an equivalence test and small point-estimate differences and threshold summaries are descriptive. Selected ablations use additional evaluation seeds and their meaning under fixed initial states is detailed in App.
+. We retain task identifiers, episode indices, seeds, outcomes, timing, and checkpoint metadata. The corresponding analysis proves the records source-file hashes and per-cell counts. Protocol checks address simulator version, executed action-chunk length, and activation-hook coverage (§
+).
+Public artifacts and extensions.
+The public repository provides evaluation code, model configurations, scope definitions, episode records, and analysis scripts. A new model implements the adapter methods for loading, component selection, task reset, and action prediction. A new quantizer connects to the quantization dispatch while recording its format and affected modules. Existing benchmark evaluators then evaluate the resulting policy against its released-precision baseline. The paper’s analyzed subset is specified by its source manifest and repository-wide inventory totals can include other runs.
+Experimental Setup
+Policies.
+OpenVLA-OFT combines a LLaMA-2-7B backbone with parallel action decoding and a four-linear-layer L1-regression head
+Kim et al., 2025a
+. The [MATH] and [MATH] policies use PaliGemma with flow-matching action experts. [MATH] additionally uses adaptive normalization conditioning
+Black et al., 2025b
+Black et al., 2025a
+. X-VLA uses Florence-2 with a soft-prompted transformer action head
+Zheng et al., 2026a
+. The two [MATH] models share a backbone family, but their checkpoints and training differ: their comparison is not an intervention that isolates adaptive normalization. The OpenVLA-OFT and X-VLA LIBERO grids run on an RTX 4090 and the two [MATH] grids run on an RTX 5080 Laptop GPU. The [MATH] results use the LeRobot checkpoint listed in the appendix, not a matched reproduction of every OpenPI-reported policy. Checkpoint identifiers and observed episode budgets are listed in App.
+Experiment groups.
+The end-to-end grid quantizes all eligible linear layers at the six main settings. Component experiments quantize VE, LLM, or AH alone, extending weights to W2 and activations to A5/A6 where available. Action-head ablations compare individual projection groups, unions, and complements. The central [MATH] analysis includes a 14-subset table and additional attention/modulation combinations. These are controlled interventions within a fixed checkpoint and task suite. The six-setting [MATH] comparison is repeated at W4 and W4A8; a separate OpenVLA-OFT-Long W3 study isolates and protects its output projection. Same-observation replay covers 20 held-out [MATH] trajectories across all ten Spatial tasks, with matched flow noise and three numerical formats.
+Alternative quantizers and calibration.
+AWQ, NF4, LLM.int8(), and SmoothQuant are evaluated on OpenVLA-OFT’s LLM with matched-bit RTN references. Implementations retain their method-specific calibration and numerical formats; equal nominal bit width does not make their representations identical. A separate SmoothQuant-style experiment uses two unquantized robot episodes to study smoothing and clipping under different quantized scopes. It is a calibration control, not an optimized method benchmark. The LLM SmoothQuant deployment path uses [MATH] and 512 text calibration samples; the scope-control experiment instead uses [MATH] or [MATH] and robot observations.
+Deployment and physical execution.
+Real-kernel profiling uses OpenVLA-OFT on one RTX 4090, batch size one, and 20 LIBERO-Spatial rollouts per method. We report both control-call and complete-network-inference timings, with the aggregation defined in §
+5.6
+. Separately, OpenVLA-OFT and [MATH] are LoRA-finetuned
+Hu et al., 2022
+using 200 demonstrations each and evaluated on Pick and Pick-and-place with a Franka Research 3. The physical study contains BF16 and five quantized settings, with 50 rollouts per model–task–precision condition. These policies and tasks differ from the simulation checkpoints and suites.
+Results
+[TABLE]
+Table 1:
+End-to-end RTN on LIBERO (success %). Each setting uses 200 episodes, except X-VLA with 190. All formats use the grids in Section
+. Bold entries are below 50%; this visual threshold is not a significance test.
+[TABLE]
+Table 2:
+X-VLA beyond LIBERO. SIMPLER-VM averages variants within task families and then averages families (864 episodes per setting). CALVIN reports completed subtasks out of five (1,000 chains, or 300 for W4A4). VLABench reports mean progress in percent with the budgets in App.
+. Unequal-coverage SIMPLER-VA runs are excluded.
+5.1
+Eight-bit activations can cause severe task losses
+Weight-only W8 closely tracks the LIBERO baselines in Table
+, whereas W4 is not uniformly lossless. OpenVLA-OFT’s Goal success falls from 96.0% to 82.0%. The W3 result on OpenVLA-OFT-Long is particularly poor (8.0%, compared with 88.5% at W4). Thus, conclusions drawn from an average across suites can hide substantial losses in individual settings.
+Activation quantization produces larger differences. OpenVLA-OFT’s W4A8 success is 21.5/2.5/2.0/76.0% on Spatial/Object/Goal/Long. Both tasks and checkpoints vary across these comparisons, so they do not isolate a checkpoint effect from task difficulty. Under W4A4, [MATH] retains 31–74% success, whereas the other three models reach zero on all four suites. Absolute success and the change from each model’s baseline provide complementary comparisons. X-VLA uses the same LIBERO checkpoint across all four suites: every weight-only and A8 format stays within 3.2 pp of its baseline on each suite, and W4A4 is zero on each (Table
+), showing that W4A4 failure recurs across the four evaluated suites with the checkpoint held fixed.
+For X-VLA, W4 and W4A8 remain close to their baselines on SIMPLER, CALVIN, and VLABench, while W4A4 sharply degrades all three (Table
+). This model-specific extension tests whether the pattern persists beyond LIBERO.
+[TABLE]
+Table 3:
+Component-only W4A4 on LIBERO-Spatial (success %). Only the indicated component is quantized; baseline denotes the released-precision policy.
+Component sensitivity.
+Component-only W4A4 yields different sensitivity orderings (Table
+). For [MATH] , LLM-only quantization gives zero success while AH-only retains 70.5%. X-VLA reverses this ordering: 96.3% with LLM-only and zero with AH-only. OpenVLA-OFT reaches zero under each component intervention. Protecting the same component across models therefore misses the observed differences. Descriptive precision thresholds are provided in App.
+5.2
+Quantizing more layers can improve success
+Figure
+compares nested uncalibrated W4A4 RTN interventions within [MATH] ’s action head. The 126-layer set containing attention, adaRMS, and down projections scores 7.0% on Spatial; its 167-layer full-head superset scores 70.5%. Quantizing 41 additional layers raises success by 63.5 pp, although it remains 28.5 pp below the unquantized baseline. The added layers comprise gate/up projections and five other linear layers. Full-head success repeats at 70.5/70.5/68.5%. On Object, the 126-layer set scores 1.0/0.0/2.0% across three seeds and the full head 60.0/63.0/61.0%, giving 59–63 pp of recovery (App.
+). Thus, success need not decrease as the quantized scope expands.
+Isolated losses also underestimate joint failure.
+Let [MATH] denote success when layer set [MATH] is quantized, and [MATH] . For disjoint groups, an additive success-loss approximation predicts [MATH] . Spatial attention and adaRMS interventions lose 1.0 and 5.5 pp individually, but their union loses 97.5 pp. Union success remains low across seeds (1.5/4.0/2.5%) and on Object (2.0/2.0/2.5%). X-VLA’s two MLP projection groups lose 30.5 and 2.6 pp separately and 72.6 pp jointly. Tables
+29
+31
+provide the complete subset and supporting comparisons.
+The reversal depends on the quantization recipe.
+The same six configurations at W4 and W4A8 score 97.5–100.0%, all within 1.5 pp of the 99.0% baseline (Table
+32
+). In particular, the union and 126-layer set no longer collapse. The strong effects are therefore not universal properties of W4 weights: they depend on activation precision in this checkpoint and scope family. Calibration further changes this behavior: smoothing and clipping from two held-out episodes raises union success from 1.5% to 97.5% and the 126-layer subset from 7.0% to 99.0% (Table
+). The severe joint failures therefore belong to the tested uncalibrated per-token absmax A4 recipe, not to all W4A4 policies.
+Figure 2:
+Uncalibrated RTN same-observation, same-noise replay on 20 held-out [MATH] trajectories (219 predicted chunks). (a) W4A4 recovery is present in normalized action-chunk error before environment feedback; W4/W4A8 do not show the 126-to-167-layer reversal. (b) Points and whiskers give the median and interquartile range of the per-chunk error-norm ratio, not confidence intervals. [MATH] denotes attention and [MATH] adaRMS. The dashed value 1 is an upper bound under exact vector addition; cancellation can give smaller ratios.
+Numerical interaction before environment feedback.
+Success-rate non-additivity alone could reflect a task-failure threshold. We therefore replay 20 held-out full-precision trajectories with identical observations and flow noise for every configuration, giving 219 predicted chunks. Repeated full-precision replay exactly reproduces the recorded actions. Let [MATH] be the flattened normalized action-chunk difference from full precision after the complete ten-step flow solve. At W4A4, the median ratio [MATH] is 2.90 (interquartile range 2.27–3.50), and the residual [MATH] is 0.82. These output errors cannot be explained by simple vector addition of the isolated perturbations.
+Recovery also precedes environment feedback: expanding 126 to 167 layers lowers normalized chunk MAE from 0.514 to 0.390, with lower error on 217 of 219 chunks (99.1%) and lower mean error in each of the 20 trajectories (Figure
+). At W4/W4A8, the corresponding MAE instead increases from 0.014/0.015 to 0.023/0.024, with no chunk improving. Their union errors are much closer to vector addition (relative residuals 0.17/0.20; cosine similarities 0.99/0.98). Thus, the tested A4 reversal appears in both numerical outputs and closed-loop outcomes, rather than only in the thresholded task metric.
+Five additional layers recover more than the gate/up group.
+Splitting the 41 added layers reveals where recovery occurs (Table
+). Adding the 36 gate/up projections to the 126-layer subset yields 26.5% success, while adding only the five remaining conditioning/input/output projections yields 78.5%. The latter adds 5.3M parameters and reduces executed-action MAE from 0.138 to 0.089 in the same-observation replay. Gate/up quantization also improves success, by 19.5 pp, but does not produce the larger recovery. The 131-layer result is not established as better than the full head: their 8-pp difference has a task-clustered interval spanning zero. These interventions identify an effective small group without proving a particular compensation mechanism.
+[TABLE]
+Table 4:
+[MATH] -Spatial W4A4 scope controls (SR %, 200 episodes; Wilson intervals). New isolated/union/126-layer calibrations use task-0 states 20–21; the full-head calibrated cell is reused from the original states-0–1 experiment. Smoothing and clipping act on selected AH layers at [MATH] . The two split rows add either 36 gate/up projections or five conditioning/input/output projections to the same 126-layer subset. Replay columns describe the uncalibrated configurations only; dashes denote unmeasured entries. The 131-layer split differs from the 131-layer “all but adaRMS scope in Table
+eftab:lattice.
+Diagnostics narrow the explanations.
+For W4A4, signed gripper-command bias is [MATH] for the union, [MATH] for 126 layers, and [MATH] for the full head. The down-projection input per-token absmax 99th-percentile summaries remain close for 126 and 167 layers (14.30 and 14.18). This aggregate statistic does not track the large recovery; it does not exclude layer- or timestep-specific outlier effects. Denoising-state deviations generally build during the flow solve, but are not strictly monotone. App.
+gives the measurement definitions and full diagnostics. The replay establishes output-level interaction; the causal roles of directional bias, activation ranges, and individual flow steps remain to be separated.
+[TABLE]
+Table 5:
+Layer-group interventions on LIBERO-Spatial. Parameters count selected linear weights; [MATH] is the success change from the corresponding baseline in pp. OFT and [MATH] use 200 episodes; X-VLA uses 190, except its MLP fc2 group with 191. Differences are computed from unrounded success rates before rounding to one decimal place.
+5.3
+Small projections and local proxies hide task sensitivity
+On OpenVLA-OFT-Spatial, W4A8 on the final AH projection,
+fc2
+, gives 18.0% success (95% Wilson interval 13–24%), compared with 20.5% (15–27%) for all four AH layers and 100.0% at baseline. This projection has 28,672 parameters, about 0.019% of the head. Quantizing only the first projection or only the two residual layers retains 99.0% and 99.5%, respectively. The
+fc2
+-only result repeats at 17.0%. Quantizing this small output projection alone is sufficient to cause an 82-pp loss, comparable to quantizing the entire head.
+Protecting one layer recovers end-to-end W3 performance.
+On OpenVLA-OFT-Long, end-to-end W3 gives 8.0% success against a 92.5% baseline. Quantizing only the final action projection gives 12.5% and 10.5% across two evaluation seeds, while quantizing all vision, projector, and language layers retains 95.0% (Table
+). Keeping only that projection at released precision among the eligible linear layers yields 93.5% [89,96], with the remaining 441 of 442 layers quantized at W3. Two further evaluation seeds give 91.5% and 91.0% for this protected-output assignment. The recorded counts are VE 209, MP 5, LLM 224, and AH 3; embeddings and other excluded operations retain their usual precision. This is an accuracy result using simulated quantization, not a packed W3 deployment measurement.
+Reducing the action head’s weight-group size from 128 to 64 or 32 gives only 12.5% and 17.5%. These tested grid refinements do not recover near-baseline success, whereas protecting the output projection does. The result supplies a concrete precision-allocation remedy without ruling out gains from other quantizers. The sensitive projection has the same architectural role as in the Spatial W4A8 experiment, but the checkpoints and tasks differ, so the contrast does not isolate a horizon effect.
+[TABLE]
+Table 6:
+OFT-Long W3 localization (success %, 200 episodes per cell; 95% Wilson intervals). W3 uses asymmetric group-128 weights unless specified. The final three rows protect only the action head’s output projection among eligible linear layers: 441 layers remain quantized. Other non-linear/excluded operations retain released precision. Layer counts are checked against run metadata.
+The same protection rule also resolves the severe OpenVLA-OFT A8 failures across all four LIBERO suites (Table
+). Protected W4A8 scores 97.5/97.0/98.0/94.0% on Spatial/Object/Goal/Long, and protected W8A8 scores 99.0/97.5/97.5/93.5%. All are within 2.5 pp of their corresponding baselines. This supports protecting that output projection in these tested checkpoints and formats; it does not establish a universal rule for other action heads.
+[TABLE]
+Table 7:
+OFT protected-output comparisons (SR %, 200 episodes; Wilson intervals for protected cells). Both weights and input activations of the AH output projection remain at released precision; 441 other eligible linear layers are quantized (VE 209, MP 5, LLM 224, AH 3). Protected scores are within 2.5 pp of the respective baselines across the tested formats and suites. The W3 Long assignment yields 93.5/91.5/91.0% across three seeds.
+For [MATH] , quantizing its action-output projection at W4A4 retains 97.0% against a 99.0% baseline. To test whether multiple integration steps are necessary for this tolerance, we also reduce the flow-matching step count. With one step, the quantized projection gives 98.0% against its matched 98.5% baseline; with two steps, 99.0% against 97.0%. The projection therefore remains tolerant even with a single flow-matching step.
+X-VLA differs again: quantizing its qkv group gives 11.6% while the output-projection group gives 96.3%. The groups contain 75.5M and 25.2M parameters, respectively. Across models, neither parameter count nor architectural role supplies a universal precision rule.
+Nearly identical kurtosis, sharply different outcomes.
+OpenVLA-OFT provides a direct counterexample to ranking these groups by activation kurtosis alone. Its final projection and residual-layer group have kurtosis 834.3 and 835.3, but W4A8 success is 18.0% and 99.5%, respectively: an 81.5-pp gap under the same checkpoint, suite, and numerical format. This comparison shows how a nearly identical local statistic can accompany very different closed-loop sensitivity.
+OpenVLA-OFT’s residual blocks add their transformed features to a skip path, whereas its final projection directly produces action coordinates. This suggests that error placement, not just the input distribution, matters. The architecture does not force the two measured kurtoses to be equal, and the skip-path explanation remains a hypothesis. The familiar practice of preserving output layers fits OpenVLA-OFT, while [MATH] ’s tolerant output projection shows why the rule still needs model-specific testing. Small-sample rank summaries are retained as diagnostics in App.
+[TABLE]
+Table 8:
+Weight-grid controls for end-to-end [MATH] on LIBERO-Spatial (success %, 200 episodes). Sym./Asym. denote symmetric/asymmetric grids. Asymmetric group-128 entries are the main presets from Table
+, reused here rather than newly measured. W4 point estimates span 97–98%.
+5.4
+Calibration is part of the configuration
+On [MATH] -Spatial, end-to-end W3 yields 0.0% with symmetric per-channel weights and 20.0% with asymmetric per-channel weights. Group-64 grids instead yield 97.5% and 97.0%, respectively. Asymmetry alone therefore does not restore near-baseline performance in the per-channel setting. W4 gives 97–98% across the tested grids (Table
+). The asymmetric group-128 entries reuse the main-grid results, with the same checkpoint, scope, and quantization preset.
+[TABLE]
+Table 9:
+W4A4 smoothing-and-clipping controls on LIBERO-Spatial (SR %, 200 episodes). Component-only settings use [MATH] ; the final two rows specify end-to-end strength. New cells use task-0 states 20–21. The [MATH] LLM/AH/end-to-end calibrated values reuse the original states-0–1 cells; its VE result (80.0%) is new. MP is not calibrated for the [MATH] models; OFT end-to-end includes MP and observes 204/209 VE layers. Coverage and disjoint-set controls are detailed in App.
+The recipe does not transfer uniformly across models.
+Two-episode SmoothQuant-style smoothing and 99.9th-percentile clipping have different effects across models and scopes (Table
+). For [MATH] , VE-only W4A4 improves from 37.0% to 80.0%, and the tested action-head unions recover near-baseline success. For [MATH] , the recipe lowers every measured scope: LLM-only drops from 72.0% to 11.0%, AH-only from 58.0% to 39.5%, and end-to-end from 61.0% to 10.5% at [MATH] . End-to-end results at [MATH] are 9.0/8.0% (Table
+17
+). OpenVLA-OFT recovers partially in LLM-only and AH-only scopes (0.0% to 33.0/38.5%), but VE-only remains zero; end-to-end scores are 0.0/9.5% at [MATH] .
+For [MATH] , raising end-to-end smoothing strength to [MATH] yields 91.5%, whereas [MATH] yields zero. The original AH/full-policy calibrations used states 0–1, overlapping evaluation; replications with three disjoint two-episode sets yield 97.0% AH-only and 88.0–90.5% end-to-end (Table
+16
+). New component and subset controls use states 20–21. The table distinguishes reused historical cells from new controls and records model-specific calibration coverage. These are controlled recipe tests, not optimized method comparisons. Calibration must be validated together with the complete precision assignment.
+Uncertainty in the large contrasts.
+Task-clustered bootstrap intervals preserve the large uncalibrated failure and recovery effects: Spatial union versus baseline is [MATH] pp with a 95% interval of [MATH] , and full-head versus 126-layer success is [MATH] pp with [MATH] (Table
+19
+). Small differences near baseline are less resolved. These intervals resample the ten observed tasks; they are not evidence of generalization to arbitrary tasks or equivalence to the baseline.
+5.5
+Near-ceiling tasks leave action-fidelity differences unresolved
+Alternative LLM quantizers on OpenVLA-OFT reach 98.0–99.0% success, close to matched-bit RTN (Table
+22
+). On one held-out trajectory, AWQ reduces mean absolute action deviation relative to RTN by factors of 1.44 at W4 and 1.15 at W3 (Table
+23
+). This comparison reveals action differences that the near-ceiling task scores cannot resolve; it cannot test whether lower action error predicts higher success in failure-prone settings. App.
+reports deviations per action coordinate. Unlike this near-ceiling LLM comparison, the [MATH] replay in §
+5.2
+includes severe-failure configurations and tests numerical composition directly.
+[TABLE]
+Table 10:
+Real-kernel measurements on OpenVLA-OFT (LLM only, RTX 4090, batch size one, 20 LIBERO episodes). Memory is peak CUDA allocation. Timings are medians of episode means. Control calls include cached actions; full inference generates a new action chunk. See App.
+for timer definitions.
+5.6
+Memory reduction does not imply lower latency
+Table
+10
+reports real LLM kernels on an RTX 4090 at batch size one. All tested quantized paths reduce peak allocated memory and take longer than BF16 under both control-call and full-inference timing. Control calls can serve cached actions; full inference generates a new chunk. Timing aggregation, warm-up, synchronization, and memory units are defined in App.
+Three independent repeat sessions preserve the finding that all quantized paths are slower than BF16. Across those repeats, the largest within-method ranges are 0.38 ms for control calls and 3.00 ms for full inference (Table
+21
+). AWQ and SmoothQuant have close control-call times and exchange order across sessions; a stable ordering between them is not established. OpenVLA-OFT decodes an action chunk in a parallel forward pass, rather than through single-token autoregressive decoding. The balance between matrix computation, online quantization, and weight dequantization can therefore differ from decoding workloads where weight-only kernels save time; kernel-level profiling would be needed to attribute the measured overhead.
+[TABLE]
+Table 11:
+Franka Research 3 task success (%), 50 rollouts per condition. Each model is separately fine-tuned for the robot study; these are within-robot precision comparisons.
+5.7
+Physical-robot precision comparisons
+Table
+11
+reports the physical-robot precision comparisons. W3 substantially reduces success for both models and tasks, while W8 and W8A8 remain within 6 pp of the corresponding BF16 baselines. With W4 weights, adding A8 reduces success by 18–40 pp across the four model–task settings.
+Evaluation-Stack Checks
+Three implementation checks are essential to reproducing the evaluated policy.
+Simulator version.
+Changing MuJoCo versions altered the settling of a stored LIBERO initial state. We pin MuJoCo to 3.3.2 for OpenVLA-OFT and the [MATH] models and examine per-task baselines; the X-VLA environment pins MuJoCo 3.1.6, which predates the change, and the version is recorded with its diagnostics. The version and per-task baseline are recorded with the evaluation configuration.
+Executed action chunks.
+Executing 50 actions before re-observing instead of the intended 10 changed the tested [MATH] -family control loop and reduced success. Predicted chunk length and executed action count must be distinguished. Other clients retain their own execution conventions; OpenVLA-OFT’s simulation adapter, for example, uses an eight-action chunk.
+Activation coverage.
+An activation-quantization run can silently become weight-only for a component if its input hooks are omitted. Missing AH hooks made OpenVLA-OFT appear much more tolerant in earlier internal runs. Selected module names, layer counts, and executed hooks must therefore be checked together. Together, these checks make the executed quantization and control settings traceable.
+Limitations
+The four evaluated models and their specific checkpoints do not span VLA architectures, and only X-VLA covers benchmarks beyond LIBERO. Some low-precision settings have smaller episode budgets. End-to-end RTN targets eligible linear layers and uses simulated quantization. Real-kernel profiling covers one backbone and GPU. VLA-specific PTQ methods are not compared under matched implementations.
+The non-monotone recovery is established for the tested uncalibrated W4A4 RTN scopes. Scope-matched calibration removes the severe joint failures. The findings are not universal properties of four-bit activations. Matched W4/W4A8 controls do not show the severe interaction or numerical recovery. Replay establishes the numerical reversal over 20 full-precision trajectories, but does not isolate its internal cause or reproduce the changed state distribution of a quantized closed-loop policy. The 219 chunks are nested within trajectories, not independent experimental replicates. Small, overlapping diagnostic scope sets support descriptive rank summaries. The separate near-ceiling OpenVLA-OFT trajectory cannot establish a general relationship between action error and task success. Calibration replications cover three two-episode sets from one task and selected scope–strength pairs, rather than a broad calibration search.
+The protected OpenVLA-OFT W3 assignment has three evaluation seeds, while the cross-suite protected A8 grid has one per cell. Other quantizers on this failing head remain untested. Fixed tasks and shared initial states limit the binomial approximation. The task-clustered bootstrap uses only ten task clusters and does not preserve episode-level pairing. Seed replication covers selected interventions, and rollout-based timing does not hold observations fixed across methods. The robot study uses separately fine-tuned policies and 50 rollouts per condition, without matched simulation-to-robot controls or physical replication of the nested action-head interventions.
+Conclusion
+VLAQuantBench shows that quantization behavior depends on the complete precision and calibration recipe. Uncalibrated A4 interventions exhibit numerical and task-level interactions, but two-episode calibration removes the severe failures in the tested [MATH] action-head subsets. That recipe does not transfer uniformly to [MATH] or OpenVLA-OFT. In OpenVLA-OFT, preserving a single output projection instead recovers near-baseline W3 success on Long and A8 success across four suites. These results support targeted interventions and joint closed-loop evaluation, with the released configurations and records providing a basis for further comparisons.
+Evaluating the identified precision assignments (protecting OpenVLA-OFT’s output projection; action-head calibration for [MATH] ) on physical robots is left to future work and the present robot study reports precision comparisons only.
+References
+Black
+et al.
+(2025a)
+K. Black, N. Brown, J. Darpinian,
+et al.
+[MATH] : A vision-language-action model with open-world generalization
+In
+Proceedings of the Conference on Robot Learning
+PMLR
+, Vol.
+305
+pp. 17–40
+External Links:
+Link
+Cited by:
+§1
+§2
+§4
+Black
+et al.
+(2025b)
+K. Black, N. Brown, D. Driess,
+et al.
+[MATH] : A Vision-Language-Action flow model for general robot control
+In
+Proceedings of Robotics: Science and Systems
+External Links:
+Document
+Link
+Cited by:
+§1
+§1
+§2
+§4
+Brohan
+et al.
+(2023)
+A. Brohan, N. Brown, J. Carbajal, Y. Chebotar, J. Dabis, C. Finn, K. Gopalakrishnan, K. Hausman, A. Herzog, J. Hsu,
+et al.
+RT-1: robotics transformer for real-world control at scale
+In
+Proceedings of Robotics: Science and Systems
+External Links:
+Document
+Cited by:
+§2
+Deng
+et al.
+(2025)
+Z. Deng, S. Sharify, X. Wang, and M. Orshansky
+Mixed-precision quantization for deep vision models with integer quadratic programming
+In
+Proceedings of the 62nd ACM/IEEE Design Automation Conference
+External Links:
+Document
+Cited by:
+§2
+Dettmers
+et al.
+(2022)
+T. Dettmers, M. Lewis, Y. Belkada,
+et al.
+LLM.int8(): 8-bit matrix multiplication for transformers at scale
+Advances in Neural Information Processing Systems
+35
+pp. 30318–30332
+Cited by:
+§2
+Dettmers
+et al.
+(2023)
+T. Dettmers, A. Pagnoni, A. Holtzman,
+et al.
+QLoRA: efficient finetuning of quantized LLMs
+Advances in Neural Information Processing Systems
+36
+pp. 10088–10115
+Cited by:
+§2
+Dong
+et al.
+(2019)
+Z. Dong, Z. Yao, A. Gholami,
+et al.
+HAWQ: hessian aware quantization of neural networks with mixed-precision
+In
+Proceedings of the IEEE/CVF International Conference on Computer Vision
+pp. 293–302
+Cited by:
+§1
+§2
+Fang
+et al.
+(2025)
+H. Fang, Y. Liu, Y. Du,
+et al.
+SQAP-VLA: a synergistic quantization-aware pruning framework for high-performance vision-language-action models
+arXiv preprint arXiv:2509.09090
+Cited by:
+§2
+Frantar
+et al.
+(2023)
+E. Frantar, S. Ashkboos, T. Hoefler,
+et al.
+GPTQ: accurate post-training quantization for generative pre-trained transformers
+In
+International Conference on Learning Representations
+External Links:
+Link
+Cited by:
+§1
+§2
+Ghosh
+et al.
+(2024)
+D. Ghosh, H. R. Walke, K. Pertsch,
+et al.
+Octo: an open-source generalist robot policy
+In
+Proceedings of Robotics: Science and Systems
+External Links:
+Document
+Link
+Cited by:
+§2
+Hu
+et al.
+(2022)
+E. J. Hu, Y. Shen, P. Wallis,
+et al.
+LoRA: low-rank adaptation of large language models
+In
+International Conference on Learning Representations
+External Links:
+Link
+Cited by:
+§4
+Jacob
+et al.
+(2018)
+B. Jacob, S. Kligys, B. Chen, M. Zhu, M. Tang, A. Howard, H. Adam, and D. Kalenichenko
+Quantization and training of neural networks for efficient integer-arithmetic-only inference
+In
+Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition
+pp. 2704–2713
+Cited by:
+§2
+Khazatsky
+et al.
+(2024)
+A. Khazatsky, K. Pertsch, S. Nair, A. Balakrishna, S. Dasari, S. Karamcheti, S. Nasiriany, M. K. Srirama, L. Y. Chen, K. Ellis,
+et al.
+DROID: a large-scale in-the-wild robot manipulation dataset
+In
+Proceedings of Robotics: Science and Systems
+External Links:
+Document
+Cited by:
+§H.1
+Kim
+et al.
+(2025a)
+M. J. Kim, C. Finn, and P. Liang
+Fine-tuning vision-language-action models: optimizing speed and success
+In
+Proceedings of Robotics: Science and Systems
+External Links:
+Document
+Link
+Cited by:
+§1
+§4
+Kim
+et al.
+(2025b)
+M. J. Kim, K. Pertsch, S. Karamcheti,
+et al.
+OpenVLA: an open-source vision-language-action model
+In
+Proceedings of the Conference on Robot Learning
+PMLR
+, Vol.
+270
+pp. 2679–2713
+External Links:
+Link
+Cited by:
+§1
+§2
+Krishnamoorthi (2018)
+R. Krishnamoorthi
+Quantizing deep convolutional networks for efficient inference: a whitepaper
+arXiv preprint arXiv:1806.08342
+Cited by:
+§2
+Li
+et al.
+(2025)
+X. Li, K. Hsu, J. Gu,
+et al.
+Evaluating real-world robot manipulation policies in simulation
+In
+Proceedings of the Conference on Robot Learning
+PMLR
+, Vol.
+270
+pp. 3705–3728
+External Links:
+Link
+Cited by:
+§1
+Li
+et al.
+(2021)
+Y. Li, R. Gong, X. Tan,
+et al.
+BRECQ: pushing the limit of post-training quantization by block reconstruction
+In
+International Conference on Learning Representations
+External Links:
+Link
+Cited by:
+§2
+Lin
+et al.
+(2024)
+J. Lin, J. Tang, H. Tang,
+et al.
+AWQ: activation-aware weight quantization for on-device LLM compression and acceleration
+Proceedings of Machine Learning and Systems
+pp. 87–100
+Cited by:
+§1
+§2
+Liu
+et al.
+(2023)
+B. Liu, Y. Zhu, C. Gao,
+et al.
+LIBERO: benchmarking knowledge transfer for lifelong robot learning
+Advances in Neural Information Processing Systems
+36
+pp. 44776–44791
+Cited by:
+§1
+Mees
+et al.
+(2022)
+O. Mees, L. Hermann, E. Rosete-Beas,
+et al.
+CALVIN: a benchmark for language-conditioned policy learning for long-horizon robot manipulation tasks
+IEEE Robotics and Automation Letters
+),
+pp. 7327–7334
+Cited by:
+§1
+Nagel
+et al.
+(2020)
+M. Nagel, R. A. Amjad, M. Van Baalen,
+et al.
+Up or down? adaptive rounding for post-training quantization
+In
+Proceedings of the International Conference on Machine Learning
+pp. 7197–7206
+Cited by:
+§2
+Nagel
+et al.
+(2019)
+M. Nagel, M. v. Baalen, T. Blankevoort, and M. Welling
+Data-free quantization through weight equalization and bias correction
+In
+Proceedings of the IEEE/CVF International Conference on Computer Vision
+pp. 1325–1334
+Cited by:
+§2
+O’Neill
+et al.
+(2024)
+A. O’Neill, A. Rehman, A. Maddukuri, A. Gupta, A. Padalkar, A. Lee, A. Pooley, A. Gupta, A. Mandlekar, A. Jain,
+et al.
+Open X-Embodiment: robotic learning datasets and RT-X models
+In
+2024 IEEE International Conference on Robotics and Automation (ICRA)
+pp. 6892–6903
+Cited by:
+§2
+Shukor
+et al.
+(2025)
+M. Shukor, D. Aubakirova, F. Capuano,
+et al.
+SmolVLA: a vision-language-action model for affordable and efficient robotics
+arXiv preprint arXiv:2506.01844
+Cited by:
+§2
+Wang
+et al.
+(2025)
+H. Wang, C. Xiong, R. Wang,
+et al.
+BitVLA: 1-bit vision-language-action models for robotics manipulation
+arXiv preprint arXiv:2506.07530
+Cited by:
+§2
+Wei
+et al.
+(2022)
+X. Wei, R. Gong, Y. Li,
+et al.
+QDrop: randomly dropping quantization for extremely low-bit post-training quantization
+In
+International Conference on Learning Representations
+External Links:
+Link
+Cited by:
+§2
+Wen
+et al.
+(2025)
+J. Wen, Y. Zhu, J. Li,
+et al.
+TinyVLA: toward fast, data-efficient vision-language-action models for robotic manipulation
+IEEE Robotics and Automation Letters
+10
+),
+pp. 3988–3995
+External Links:
+Document
+Cited by:
+§2
+Xiao
+et al.
+(2023)
+G. Xiao, J. Lin, M. Seznec,
+et al.
+SmoothQuant: accurate and efficient post-training quantization for large language models
+In
+Proceedings of the International Conference on Machine Learning
+pp. 38087–38099
+Cited by:
+§1
+§2
+Xu
+et al.
+(2026)
+Y. Xu, Y. Yang, Z. Fan,
+et al.
+QVLA: not all channels are equal in Vision-Language-Action model’s quantization
+In
+International Conference on Learning Representations
+External Links:
+Link
+Cited by:
+§1
+§2
+Yan
+et al.
+(2026)
+X. Yan, Z. Wan, F. Ye,
+et al.
+HBVLA: pushing 1-Bit Post-Training quantization for Vision-Language-Action models
+arXiv preprint arXiv:2602.13710
+Cited by:
+§1
+§2
+Zhang
+et al.
+(2026)
+J. Zhang, Y. Hsieh, Z. Wan,
+et al.
+QuantVLA: scale-calibrated post-training quantization for vision-language-action models
+In
+Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition
+pp. 39539–39549
+External Links:
+Link
+Cited by:
+§1
+§2
+Zhang
+et al.
+(2025)
+S. Zhang, Z. Xu, P. Liu,
+et al.
+VLABench: a large-scale benchmark for language-conditioned robotics manipulation with long-horizon reasoning tasks
+In
+Proceedings of the IEEE/CVF International Conference on Computer Vision
+pp. 11142–11152
+Cited by:
+§1
+Zheng
+et al.
+(2026a)
+J. Zheng, J. Li, Z. Wang,
+et al.
+X-VLA: soft-prompted transformer as scalable cross-embodiment vision-language-action model
+In
+International Conference on Learning Representations
+External Links:
+Link
+Cited by:
+§1
+§1
+§2
+§4
+Zheng
+et al.
+(2026b)
+Z. Zheng, H. Cao, S. Tian,
+et al.
+DyQ-VLA: Temporal-Dynamic-Aware quantization for embodied Vision-Language-Action models
+arXiv preprint arXiv:2603.07904
+Cited by:
+§1
+§2
+Zitkovich
+et al.
+(2023)
+B. Zitkovich, T. Yu, S. Xu,
+et al.
+RT-2: vision-language-action models transfer web knowledge to robotic control
+In
+Proceedings of the Conference on Robot Learning
+pp. 2165–2183
+Cited by:
+§2
+Appendix A
+Quantization Definitions and Implementation
+Figure 3:
+Evaluation axes of VLAQuantBench. RTN anchors comparisons across numerical formats and layer scopes. The physical-robot study uses separate fine-tuned policies. Connections summarize component scopes rather than a single architecture shared by all models.
+A.1
+Round-to-nearest grids
+For a tensor group [MATH] , quantization maps values to an integer grid and immediately dequantizes them:
+[TABLE]
+Here [MATH] is the scale and [MATH] the zero point. Rounding follows
+torch.round
+, including nearest-even tie handling. Grid arithmetic uses float32 and returns to the original tensor dtype. The main accuracy experiments retain floating-point storage and matrix multiplication after this transformation.
+For symmetric [MATH] -bit quantization, [MATH] , [MATH] , [MATH] , and
+[TABLE]
+For asymmetric quantization, the observed range is extended to include zero. Let [MATH] , [MATH] , and [MATH] . Then
+[TABLE]
+with integer range [MATH] . Including zero and bounding the scale handle constant or single-sign groups explicitly.
+A.2
+Granularity, scope, and exclusions
+A linear weight matrix has shape [MATH] . Per-channel quantization computes one scale per output row. Per-group quantization partitions each row into consecutive groups along the input dimension; a shorter final group gets its own scale without padding. Activations are flattened over leading dimensions and quantized independently along the last dimension, giving one dynamic scale per token.
+[TABLE]
+Table 12:
+Main RTN presets. W2 uses the W3/W4 weight-grid convention. Additional activation widths and alternative weight grids are restricted to the corresponding ablations.
+Component scopes select disjoint module roots for VE, MP where present, LLM, and AH. Include/exclude patterns then define layer groups. Only selected linear weights and their inputs are quantized. Biases, embeddings, normalization, attention matrix products, and the language vocabulary head remain at released precision. The X-VLA action decoder implemented through embedding operations is excluded. Thus, “end-to-end” denotes all eligible linear scopes, not every operation in the policy. Layer and parameter counts refer to the selected linear weights, not the total model size.
+[TABLE]
+Table 13:
+Selected linear-layer counts / weight parameters in millions for the LIBERO-Spatial W4 end-to-end scopes. Excluded modules are not counted. These are quantized linear weights, not total model parameters or memory measurements. Zero denotes an empty separate scope.
+A.3
+Alternative quantizers
+AWQ, NF4, LLM.int8(), and SmoothQuant are evaluated on OpenVLA-OFT’s LLM scope, while its vision and action modules remain unquantized. These methods differ in their grids, calibration, scaling, and outlier handling; equal nominal bit widths do not make them identical interventions. NF4 evaluates the representation introduced with QLoRA, without QLoRA fine-tuning. The calibration controls on [MATH] use a separate rollout-based smoothing-and-clipping procedure, detailed in App.
+. The real-kernel OpenVLA-OFT configuration uses text calibration.
+Appendix B
+Benchmark Coverage and Record Selection
+LIBERO.
+We evaluate the Spatial, Object, Goal, and Long (LIBERO-10) suites, with ten tasks per suite. All four models cover all four suites in the end-to-end grid. X-VLA uses one LIBERO checkpoint across suites. Most configurations use 20 episodes per task. X-VLA normally uses 19 per task under its client, giving 190 episodes; the MLP-fc2 ablation contains 191 distinct episodes and retains that denominator. Policies use official initial states and their own released inference conventions. A cross-model comparison therefore includes checkpoint and client differences, whereas precision comparisons use the corresponding model baseline.
+SIMPLER.
+The reported X-VLA visual-matching experiment uses the Google Robot tasks and 864 episodes for each precision setting. To prevent families with more trials from dominating, success is averaged within variants, then across variants within each task family, and finally across families. All seven reported settings have matching variant coverage. The available variant-aggregation runs contain different sets and counts of variants, so their pooled success rates are not used as a controlled precision comparison.
+CALVIN.
+The X-VLA experiment uses the [MATH] setting. Each evaluation chain contains five sequential subtasks, and the metric is the mean number completed before failure. Six settings use 1,000 chains; W4A4 uses 300. This chain-length metric should not be interpreted as a percentage success rate or assigned a binomial Wilson interval.
+VLABench.
+Five evaluation tracks contribute episode progress scores. Baseline, W4, and W8 use 50 episodes per task; W3, W4A8, and W8A8 use 20; W4A4 uses ten. The paper reports the pooled mean progress over the retained episodes, so the weighting follows episode counts. Scenes that fail to compile are omitted consistently across settings. The reduced budgets affect uncertainty and are not hidden by reporting only the mean.
+Evaluation seeds.
+The LIBERO runner seeds the simulator, then loads the fixed indexed initial state; changing the seed does not select a different list of initial states. The [MATH] and X-VLA adapters additionally reset model random-number generators between episodes, affecting stochastic action generation. OpenVLA-OFT uses a deterministic regression head and a fixed model seed (default 7); its evaluation-seed repeats primarily vary simulator random state, not learned weights or sampled action tokens. These are evaluation replications, not independent training runs.
+[TABLE]
+Table 14:
+Checkpoint identifiers recorded for the main simulation sweeps. Each [MATH] checkpoint and the X-VLA LIBERO checkpoint are shared across their four suites. The lower block gives revisions recorded by the four LIBERO diagnostic recollections.
+Inventory and provenance.
+The analysis manifest lists result-file paths, episode counts, checkpoint identifiers, and SHA-256 hashes. The frozen source list includes the previous 381 runs plus 28 new calibration, scope-split, protected-output, and seed-replication runs; it is not a complete Cartesian product of every model, benchmark, scope, and precision. Separate precision-search experiments and the broader 387-layer exclusion trial are excluded. The 20 reference trajectories collected for [MATH] replay are listed separately and are not added to the 94,574 closed-loop evaluation episodes. Duplicate task/episode/seed keys are checked within each file. This does not establish independence across files: configurations may share initial states, and layer scopes may overlap. The analyzed inventory comprises 409 evaluation runs and 94,574 simulation episodes. Each run corresponds to one result file; this count includes baseline runs and evaluation-seed repetitions, not 409 distinct precision assignments.
+Appendix C
+Calibration Details
+The rollout-based control collects statistics at target linear inputs during two unquantized closed-loop episodes. For channel [MATH] , let [MATH] be the running maximum of activation magnitude and [MATH] . After bounding both by [MATH] , the smoothing vector is
+[TABLE]
+Weights become [MATH] before weight quantization, while the input hook divides activations by [MATH] . Without clipping or quantization, these inverse transforms preserve the original linear output.
+The observer also computes each channel’s 99.9th percentile separately for every call and retains the maximum of these per-call quantiles. This is not the percentile of all concatenated calibration tokens. Calls with a single token use its magnitude; exceptionally large inputs are sampled at a fixed stride for quantile computation. The post-smoothing clipping threshold is the retained quantile divided by [MATH] , bounded below by [MATH] . Clipping generally changes the floating-point function and is not part of the exact scaling identity. The dynamic per-token activation quantizer operates after division and clipping.
+Calibration episodes and provenance.
+The cells in Table
+15
+collected statistics on init states 0–1 of task 0, which are also evaluation states; the replication in Table
+16
+collects on init states 20–25, disjoint from evaluation. The default first calibration state is 20; the statistics cache is keyed on the calibration states, task count, RNG seed, and code revision to distinguish these recorded collection conditions, and every run header records the calibration components, episode range, seed, [MATH] , clip quantile, cache tag, and code revision.
+The real-kernel OpenVLA-OFT SmoothQuant experiment instead uses the method implementation’s text calibration with 512 samples and [MATH] . AWQ uses 128 calibration samples and group size 128. Their real-kernel settings are separate from the two-episode robot calibration controls and from the RTN accuracy grid.
+Model-specific coverage in the new controls.
+New cells collect task-0 states 20–21 at [MATH] unless another strength is stated. Reused [MATH] LLM/AH/end-to-end reference cells retain their original states 0–1; the separate stability study addresses this overlap. Both [MATH] models leave MP uncalibrated. OpenVLA-OFT end-to-end calibration includes all five MP layers, all 224 LLM layers, all four AH layers, and 204 of the 209 quantized VE layers observed during calibration. OpenVLA-OFT VE-only coverage is likewise 204/209. Thus, the smoothing/clipping recipe is shared, but observed module coverage and calibration data are explicitly distinguished.
+[TABLE]
+Table 15:
+Calibration scope and strength for [MATH] -Spatial at W4A4 (200 evaluation episodes). Statistics use two unquantized-policy episodes, with smoothing strength [MATH] unless noted and 99.9th-percentile clipping. VE+LLM+AH excludes the quantized projector. These are calibration controls, not an optimized SmoothQuant comparison.
+[TABLE]
+Table 16:
+Calibration-set stability for [MATH] -Spatial at W4A4 (SR %, 200 evaluation episodes on init states 0–19 per cell). Each column calibrates on a different two-episode set; the 0–1 column is the original run, whose calibration episodes overlap the evaluation states, and the three others are disjoint from them and from each other. The 95% Wilson intervals for the disjoint sets are: AH only, [93.6, 98.6] for each set; end-to-end, [85.6, 93.8], [82.8, 91.8], [85.6, 93.8].
+[TABLE]
+Table 17:
+[MATH] -Spatial W4A4 calibration controls (SR %, 200 episodes). Two unquantized episodes at task-0 states 20–21 provide statistics; MP is not calibrated. Dashes denote unmeasured settings. Calibration lowers the measured success point estimates at every scope; the smoothing-strength sweep does not recover the end-to-end baseline.
+Appendix D
+Replication and Uncertainty
+[TABLE]
+Table 18:
+Selected independent evaluation-seed replications on LIBERO-Spatial. Each run uses 200 episodes, or 190 for X-VLA. These repetitions do not vary the training checkpoint or calibration-data selection.
+For [MATH] successful episodes out of [MATH] , let [MATH] . The reported 95% Wilson interval uses [MATH] :
+[TABLE]
+Intervals describe marginal episode-sampling uncertainty under a binomial approximation. Fixed task allocations, shared initial states, and within-task dependence can limit this approximation. They do not capture training-seed or task-distribution uncertainty. Intervals on individual rates are distinct from intervals on contrasts. Table
+19
+uses a two-stage percentile bootstrap (5,000 draws, random seed 0): resample ten task identities with replacement, using the same identities for both cells, then independently resample each cell’s episodes within the selected task. The task-wise differences are averaged with equal task weight. This implementation preserves task pairing, not paired initial-state outcomes. Only observed tasks enter the resampling distribution.
+The table reports selected evaluation-seed repetitions. The attention+adaRMS union and full-head [MATH] configurations have three seeds, while several other interventions have two. Table
+30
+additionally repeats the full six-setting isolated/joint/recovery comparison on Object at three seeds. Long provides a union-failure observation, but not the complete six-setting comparison. Threshold tables use point estimates within five or ten pp of baseline and are screening summaries, not demonstrated equivalence regions.
+Table 19:
+Task-clustered uncertainty for selected contrasts. A and B are success rates (%); [MATH] in pp. Intervals are two-stage bootstrap percentiles (5,000 draws): task identities are paired across cells, but episodes within each selected task are resampled independently. The procedure does not preserve paired initial-state outcomes.
+[TABLE]
+Appendix E
+Diagnostic Reanalysis
+[TABLE]
+Table 20:
+Exploratory Spearman correlations between saved layer-averaged diagnostics and success loss. Average ranks handle ties; repeated seeds are excluded. Scope sets overlap and per-model samples are small, limiting interpretation; a separately documented recollection reproduces the kurtosis correlations to the reported precision.
+The saved diagnostics contain per-layer activation kurtosis, relative output error, relative activation error, and activation dispersion. For each matching action-head ablation, the reanalysis applies the recorded include/exclude patterns to diagnostic layer names and checks the selected count against the quantization record. It averages each diagnostic equally across layers in that scope. This weights layers rather than parameters or tokens. Repeated evaluation seeds of the same configuration are excluded from the correlation calculation. Spearman correlations use average ranks for ties.
+The diagnostic cohort is frozen to the 35 scopes listed in its source manifest; the new recovery-decomposition scopes are reported separately in Table
+. These 35 scopes are neither disjoint interventions nor independent samples from a population of models. Two models contribute only four scopes each. The original diagnostic files lack complete collection metadata. A separate recollection on initial states 20–21 records checkpoint revision, seed, initial states, MuJoCo, PyTorch, and GPU for each model; code revision is also recorded for the two [MATH] models. Reapplying the same group-selection and average-rank procedure preserves the four kurtosis–damage rank correlations. This corroborates those rank comparisons under documented collection conditions; it does not supply the missing historical metadata or establish invariance of every diagnostic. The accompanying records distinguish the original analysis from the recollection.
+Appendix F
+Deployment Measurement Definitions
+[TABLE]
+Table 21:
+Real-kernel measurements of Table
+10
+(ref.) and three further independent profiling sessions (s1–s3), each a fresh process with the five methods interleaved, 20 LIBERO episodes per entry; same GPU and definitions. Across s1–s3, the largest within-method ranges are approximately 0.38 ms (control call) and 3.00 ms (full inference); memory variation is below 0.01 GiB. Ranges are calculated across s1–s3 only.
+The RTX 4090 comparison uses batch size one, the OpenVLA-OFT Spatial checkpoint, and 20 episodes per method. The LLM scope contains 224 selected linear layers. AWQ uses an INT4 GEMM implementation; NF4 and LLM.int8() use their packed method implementations; SmoothQuant uses a
+torch._int_mm
+path with online activation quantization. Other policy modules remain at released precision.
+The control-call timer encloses the policy adapter call and excludes simulator stepping. An adapter call can either run the network or retrieve an action from a cached chunk. The inference timer measures new network evaluations that generate chunks. The runner discards the first three control calls and first inference in each episode and synchronizes CUDA around timed regions. For both columns in Table
+10
+, an episode contributes its recorded mean latency, and the reported value is the median over episodes. These are different estimands from median individual-call latency or total wall-clock time per successful task.
+Peak allocated CUDA memory is reported in GiB, with one GiB equal to [MATH] bytes. It excludes nonallocated device memory and is not the checkpoint file size. Actual kernels and packed representations are required for this comparison: simulated RTN keeps floating-point storage. Three additional sessions repeat the rollout-based measurement with 20 episodes per method and show that every quantized path remains slower than BF16; AWQ and SmoothQuant exchange order in control-call latency. Rollout trajectories can differ across methods; these repetitions are not a fixed-observation timing replay. The paired-observation action-fidelity experiment in App.
+evaluates action errors, not kernel latency. Accordingly, the results describe the measured implementations and workload rather than a universal ordering of quantization algorithms.
+Appendix G
+Action-Fidelity Measurement
+[TABLE]
+Table 22:
+LLM-only PTQ on OpenVLA-OFT, LIBERO-Spatial (baseline 100%; 200 episodes per setting). Brackets give 95% Wilson intervals. The near-ceiling setting limits resolution of small method differences.
+[TABLE]
+Table 23:
+Action-space fidelity on paired observations (OpenVLA-OFT, LLM-only quantization). One held-out LIBERO-Spatial episode (task 0, init state 20, 80 steps) is rolled out at full precision and its observation sequence is replayed open-loop through each quantized policy; the entry is the mean over steps and the seven action dimensions of the absolute deviation from the reference actions, in the environment’s unnormalized action units (App.
+). The full-precision replay has zero measured deviation on this trajectory.
+[TABLE]
+Table 24:
+Per-coordinate action deviations on the same held-out OFT trajectory as Table
+23
+. Values are multiplied by [MATH] for readability. Signed error is quantized minus reference action; absolute error is averaged after taking magnitudes. Coordinates follow the client order (three translations, three rotations, gripper); scales are not pooled across coordinates. There are 80 control calls, including actions served from the chunk cache. Full-precision replay is zero in every coordinate.
+The paired-observation test of Table
+23
+rolls out the full-precision policy once on LIBERO-Spatial task 0 from init state 20 (outside the evaluation states 0–19), recording every observation the policy received (all camera images, the proprioceptive state, and the instruction) together with the action it returned. Each quantized policy is then reset for the same task and fed the recorded observations in order, open-loop, so that every policy sees identical inputs; the quantization is applied by the same code path as the closed-loop runs. The reported quantity is the mean over the 80 steps and the seven action dimensions of the absolute difference from the recorded reference actions, in the environment’s unnormalized action units. The full-precision replay gives zero measured deviation on this trajectory, checking consistency of this recording and replay. The recorded observations, replayed actions, and per-dimension deviations are retained with the experiment records. Table
+24
+additionally reports signed mean error and mean absolute error per coordinate over the same 80 control calls. Signed averages can reveal directional bias on this trajectory, but do not establish its accumulation under closed-loop feedback. A single trajectory does not support a population-level estimate of action fidelity or its relationship to task success.
+Appendix H
+Physical-Robot Setup
+H.1
+Hardware and control
+The physical study uses a Franka Research 3 with a Franka Hand gripper on a tabletop workstation (Figure
+). Two Intel RealSense D415 cameras provide frontal and wrist RGB views; depth is not used. An RTX 4090 workstation runs policy inference, and a separate control computer runs the Polymetis interface to the robot. The machines communicate over Ethernet.
+Figure 4:
+Assembled real-robot platform used in the physical evaluation.
+The setup consists of the robot arm, end-effector, workspace,
+and the camera configuration described in this appendix.
+The collection and control software follows DROID
+Khazatsky et al., 2024
+. Demonstrations use VR teleoperation with a Meta Quest 3 controller; the controller pose specifies end-effector motion and the trigger controls the gripper. The policy control rate is 15 Hz. Predicted action chunks and the number of actions executed before re-observation are distinct settings and must be recorded with the deployed client.
+H.2
+Fine-tuning and evaluation
+OpenVLA-OFT and [MATH] are each LoRA-fine-tuned using 200 demonstrations. Tables
+25
+and
+26
+report the study’s training configurations. These are robot-adapted policies, not the unchanged simulation checkpoints. The OpenVLA-OFT robot configuration uses two image inputs, proprioception, and a ten-action prediction chunk; its simulation client uses a different chunk convention.
+For deployment, OpenVLA-OFT follows its official fine-tuning script, which merges the LoRA adapter into the base weights before saving, so quantization acts on merged weights; [MATH] uses LeRobot’s PEFT loading path, which attaches the adapter without merging.
+Table 25:
+Hyperparameters for LoRA fine-tuning of [MATH] .
+[TABLE]
+Fine-tuned on a single NVIDIA A40. All other hyperparameters follow the LeRobot defaults.
+Table 26:
+Hyperparameters for LoRA fine-tuning of OpenVLA-OFT.
+[TABLE]
+Fine-tuned on a single NVIDIA A100-80GB.
+Set via the constant in
+prismatic/vla/constants.py
+, not a command-line argument. All other hyperparameters follow the official OpenVLA-OFT defaults.
+Each model is evaluated on Pick and Pick-and-Place at six precision settings, with 50 rollouts per condition. Thus the table contains 1,200 physical rollouts. These comparisons measure precision changes within the physical study. They do not identify the effect of transferring a fixed policy from simulation to reality. The images below illustrate successful and unsuccessful executions; individual examples do not establish mechanisms of quantization failure.
+Appendix I
+Implementation Checks
+Reliable interpretation requires recording both the intended intervention and its executed behavior. The checks used in this study concern (i) per-task baseline outcomes under the pinned MuJoCo version; (ii) predicted and executed action-chunk lengths; and (iii) selected linear modules and activation-hook coverage. Layer counts alone cannot detect hooks that were installed but never executed. Known pre-fix results are kept separate from the analyzed corpus.
+The evaluation records pair the configuration and checkpoint identifier with simulator versions, seeds, per-episode outcomes, selected module names, and actual activation-hook coverage. Calibration records additionally retain the observation or episode identifiers and cache provenance. The analysis manifest and scripts provide count, aggregation, and source-hash checks. The public repository also supplies environment setup scripts and model-adapter documentation.
+Appendix J
+Descriptive Precision Screening
+The following summaries apply 10-pp and 5-pp cutoffs to observed point estimates. They describe the tested grid, not confidence-qualified precision budgets. Configurations close to a cutoff require further evaluation before deployment.
+[TABLE]
+Table 27:
+Component-only quantization on LIBERO-Spatial. The weight-only floor is the lowest tested width among W2/W3/W4 whose success point estimate is within 10 pp of baseline. W4A4 columns quantize only the named component. These thresholds do not establish statistical equivalence.
+[TABLE]
+Table 28:
+Component-only activation precision with W4 weights (LIBERO-Spatial success %). Budget denotes the lowest tested activation width within 5 pp of the model baseline; none retains released activation precision. Dashes denote unmeasured settings or no qualifying budget. The criterion uses point estimates and does not guarantee joint performance.
+Appendix K
+Complete Action-Head Interventions
+[TABLE]
+Table 29:
+Action-head subsets under W4A4 on [MATH] -Spatial (baseline 99.0%; 200 episodes per setting). Brackets give 95% Wilson intervals; [MATH] is the change from baseline in pp. The 167-layer head contains the 126-layer subset. Selected seed replications appear in App.
+[TABLE]
+Table 30:
+The six-setting comparison of Table
+29
+repeated on LIBERO-Object at three evaluation seeds ( [MATH] , W4A4 on subsets of the action head; SR %, 200 episodes per cell). Non-additivity (the 108-layer union) and recovery (126 to 167 layers) both replicate at every seed.
+[TABLE]
+Table 31:
+Supporting scope, format, and flow-step controls. All entries use evaluation seed 0. The source manifest records the exact result files; no new rollouts are introduced by this consolidation.
+Table
+31
+collects the additional modulation, activation-width, suite, and flow-step controls referenced in the main text. Its source manifest records the underlying result file and episode denominator for each entry.
+Appendix L
+Matched-Format Replay and Numerical Diagnostics
+Records and matched inputs.
+We record a full-precision [MATH] rollout from initial states 20 and 21 for each of LIBERO-Spatial’s ten tasks. These states are disjoint from evaluation states 0–19. All 20 reference rollouts succeed and supply 219 replanning calls, with ten executed actions between replans. Each call predicts a normalized 50-step chunk through ten flow updates. Replay resets the policy per trajectory, restores its recorded random seed, and supplies exactly the recorded images, proprioceptive states, and instruction. Each configuration is loaded separately and uses the same quantization path and checked layer count as closed-loop evaluation. Two full-precision replays reproduce the recorded actions exactly. Quantized policies do not drive the simulator during replay.
+Error definitions and aggregation.
+Let [MATH] be predicted normalized chunk [MATH] under scope [MATH] , and [MATH] . Chunk MAE averages absolute coordinate errors within each full chunk and then over all 219 chunks. Norm ratios, residuals, and cosines are computed per chunk and summarized by medians and interquartile ranges (Table
+33
+). Executed-action MAE and signed bias use the seven environment-action coordinates and pool recorded control calls, including cached actions; coordinate-wise values are supplied separately. Longer trajectories therefore receive more weight in these pooled summaries. Chunks are nested in 20 trajectories and are not treated as 219 independent statistical replicates.
+Flow states and input statistics.
+The recorded [MATH] is the state entering each denoising step, so the tenth-state deviation precedes the final update and differs from final chunk MAE. The state can include padded action coordinates, while returned chunks use the seven action coordinates. Down-projection hooks observe raw inputs before their activation quantizer. Each call records token-wise absmax statistics and the fourth standardized moment of absolute activation values. These summaries are averaged over calls within each trajectory, then over trajectories and the 18 expert down projections. This absolute-value kurtosis differs from a signed-activation statistic. The aggregates can miss particular layers, tokens, or flow steps, and do not establish an outlier-clipping mechanism.
+[TABLE]
+Table 32:
+Matched action-head scopes on [MATH] -Spatial (success %, 200 episodes per cell; brackets: 95% Wilson intervals). The six W4/W4A8 settings are within 1.5 pp of the full-precision baseline. W4A4 repeats the reference cells from Table
+29
+[TABLE]
+Table 33:
+Replay composition statistics over 219 chunks. Norm ratio is [MATH] ; residual is [MATH] ; cosine compares [MATH] with [MATH] . These columns report medians. MAE is averaged over normalized chunk coordinates and chunks.
+[TABLE]
+Table 34:
+Replay across formats on the same 20 held-out trajectories. Executed-action MAE uses environment units; chunk MAE uses the full normalized 50-step output. State MAE is measured before the tenth flow update. SR comes from separate closed-loop evaluations (200 episodes per cell), not the replay trajectories. Definitions and weighting follow App.
+[TABLE]
+Table 35:
+W4A4 signed action deviations (quantized minus full precision, environment units) and down-projection input summaries. Coordinates follow client order: translation, rotation, gripper. The full-precision input summaries are 15.23 for token-absmax P99 and 315.0 for absolute-value kurtosis. These are averages of per-call statistics, not quantiles of all concatenated tokens.
+Experimental support, please
+view the build logs
+for errors. Generated by
+xml
+Instructions for reporting errors
+We are continuing to improve HTML versions of papers, and your feedback helps enhance accessibility and mobile
+support. To report errors in the HTML that will help us improve conversion and rendering, choose any of the
+methods listed below:
+Click the "Report Issue"
+button, located in the page header.
+Tip:
+You can select the relevant text first, to include it in your report.
+Our team has already identified
+the following issues
+. We appreciate your time reviewing and reporting rendering errors we
+may not have found yet. Your efforts will help us improve the HTML versions for all readers, because disability
+should not be a barrier to accessing research. Thank you for your continued support in championing open access for
+all.
+Have a free development cycle? Help support accessibility at arXiv! Our collaborators at LaTeXML maintain a
+list of packages that need conversion
+, and welcome
+developer contributions
+We gratefully acknowledge support from our
+major funders
+member institutions
+and all contributors.
+About
+Help
+Contact
+Subscribe
+Copyright
+Privacy
+Accessibility
+Operational Status
+(opens in new tab)

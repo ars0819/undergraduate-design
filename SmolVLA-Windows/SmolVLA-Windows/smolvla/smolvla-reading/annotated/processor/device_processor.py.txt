@@ -1,0 +1,353 @@
+# 原文件 lerobot/src/lerobot/processor/device_processor.py
+# 原行范围 1–194
+# L 后是官方源码或本机文件的原行号。每条中文注释对应紧随其后的原文。
+# 这是静态阅读副本。请在编辑器中阅读。空行保留，节选之间标出跳过的范围。
+# L0001 原作者对相邻代码的说明。
+#!/usr/bin/env python
+
+# L0003 原版权或开源许可声明。
+# Copyright 2025 The HuggingFace Inc. team. All rights reserved.
+# L0004 原作者对相邻代码的说明。
+#
+# L0005 原版权或开源许可声明。
+# Licensed under the Apache License, Version 2.0 (the "License");
+# L0006 原版权或开源许可声明。
+# you may not use this file except in compliance with the License.
+# L0007 原版权或开源许可声明。
+# You may obtain a copy of the License at
+# L0008 原作者对相邻代码的说明。
+#
+# L0009 原版权或开源许可声明。
+#     http://www.apache.org/licenses/LICENSE-2.0
+# L0010 原作者对相邻代码的说明。
+#
+# L0011 原作者对相邻代码的说明。
+# Unless required by applicable law or agreed to in writing, software
+# L0012 原版权或开源许可声明。
+# distributed under the License is distributed on an "AS IS" BASIS,
+# L0013 原版权或开源许可声明。
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# L0014 原版权或开源许可声明。
+# See the License for the specific language governing permissions and
+# L0015 原版权或开源许可声明。
+# limitations under the License.
+
+# L0017 文档字符串的边界。
+"""
+# L0018 原文档中的说明或续行。
+This script defines a processor step for moving environment transition data to a specific torch device and casting
+# L0019 原文档中的说明或续行。
+its floating-point precision.
+# L0020 文档字符串的边界。
+"""
+
+# L0022 从模块 dataclasses 导入 dataclass。
+from dataclasses import dataclass
+# L0023 从模块 typing 导入 Any。
+from typing import Any
+
+# L0025 导入模块 torch。
+import torch
+
+# L0027 从模块 lerobot.configs 导入 PipelineFeatureType、PolicyFeature。
+from lerobot.configs import PipelineFeatureType, PolicyFeature
+# L0028 从模块 lerobot.lerobot_types 导入 EnvTransition、TransitionKey。
+from lerobot.lerobot_types import EnvTransition, TransitionKey
+# L0029 从模块 lerobot.utils.device_utils 导入 get_safe_torch_device。
+from lerobot.utils.device_utils import get_safe_torch_device
+
+# L0031 从模块 .pipeline 导入 ProcessorStep、ProcessorStepRegistry。
+from .pipeline import ProcessorStep, ProcessorStepRegistry
+
+
+# L0034 注册装饰器。模块导入时，把随后的类或方法登记到框架的查找表。
+@ProcessorStepRegistry.register("device_processor")
+# L0035 数据类装饰器。Python 根据字段生成初始化等方法。
+@dataclass
+# L0036 根据阶段决定 Tensor 目的设备或浮点 dtype。策略前处理使用 CUDA，动作后处理用 CPU。
+class DeviceProcessorStep(ProcessorStep):
+    # L0037 文档字符串的边界。
+    """
+    # L0038 原文档中的说明或续行。
+    Processor step to move all tensors within an `EnvTransition` to a specified device and optionally cast their
+    # L0039 原文档中的说明或续行。
+    floating-point data type.
+
+    # L0041 原文档中的说明或续行。
+    This is crucial for preparing data for model training or inference on hardware like GPUs.
+
+    # L0043 以下说明对象属性。
+    Attributes:
+        # L0044 原文档对“device”（运算设备）的说明。
+        device: The target device for tensors (e.g., "cpu", "cuda", "cuda:0").
+        # L0045 原文档对“float_dtype”的说明。
+        float_dtype: The target floating-point dtype as a string (e.g., "float32", "float16", "bfloat16").
+                     # L0046 原文档中的说明或续行。
+                     If None, the dtype is not changed.
+    # L0047 文档字符串的边界。
+    """
+
+    # L0049 声明“device”（运算设备）的类型为 str，使用字面值 'cpu'作为初始值。
+    device: str = "cpu"
+    # L0050 声明“float_dtype”的类型为 str | None，设为空值 None作为初始值。
+    float_dtype: str | None = None
+
+    # L0052 创建字典，用键查找对应的值给 “DTYPE_MAPPING” 赋值。
+    DTYPE_MAPPING = {
+        # L0053 字典项“float16”，冒号右边给出它的值。
+        "float16": torch.float16,
+        # L0054 字典项“float32”，冒号右边给出它的值。
+        "float32": torch.float32,
+        # L0055 字典项“float64”，冒号右边给出它的值。
+        "float64": torch.float64,
+        # L0056 字典项“bfloat16”，冒号右边给出它的值。
+        "bfloat16": torch.bfloat16,
+        # L0057 字典项“half”，冒号右边给出它的值。
+        "half": torch.float16,
+        # L0058 字典项“float”，冒号右边给出它的值。
+        "float": torch.float32,
+        # L0059 字典项“double”，冒号右边给出它的值。
+        "double": torch.float64,
+    # L0060 闭合上方尚未结束的括号。
+    }
+
+    # L0062 定义方法 __post_init__。
+    def __post_init__(self) -> None:
+        # L0063 文档字符串的边界。
+        """
+        # L0064 原文档中的说明或续行。
+        Initializes the processor by converting string configurations to torch objects.
+
+        # L0066 原文档中的说明或续行。
+        This method sets up the `torch.device`, determines if transfers can be non-blocking, and validates the
+        # L0067 原文档中的说明或续行。
+        `float_dtype` string, converting it to a `torch.dtype` object.
+        # L0068 文档字符串的边界。
+        """
+        # L0069 把配置里的设备名称转换为可用的 torch.device。
+        self.tensor_device: torch.device = get_safe_torch_device(self.device)
+        # L0070 运算设备或数据传输的说明。
+        # Preserve the resolved device index when serializing the processor configuration.
+        # L0071 调用 str，用它的结果给 “self.device” 赋值。
+        self.device = str(self.tensor_device)
+        # L0072 计算此行的右侧表达式给 “self.non_blocking” 赋值。
+        self.non_blocking = "cuda" in str(self.device)
+
+        # L0074 原作者对相邻代码的说明。
+        # Validate and convert float_dtype string to torch dtype
+        # L0075 条件 self.float_dtype is not None 成立时进入下方分支。
+        if self.float_dtype is not None:
+            # L0076 条件 self.float_dtype not in self.DTYPE_MAPPING 成立时进入下方分支。
+            if self.float_dtype not in self.DTYPE_MAPPING:
+                # L0077 抛出 ValueError，中断当前路径并交给上层的异常处理。
+                raise ValueError(
+                    # L0078 f 字符串片段，花括号中的表达式会被求值并插入文本。
+                    f"Invalid float_dtype '{self.float_dtype}'. Available options: {list(self.DTYPE_MAPPING.keys())}"
+                # L0079 闭合上方尚未结束的括号。
+                )
+            # L0080 用方括号按键或索引读取 self.DTYPE_MAPPING给 “self._target_float_dtype” 赋值。
+            self._target_float_dtype = self.DTYPE_MAPPING[self.float_dtype]
+        # L0081 进入对应的另一条分支，注意用缩进找到配对的判断或异常块。
+        else:
+            # L0082 设为空值 None给 “self._target_float_dtype” 赋值。
+            self._target_float_dtype = None
+
+    # L0084 根据输入和设置决定单个 Tensor 的类型及设备转换。
+    def _process_tensor(self, tensor: torch.Tensor) -> torch.Tensor:
+        # L0085 文档字符串的边界。
+        """
+        # L0086 原文档中的说明或续行。
+        Moves a single tensor to the target device and casts its dtype.
+
+        # L0088 原文档中的说明或续行。
+        Handles multi-GPU scenarios by not moving a tensor if it's already on a different CUDA device than
+        # L0089 原文档中的说明或续行。
+        the target, which is useful when using frameworks like Accelerate.
+
+        # L0091 以下列出调用参数及其含义。
+        Args:
+            # L0092 原文档对“tensor”的说明。
+            tensor: The input torch.Tensor.
+
+        # L0094 以下说明调用者接收到的结果。
+        Returns:
+            # L0095 原文档中的说明或续行。
+            The processed tensor on the correct device and with the correct dtype.
+        # L0096 文档字符串的边界。
+        """
+        # L0097 运算设备或数据传输的说明。
+        # Determine target device
+        # L0098 条件 tensor.is_cuda and self.tensor_device.type == "cuda" 成立时进入下方分支。
+        if tensor.is_cuda and self.tensor_device.type == "cuda":
+            # L0099 运算设备或数据传输的说明。
+            # Both tensor and target are on GPU - preserve tensor's GPU placement.
+            # L0100 运算设备或数据传输的说明。
+            # This handles multi-GPU scenarios where Accelerate has already placed
+            # L0101 运算设备或数据传输的说明。
+            # tensors on the correct GPU for each process.
+            # L0102 读取属性 tensor.device给 “target_device” 赋值。
+            target_device = tensor.device
+        # L0103 进入对应的另一条分支，注意用缩进找到配对的判断或异常块。
+        else:
+            # L0104 运算设备或数据传输的说明。
+            # Either tensor is on CPU, or we're configured for CPU.
+            # L0105 运算设备或数据传输的说明。
+            # In both cases, use the configured device.
+            # L0106 读取属性 self.tensor_device给 “target_device” 赋值。
+            target_device = self.tensor_device
+
+        # L0108 原作者对相邻代码的说明。
+        # MPS workaround: Convert float64 to float32 since MPS doesn't support float64
+        # L0109 条件 target_device.type == "mps" and tensor.dtype == torch.float64 成立时进入下方分支。
+        if target_device.type == "mps" and tensor.dtype == torch.float64:
+            # L0110 调用 tensor.to，用它的结果给 “tensor” 赋值。
+            tensor = tensor.to(dtype=torch.float32)
+
+        # L0112 原作者对相邻代码的说明。
+        # Only move if necessary
+        # L0113 条件 tensor.device != target_device 成立时进入下方分支。
+        if tensor.device != target_device:
+            # L0114 调用 Tensor.to 把 Tensor 移到目标设备。形状不变。
+            tensor = tensor.to(target_device, non_blocking=self.non_blocking)
+
+        # L0116 原作者对相邻代码的说明。
+        # Convert float dtype if specified and tensor is floating point
+        # L0117 条件 self._target_float_dtype is not None and tensor.is_floating_point() 成立时进入下方分支。
+        if self._target_float_dtype is not None and tensor.is_floating_point():
+            # L0118 配置指定目标浮点类型时转换 dtype。
+            tensor = tensor.to(dtype=self._target_float_dtype)
+
+        # L0120 引用已有的值 tensor作为当前调用的返回值。
+        return tensor
+
+    # L0122 按 transition 内各区域逐个处理需要设备转换的张量。
+    def __call__(self, transition: EnvTransition) -> EnvTransition:
+        # L0123 文档字符串的边界。
+        """
+        # L0124 原文档中的说明或续行。
+        Applies device and dtype conversion to all tensors in an environment transition.
+
+        # L0126 原文档中的说明或续行。
+        It iterates through the transition, finds all `torch.Tensor` objects (including those nested in
+        # L0127 原文档中的说明或续行。
+        dictionaries like `observation`), and processes them.
+
+        # L0129 以下列出调用参数及其含义。
+        Args:
+            # L0130 原文档对“transition”的说明。
+            transition: The input `EnvTransition` object.
+
+        # L0132 以下说明调用者接收到的结果。
+        Returns:
+            # L0133 原文档中的说明或续行。
+            A new `EnvTransition` object with all tensors moved to the target device and dtype.
+        # L0134 文档字符串的边界。
+        """
+        # L0135 调用 transition.copy，用它的结果给 “new_transition” 赋值。
+        new_transition = transition.copy()
+        # L0136 调用 new_transition.get，用它的结果给 “action”（单步动作） 赋值。
+        action = new_transition.get(TransitionKey.ACTION)
+
+        # L0138 条件 action is not None and not isinstance(action, torch.Tensor) 成立时进入下方分支。
+        if action is not None and not isinstance(action, torch.Tensor):
+            # L0139 抛出 ValueError，中断当前路径并交给上层的异常处理。
+            raise ValueError(f"If action is not None should be a PolicyAction type got {type(action)}")
+
+        # L0141 打包成元组，元素顺序由逗号分隔的位置决定给 “simple_tensor_keys” 赋值。
+        simple_tensor_keys = (
+            # L0142 延续上面的语句，TransitionKey.ACTION,。
+            TransitionKey.ACTION,
+            # L0143 延续上面的语句，TransitionKey.REWARD,。
+            TransitionKey.REWARD,
+            # L0144 延续上面的语句，TransitionKey.DONE,。
+            TransitionKey.DONE,
+            # L0145 延续上面的语句，TransitionKey.TRUNCATED,。
+            TransitionKey.TRUNCATED,
+        # L0146 闭合上方尚未结束的括号。
+        )
+
+        # L0148 打包成元组，元素顺序由逗号分隔的位置决定给 “dict_tensor_keys” 赋值。
+        dict_tensor_keys = (
+            # L0149 延续上面的语句，TransitionKey.OBSERVATION,。
+            TransitionKey.OBSERVATION,
+            # L0150 延续上面的语句，TransitionKey.COMPLEMENTARY_DATA,。
+            TransitionKey.COMPLEMENTARY_DATA,
+        # L0151 闭合上方尚未结束的括号。
+        )
+
+        # L0153 原作者对相邻代码的说明。
+        # Process simple, top-level tensors
+        # L0154 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+        for tensor_key in simple_tensor_keys:
+            # L0155 调用 transition.get，用它的结果给 “value” 赋值。
+            value = transition.get(tensor_key)
+            # L0156 条件 isinstance(value, torch.Tensor) 成立时进入下方分支。
+            if isinstance(value, torch.Tensor):
+                # L0157 调用 self._process_tensor，用它的结果给 “new_transition[tensor_key]” 赋值。
+                new_transition[tensor_key] = self._process_tensor(value)
+
+        # L0159 原作者对相邻代码的说明。
+        # Process tensors nested within dictionaries
+        # L0160 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+        for dict_key in dict_tensor_keys:
+            # L0161 调用 transition.get，用它的结果给 “data_dict” 赋值。
+            data_dict = transition.get(dict_key)
+            # L0162 条件 data_dict is not None 成立时进入下方分支。
+            if data_dict is not None:
+                # L0163 用字典推导式从可迭代对象逐项取值并构造结果给 “new_data_dict” 赋值。
+                new_data_dict = {
+                    # L0164 延续上面的语句，k: self._process_tensor(v) if isinstance(v, torch.Tensor) else v。
+                    k: self._process_tensor(v) if isinstance(v, torch.Tensor) else v
+                    # L0165 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+                    for k, v in data_dict.items()
+                # L0166 闭合上方尚未结束的括号。
+                }
+                # L0167 引用已有的值 new_data_dict给 “new_transition[dict_key]” 赋值。
+                new_transition[dict_key] = new_data_dict
+
+        # L0169 引用已有的值 new_transition作为当前调用的返回值。
+        return new_transition
+
+    # L0171 定义方法 get_config。
+    def get_config(self) -> dict[str, Any]:
+        # L0172 文档字符串的边界。
+        """
+        # L0173 原文档中的说明或续行。
+        Returns the serializable configuration of the processor.
+
+        # L0175 以下说明调用者接收到的结果。
+        Returns:
+            # L0176 原文档中的说明或续行。
+            A dictionary containing the device and float_dtype settings.
+        # L0177 文档字符串的边界。
+        """
+        # L0178 创建字典，用键查找对应的值作为当前调用的返回值。
+        return {"device": self.device, "float_dtype": self.float_dtype}
+
+    # L0180 定义方法 transform_features。
+    def transform_features(
+        # L0181 延续上面的语句，self, features: dict[PipelineFeatureType, dict[str, PolicyFeature]]。
+        self, features: dict[PipelineFeatureType, dict[str, PolicyFeature]]
+    # L0182 结束参数表。若箭头后有类型，它标注预期返回值，缩进块是函数体。
+    ) -> dict[PipelineFeatureType, dict[str, PolicyFeature]]:
+        # L0183 文档字符串的边界。
+        """
+        # L0184 原文档中的说明或续行。
+        Returns the input features unchanged.
+
+        # L0186 原文档中的说明或续行。
+        Device and dtype transformations do not alter the fundamental definition of the features (e.g., shape).
+
+        # L0188 以下列出调用参数及其含义。
+        Args:
+            # L0189 原文档对“features”的说明。
+            features: A dictionary of policy features.
+
+        # L0191 以下说明调用者接收到的结果。
+        Returns:
+            # L0192 原文档中的说明或续行。
+            The original dictionary of policy features.
+        # L0193 文档字符串的边界。
+        """
+        # L0194 引用已有的值 features作为当前调用的返回值。
+        return features

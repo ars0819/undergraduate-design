@@ -1,0 +1,56 @@
+{
+  "cn": "面向机器人操作的视觉语言动作模型高效推理与部署研究",
+  "en": "Efficient Inference and Deployment of Vision-Language-Action Models for Robotic Manipulation",
+  "tasks": [
+    "任务1：文献研究与技术方案分析。调研视觉语言动作模型结构、动作生成与高效推理技术，重点比较SmolVLA、OpenVLA-OFT及代表性量化方法的模型规模、资源需求、延迟、部署复杂度与任务性能。目标是形成有依据的主线和替代方案；交付文献矩阵、兼容性清单、需求分析及英文技术概要。",
+    "任务2：机器人模型推理与部署实验系统设计。面向机器人操作的输入输出、硬件资源与实时性约束，设计感知—推理—动作执行链路，明确数据归一化、动作语义、控制周期、执行时序、范围约束及异常处理。目标是形成可验证的部署方案；交付系统架构图、接口与时序图、方案比选及工程验证计划。3.3最终支撑口径待学院确认。",
+    "任务3：开源VLA推理与机器人任务基线复现。选择一种成熟开源模型，首选SmolVLA及匹配的LIBERO权重与环境，备用OpenVLA-OFT。完成环境安装、版本固定、加载与推理测试、完整仿真回合及性能测量。目标是建立可重复的原始模型基线；交付配置、运行脚本、延迟/显存/吞吐与成功率原始记录、视频索引及问题日志。",
+    "任务4：已有高效推理方法复现与工程评测。优先复现torch.compile；不兼容时经导师确认改用流匹配迭代次数优化或经条件核查的低比特量化。固定权重、任务和主要条件，比较延迟、显存、动作误差与闭环成功率，分析额外开销、失效条件及资源成本。目标是给出可信的适用性结论，不强求正向加速；交付对照数据、工程验证报告、论文及复现包。3.3最终支撑口径待学院确认。"
+  ],
+  "contents": [
+    "内容一：VLA模型和高效推理技术研究现状及需求分析。依据文献[1—10]与官方实现梳理视觉、语言、状态输入及动作生成机制；比较候选模型与编译、减步数、量化的条件和代价，形成文献矩阵、需求约束与选型报告。以多方案论证支撑2.3，以英文概要及技术问答记录拟支撑10.3，以源码学习、问题归纳和学习记录拟支撑12.2。",
+    "内容二：机器人感知、模型推理和动作执行实验系统总体设计。明确仿真机器人动作空间、坐标系和时间边界，设计相机与状态接口、动作格式、归一化、控制时序、动作校验、超时和异常终止；比较计算平台与部署方式，形成架构图、接口表、时序图及需求—测试追溯表。以设计取舍和验证方案拟支撑3.3（待学院确认）；以风险、许可和责任边界分析支撑6.2；以能耗测量边界、设备复用及产品周期分析支撑7.2；以资源、工时和成本决策支撑11.2。",
+    "内容三：代表性开源VLA模型部署、原始性能测试和机器人仿真任务复现。固定代码、依赖、权重及环境版本，核对观测键、处理器与动作维度，完成推理到闭环回合的逐层验收；测量新动作块延迟、峰值显存、吞吐和成功数/总回合数，保留运行配置、种子、初态与失败记录。以兼容性诊断和替代方案分析拟支撑2.3，以真实日志、许可及负结果报告支撑8.2，以资源预算和进度决策支撑11.2，以独立排障及复盘支撑12.2。",
+    "内容四：高效推理方法复现、性能对照、误差分析与工程验证。在同设备、同权重、同精度、同任务初态及主要配置下比较原模型与一种优化；分别记录编译冷启动、预热后延迟、显存、动作误差和闭环成功率，报告样本范围与不确定性，定位收益或负结果。完成维度错误、非有限输入、动作越界、推理超时四类仿真故障测试；形成对照报告、系统改进与适用边界、资源能耗和成本分析、英文摘要及复现说明。以上证据分别拟支撑3.3（待学院确认）、6.2、7.2、8.2、10.3、11.2、12.2；不得把仿真保护称为真机安全认证。"
+  ],
+  "references": [
+    "SHUKOR M, AUBAKIROVA D, CAPUANO F, et al. SmolVLA: A Vision-Language-Action Model for Affordable and Efficient Robotics[EB/OL]. (2025-06-02)[2026-11-06]. https://arxiv.org/abs/2506.01844.",
+    "KIM M J, FINN C, LIANG P. Fine-Tuning Vision-Language-Action Models: Optimizing Speed and Success[C/OL]//Robotics: Science and Systems. 2025[2026-11-06]. https://arxiv.org/abs/2502.19645.",
+    "BLACK K, BROWN N, DRIESS D, et al. π0: A Vision-Language-Action Flow Model for General Robot Control[C/OL]//Robotics: Science and Systems. 2025[2026-11-06]. https://arxiv.org/abs/2410.24164.",
+    "PHYSICAL INTELLIGENCE, BLACK K, BROWN N, et al. π0.5: a Vision-Language-Action Model with Open-World Generalization[EB/OL]. (2025-04-22)[2026-11-06]. https://arxiv.org/abs/2504.16054.",
+    "LIN J, TANG J, TANG H, et al. AWQ: Activation-aware Weight Quantization for On-Device LLM Compression and Acceleration[C/OL]//Proceedings of Machine Learning and Systems. 2024, 6[2026-11-06]. https://arxiv.org/abs/2306.00978.",
+    "XIAO G, LIN J, SEZNEC M, et al. SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models[C/OL]//Proceedings of the 40th International Conference on Machine Learning. PMLR, 2023, 202: 38087-38099[2026-11-06]. https://arxiv.org/abs/2211.10438.",
+    "LI M, LIN Y, ZHANG Z, et al. SVDQuant: Absorbing Outliers by Low-Rank Components for 4-Bit Diffusion Models[C/OL]//International Conference on Learning Representations. 2025[2026-11-06]. https://arxiv.org/abs/2411.05007.",
+    "XU J, JIN Q, CHEN M, et al. VLAQuantBench: Closed-Loop Evaluation of Post-Training Quantization for Vision-Language-Action Models[EB/OL]. (2026-09-21)[2026-11-06]. https://arxiv.org/abs/2609.25376.",
+    "ZHANG J, HSIEH Y, WAN Z, et al. QuantVLA: Scale-Calibrated Post-Training Quantization for Vision-Language-Action Models[EB/OL]. (2026-02-23)[2026-11-06]. https://arxiv.org/abs/2602.20309.",
+    "LIU B, ZHU Y, GAO C, et al. LIBERO: Benchmarking Knowledge Transfer for Lifelong Robot Learning[C/OL]//Advances in Neural Information Processing Systems. 2023, 36[2026-11-06]. https://arxiv.org/abs/2306.03310."
+  ],
+  "links": [
+    [
+      "2.3",
+      "10.3",
+      "12.2"
+    ],
+    [
+      "3.3",
+      "6.2",
+      "7.2",
+      "11.2"
+    ],
+    [
+      "2.3",
+      "8.2",
+      "11.2",
+      "12.2"
+    ],
+    [
+      "3.3",
+      "6.2",
+      "7.2",
+      "8.2",
+      "10.3",
+      "11.2",
+      "12.2"
+    ]
+  ]
+}

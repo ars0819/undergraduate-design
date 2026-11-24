@@ -1,0 +1,280 @@
+{
+  "schema_version": "1.1",
+  "session": {
+    "id": "vla-undergraduate-20261106",
+    "title": "本科方向收敛",
+    "question": "怎样以最小工程实验连接VLA推理与机器人闭环表现？",
+    "date": "2026-11-06",
+    "decision_owner_id": null,
+    "facilitator_id": null,
+    "participant_ids": [
+      "ai-assistant"
+    ],
+    "represented_perspectives": [
+      "方法",
+      "工程实施"
+    ],
+    "missing_perspectives": [],
+    "conflicts_or_power_dynamics": []
+  },
+  "scope": {
+    "in_scope": [
+      "评测",
+      "预算",
+      "执行协同"
+    ],
+    "out_of_scope": [
+      "通用世界模型训练",
+      "新基础模型"
+    ],
+    "constraints": [
+      {
+        "statement": "兼容checkpoint和任务未确认",
+        "classification": "unclassified"
+      }
+    ],
+    "prohibited_outputs": []
+  },
+  "information_governance": {
+    "classification": "not-assessed",
+    "approved_record_location": null,
+    "contains_personal_or_sensitive_data": false,
+    "contains_unpublished_or_proprietary_data": false,
+    "contains_controlled_or_security_sensitive_data": false,
+    "external_ai_use_permitted": "not-assessed"
+  },
+  "workflow": [
+    {
+      "order": 1,
+      "stage": "scope",
+      "status": "pending",
+      "method_or_deviation": null
+    },
+    {
+      "order": 2,
+      "stage": "independent-generation",
+      "status": "pending",
+      "method_or_deviation": null
+    },
+    {
+      "order": 3,
+      "stage": "structured-sharing",
+      "status": "pending",
+      "method_or_deviation": null
+    },
+    {
+      "order": 4,
+      "stage": "clustering",
+      "status": "pending",
+      "method_or_deviation": null
+    },
+    {
+      "order": 5,
+      "stage": "criteria-definition",
+      "status": "pending",
+      "method_or_deviation": null
+    },
+    {
+      "order": 6,
+      "stage": "independent-evaluation",
+      "status": "pending",
+      "method_or_deviation": null
+    },
+    {
+      "order": 7,
+      "stage": "adversarial-review",
+      "status": "pending",
+      "method_or_deviation": null
+    },
+    {
+      "order": 8,
+      "stage": "literature-check",
+      "status": "pending",
+      "method_or_deviation": null
+    },
+    {
+      "order": 9,
+      "stage": "feasibility-and-ethics-gate",
+      "status": "pending",
+      "method_or_deviation": null
+    },
+    {
+      "order": 10,
+      "stage": "decision-log",
+      "status": "pending",
+      "method_or_deviation": null
+    }
+  ],
+  "ideas": [
+    {
+      "id": "I001",
+      "statement": "A 固定策略的延迟与闭环性能评测",
+      "provenance": {
+        "origin": "ai-assisted",
+        "contributor_ids": [
+          "ai-assistant"
+        ],
+        "recorded_stage": "post-check",
+        "source_refs": [
+          "SmolVLA",
+          "VLALagBench",
+          "RTC",
+          "VLASH"
+        ],
+        "ai_tool": "Codex"
+      },
+      "assumption_ids": [
+        "A001"
+      ],
+      "predicted_observations": [
+        "可能得到负结果，候选不是已验证创新"
+      ],
+      "uncertainties": [
+        "兼容性",
+        "与已有工作重叠",
+        "学院交付口径"
+      ],
+      "evidence_status": "mixed",
+      "status": "candidate"
+    },
+    {
+      "id": "I002",
+      "statement": "B 预算与执行长度对照",
+      "provenance": {
+        "origin": "ai-assisted",
+        "contributor_ids": [
+          "ai-assistant"
+        ],
+        "recorded_stage": "post-check",
+        "source_refs": [
+          "SmolVLA",
+          "VLALagBench",
+          "RTC",
+          "VLASH"
+        ],
+        "ai_tool": "Codex"
+      },
+      "assumption_ids": [
+        "A002"
+      ],
+      "predicted_observations": [
+        "可能得到负结果，候选不是已验证创新"
+      ],
+      "uncertainties": [
+        "兼容性",
+        "与已有工作重叠",
+        "学院交付口径"
+      ],
+      "evidence_status": "mixed",
+      "status": "candidate"
+    },
+    {
+      "id": "I003",
+      "statement": "C 一种实际瓶颈的协同改进",
+      "provenance": {
+        "origin": "ai-assisted",
+        "contributor_ids": [
+          "ai-assistant"
+        ],
+        "recorded_stage": "post-check",
+        "source_refs": [
+          "SmolVLA",
+          "VLALagBench",
+          "RTC",
+          "VLASH"
+        ],
+        "ai_tool": "Codex"
+      },
+      "assumption_ids": [
+        "A003"
+      ],
+      "predicted_observations": [
+        "可能得到负结果，候选不是已验证创新"
+      ],
+      "uncertainties": [
+        "兼容性",
+        "与已有工作重叠",
+        "学院交付口径"
+      ],
+      "evidence_status": "mixed",
+      "status": "candidate"
+    }
+  ],
+  "assumptions": [
+    {
+      "id": "A001",
+      "statement": "存在兼容且能完成任务的权重与环境",
+      "category": "feasibility",
+      "status": "untested",
+      "test_or_check": "兼容准入或基线试验，尚未实施",
+      "owner_id": "ai-assistant",
+      "evidence_refs": []
+    },
+    {
+      "id": "A002",
+      "statement": "实现允许独立改变采样步数和执行长度",
+      "category": "feasibility",
+      "status": "untested",
+      "test_or_check": "兼容准入或基线试验，尚未实施",
+      "owner_id": "ai-assistant",
+      "evidence_refs": []
+    },
+    {
+      "id": "A003",
+      "statement": "基线揭示可干预且可重复的瓶颈",
+      "category": "feasibility",
+      "status": "untested",
+      "test_or_check": "兼容准入或基线试验，尚未实施",
+      "owner_id": "ai-assistant",
+      "evidence_refs": []
+    }
+  ],
+  "clusters": [],
+  "criteria": [
+    {
+      "criterion": "可执行性、测量有效性、重叠风险、工程交付",
+      "method": "定性比较，无自动打分或人类最终决定"
+    }
+  ],
+  "adversarial_reviews": [],
+  "literature_checks": [],
+  "feasibility_and_ethics_reviews": [],
+  "decision_log": [],
+  "templates": {
+    "idea": {
+      "id": "I001",
+      "statement": "Replace with a concise candidate direction.",
+      "provenance": {
+        "origin": "human",
+        "contributor_ids": [
+          "ai-assistant"
+        ],
+        "recorded_stage": "independent",
+        "source_refs": [],
+        "ai_tool": null
+      },
+      "assumption_ids": [
+        "A001"
+      ],
+      "predicted_observations": [],
+      "uncertainties": [],
+      "evidence_status": "not-checked",
+      "status": "candidate"
+    },
+    "assumption": {
+      "id": "A001",
+      "statement": "Replace with one explicit assumption.",
+      "category": "measurement",
+      "status": "untested",
+      "test_or_check": "Describe how this could be checked.",
+      "owner_id": "ai-assistant",
+      "evidence_refs": []
+    }
+  },
+  "notices": [
+    "Ideas and scores are not evidence or scientific conclusions.",
+    "Clinical, ethics, biosafety, dual-use, regulatory, and institutional review remain separate.",
+    "Do not store sensitive prompt content or restricted information in this register.",
+    "单一AI辅助整理，未进行多人独立头脑风暴，未冒充导师作出决策。A仅为供讨论首选。"
+  ]
+}

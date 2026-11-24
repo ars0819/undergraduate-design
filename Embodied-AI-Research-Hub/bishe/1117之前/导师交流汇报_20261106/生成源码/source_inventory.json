@@ -1,0 +1,679 @@
+{
+  "date": "2026-11-05",
+  "meeting_date": "2026-11-06",
+  "sources": [
+    {
+      "path": "D:\\Desktop\\library\\Literature_Notes\\00_文献总索引.md",
+      "sha256": "92cc77dcec224e70d016f229af4711be7ce9794dc29ed14b630dcea3b8e1ddad"
+    },
+    {
+      "path": "D:\\Desktop\\library\\Literature_Notes\\00_横向比较与总结.md",
+      "sha256": "78f328f142c24e72d33e312f92135365d0c65ab7487e412348da60c96fa38aba"
+    },
+    {
+      "path": "D:\\Desktop\\bishe\\具身智能系统架构与协同调度_深度研究报告.md",
+      "sha256": "432e63723802d164c574f40ccb0d7fec51d101c492c4d10df0cf5d2110bda852"
+    },
+    {
+      "path": "D:\\Desktop\\Embodied-Research-Library\\08-本科毕设候选\\本科毕设候选方向分析.md",
+      "sha256": "dd7a7a116a9d1abf9902d94865a7d35797e2e83e22f6f5448dfbacfc3feb7006"
+    },
+    {
+      "path": "D:\\Desktop\\Embodied-Research-Library\\09-论文对比表\\按技术主题分类的文献矩阵.md",
+      "sha256": "532f0bea704a1e5cdccd3044c95c977b0c096b100b56acd367e17e403f6990b3"
+    }
+  ],
+  "notes": [
+    {
+      "folder": "Paper_001_TinyVLA",
+      "note_count": 5,
+      "title": "TinyVLA: Toward Fast, Data-Efficient Vision-Language-Action Models for Robotic Manipulation",
+      "files": [
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_001_TinyVLA\\01_论文精读.md",
+          "sha256": "2a5f0ae8d274560f5d0451c6d71686348750fed4b72f4e31518d929a5b069fa3"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_001_TinyVLA\\02_核心创新与方法.md",
+          "sha256": "bb887ab87642a2e2cfdd587abf5848d5b9b3885a32a6fab2da5da97023da29ca"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_001_TinyVLA\\03_架构图与流程图.md",
+          "sha256": "b8c67878bd4429b32b8daf1c2e6e68808d7dc733b10754e818fd8cb5c3342377"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_001_TinyVLA\\04_术语和公式解释.md",
+          "sha256": "fb9716709f06be576788b86b0165f4c78049a5beca96bef40e439f30938e40e3"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_001_TinyVLA\\05_科研启发与复现建议.md",
+          "sha256": "10cab9852bf7d5de184cd807a333ed4d20a97ec06b3c9c47cc707fd8af956af3"
+        }
+      ]
+    },
+    {
+      "folder": "Paper_002_SPAR",
+      "note_count": 5,
+      "title": "SPAR: Structural Pruning and Action Recovery for Vision-Language-Action Models",
+      "files": [
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_002_SPAR\\01_论文精读.md",
+          "sha256": "152a33d6bb5d04a3cc7604fa7bb5199e527956ddfd86dd13b36f35155e242bfb"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_002_SPAR\\02_核心创新与方法.md",
+          "sha256": "a4da7c9ad750d8d74d13d37cbe5debc20286b4fb033720b67d691e68be99fb43"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_002_SPAR\\03_架构图与流程图.md",
+          "sha256": "bf835ad6b43edde701d675ddab080e5acc3b24c5ed7b7a37bd1a789ef01e3d71"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_002_SPAR\\04_术语和公式解释.md",
+          "sha256": "028c0c6292295921a6e5bbe9d19c1fee54aa19989cd51a6d4c9bc3ee50da6a6f"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_002_SPAR\\05_科研启发与复现建议.md",
+          "sha256": "b28b13ed2e7b842ff86b0e27819d620f94782854b3379f48a04f4d22fffeb5b2"
+        }
+      ]
+    },
+    {
+      "folder": "Paper_003_RT-2",
+      "note_count": 5,
+      "title": "RT-2: Vision-Language-Action Models Transfer Web Knowledge to Robotic Control",
+      "files": [
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_003_RT-2\\01_论文精读.md",
+          "sha256": "e254186ada86cc470aa0e26044ea105d985499274b2e4f25f2d842fe91f961d0"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_003_RT-2\\02_核心创新与方法.md",
+          "sha256": "c15fbaa7132b61c9cc480c7ee23c5dc08d571c0ae82e2c7296042f9d0cf83c25"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_003_RT-2\\03_架构图与流程图.md",
+          "sha256": "85ee97f70c8e4636b98498781103f2c5784c40c959e58cbdd9ac36de3a67dd4e"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_003_RT-2\\04_术语和公式解释.md",
+          "sha256": "6f655b5155c635d7971ad80ab8b0160e1357ee45784eaa7b836ffcc6752c8fe0"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_003_RT-2\\05_科研启发与复现建议.md",
+          "sha256": "a87d79e4d6e62b1f56323f79a9a641bbc3dc8c69c72df9b2404e079c91819bc9"
+        }
+      ]
+    },
+    {
+      "folder": "Paper_004_OpenVLA",
+      "note_count": 5,
+      "title": "OpenVLA: An Open-Source Vision-Language-Action Model",
+      "files": [
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_004_OpenVLA\\01_论文精读.md",
+          "sha256": "2984e87911954528fb96e12c68527cff43a4c5c52fffc98f97f6a3883e582831"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_004_OpenVLA\\02_核心创新与方法.md",
+          "sha256": "37ec37dbed38e382d1e4c39f56843e9bc662dbe7d49039a8512cb2e9ccedc1d3"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_004_OpenVLA\\03_架构图与流程图.md",
+          "sha256": "eaf2573ccc2c48cf29c08ede5bc30bf83e4bfb09731eeaca0b112174507c2435"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_004_OpenVLA\\04_术语和公式解释.md",
+          "sha256": "aad0834a0c02085cda5afb8d5c7feb986549504d31a516d6733d66f82ced8997"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_004_OpenVLA\\05_科研启发与复现建议.md",
+          "sha256": "aeb5389b6230511d8abff9e690031732b24e30dbb423992007aa8ecd69623074"
+        }
+      ]
+    },
+    {
+      "folder": "Paper_005_pi0",
+      "note_count": 5,
+      "title": "π0: A Vision-Language-Action Flow Model for General Robot Control",
+      "files": [
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_005_pi0\\01_论文精读.md",
+          "sha256": "a6428cf20a333720f44a97d9d5a496bf4fda161239a749e4b46ab19bd3d1afe5"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_005_pi0\\02_核心创新与方法.md",
+          "sha256": "67f7fea21ea19fa00a66683ea479bb720d506e3cfe4c0056b2bfde19c9af0120"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_005_pi0\\03_架构图与流程图.md",
+          "sha256": "35102838d51622c85d6b2b546eeafff88576862336095fdf058e64ee38290495"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_005_pi0\\04_术语和公式解释.md",
+          "sha256": "2d6ae0486cfd3186ab3090cd9f5d30a1eb813bbcab4270c58e370058bc414443"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_005_pi0\\05_科研启发与复现建议.md",
+          "sha256": "6eae5a9cbf5230e9d00af43e9624a30afd04c7b465f0b703f8fe49edfa6e9067"
+        }
+      ]
+    },
+    {
+      "folder": "Paper_006_DiffusionPolicy",
+      "note_count": 5,
+      "title": "Diffusion Policy: Visuomotor Policy Learning via Action Diffusion",
+      "files": [
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_006_DiffusionPolicy\\01_论文精读.md",
+          "sha256": "4b30efbe645191b3916909bef7a61d636c60ea6d439d52796ba7e79d5b671db8"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_006_DiffusionPolicy\\02_核心创新与方法.md",
+          "sha256": "20ecf0f215ce78a8ec2a7d5af0f58f25b9f50dce0c05c680c9f8d19e9f78e255"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_006_DiffusionPolicy\\03_架构图与流程图.md",
+          "sha256": "9a412920a9e03428499bb544b510321cbbe1b6c8dd9d996175052f1cb8916950"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_006_DiffusionPolicy\\04_术语和公式解释.md",
+          "sha256": "e2cea5e8909fe2037af2173f38a9357dda9afb3a877edb8e3e353bd1a753dfe8"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_006_DiffusionPolicy\\05_科研启发与复现建议.md",
+          "sha256": "d065a83fb512bb90bccc4ffb148ce2d72b9f136d62f46c471d35ec5433fd9235"
+        }
+      ]
+    },
+    {
+      "folder": "Paper_007_SayCan",
+      "note_count": 5,
+      "title": "Do As I Can, Not As I Say: Grounding Language in Robotic Affordances",
+      "files": [
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_007_SayCan\\01_论文精读.md",
+          "sha256": "503606279a50a8e88c3fb18f73436aac541a3c33290d9c10ad64c343eb17fb94"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_007_SayCan\\02_核心创新与方法.md",
+          "sha256": "c117887a8cb6a0ec0d6b05e49e5fae79aaf7cdfae29c1e0bdad44beae7caee7f"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_007_SayCan\\03_架构图与流程图.md",
+          "sha256": "aff27541b0ad72a885ff7201b514bdbcf08861b71a7a2f0c7416df69839808f3"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_007_SayCan\\04_术语和公式解释.md",
+          "sha256": "b4565f11422e23c097cef2c9c7254f933dd781a4333977ebd21ceea15b075bf7"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_007_SayCan\\05_科研启发与复现建议.md",
+          "sha256": "2681d7ed9370d8355ea317aaa85d8abc938112cb2eeb607ce70c044d929ce5d0"
+        }
+      ]
+    },
+    {
+      "folder": "Paper_008_CueTheFlow",
+      "note_count": 5,
+      "title": "Cue the Flow: Steering Flow-Matching Policies for Open-World Delivery Manipulation",
+      "files": [
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_008_CueTheFlow\\01_论文精读.md",
+          "sha256": "97ca0b988d0d223249d680c00928cb0b85e6bd6a4f6df548dc2b91828bfbecb7"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_008_CueTheFlow\\02_核心创新与方法.md",
+          "sha256": "04272236721b97af8ad5178a532a3a4e8a6ce6d122ee79df498b113bd98b0a31"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_008_CueTheFlow\\03_架构图与流程图.md",
+          "sha256": "b56347d6337f73b2a73a41a178253f3ad5751f04f97e7d4f114ac56273d8ad80"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_008_CueTheFlow\\04_术语和公式解释.md",
+          "sha256": "ea3086cc3d3615669483af6846f3b6cd8005e7c8e109b2b2c0e4690f513b9541"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_008_CueTheFlow\\05_科研启发与复现建议.md",
+          "sha256": "a66820a00986886c07d138d0450ba4bf481a628764a657aa657f447946cb420b"
+        }
+      ]
+    },
+    {
+      "folder": "Paper_009_TrajWAM",
+      "note_count": 5,
+      "title": "TrajWAM: An Efficient Trajectory-Guided World Action Model for Dynamic Robotic Manipulation",
+      "files": [
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_009_TrajWAM\\01_论文精读.md",
+          "sha256": "74b055e3a581fe7b21242024921ef3a671153fa3da59090899bad5499e64b4a2"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_009_TrajWAM\\02_核心创新与方法.md",
+          "sha256": "965acc7f7c6f30a5bd2c52295d4ea0d29b156ace83fd60b8a81901b5afbf63b3"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_009_TrajWAM\\03_架构图与流程图.md",
+          "sha256": "b0786b4e11915fca4e572aec7ebaea117a3b5c693a45ba8b5c8e3260ede8fe49"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_009_TrajWAM\\04_术语和公式解释.md",
+          "sha256": "e289270e57eb07cfc8e7cceecbaa4d3dbea2fbdcd61ffca3467118b276f001ae"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_009_TrajWAM\\05_科研启发与复现建议.md",
+          "sha256": "943a108e25ca6ce47040a0d0bb687694353129b3c81ba76c318b382ea7acacb6"
+        }
+      ]
+    },
+    {
+      "folder": "Paper_010_DiPLO",
+      "note_count": 5,
+      "title": "DiPLO: Self-distilled Diffusion Planning for Loco-manipulation",
+      "files": [
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_010_DiPLO\\01_论文精读.md",
+          "sha256": "3710db6a53085e7a15c52046b78ef1a31423a5f3e19fdd4d4483bf7e3c54785b"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_010_DiPLO\\02_核心创新与方法.md",
+          "sha256": "e15217baf896a8aab82c9301d548dbf9bec8d1c34c7a574af281d24a9c5b51fe"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_010_DiPLO\\03_架构图与流程图.md",
+          "sha256": "79c62825f57d6ef78e648823288ac57dbb8aafc3fc91538ca69b37c8e1398099"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_010_DiPLO\\04_术语和公式解释.md",
+          "sha256": "c93ccaad8090860513f6c55dad578e3751df56428ce219c997b5c9a0777fb65b"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_010_DiPLO\\05_科研启发与复现建议.md",
+          "sha256": "46a6da3e3991a0bfc9af165ad42825e091ed6fec6fb0cc176fd9987bc0b80fcf"
+        }
+      ]
+    },
+    {
+      "folder": "Paper_011_MAVP",
+      "note_count": 5,
+      "title": "MAVP: Map-Aware Visuomotor Policies for Mobile Manipulation",
+      "files": [
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_011_MAVP\\01_论文精读.md",
+          "sha256": "fab0116950cffcbb62b5af766af75dab690aa426e7f23550c9df276366ab4ec4"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_011_MAVP\\02_核心创新与方法.md",
+          "sha256": "4fe8fffd1cf54f13ed8fbd4166c01eb46e3520115054794316f55cd7fa17f122"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_011_MAVP\\03_架构图与流程图.md",
+          "sha256": "6847cc681b9f6748dbbc8a114d5779522a69e94dcc6ff35d2f8f229893301f48"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_011_MAVP\\04_术语和公式解释.md",
+          "sha256": "cc9e129263f3e838c4d32f9e48ae8c0ddabfee7da69c74de17b5465d767476a9"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_011_MAVP\\05_科研启发与复现建议.md",
+          "sha256": "47fc54f3640ba4132b65841e7274afbb1576ba2b2f641e1fa7eec7206794e0d5"
+        }
+      ]
+    },
+    {
+      "folder": "Paper_012_CrackingMM",
+      "note_count": 5,
+      "title": "Cracking Mobile Manipulation: From Failure Diagnosis to Agentic Robot System",
+      "files": [
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_012_CrackingMM\\01_论文精读.md",
+          "sha256": "b2734995fb6a61463d7afc8896d7e9f3152b909840bc7a61bff876af3c14aa86"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_012_CrackingMM\\02_核心创新与方法.md",
+          "sha256": "a13ef6da626f78be86b01a4bf00a4247ba4825620f3baf3392a2d43f22664ca1"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_012_CrackingMM\\03_架构图与流程图.md",
+          "sha256": "ff92f44796cb4c0ca23c4e9422df76c3bedfe10c65ebe923cef49758b694f91c"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_012_CrackingMM\\04_术语和公式解释.md",
+          "sha256": "ec3934a0ed9cf007f67430519b7b71b3caa51727c6498f3e10110c4ccc4a3578"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_012_CrackingMM\\05_科研启发与复现建议.md",
+          "sha256": "45c8b47716f1a51618ed8ff12b3df5481f23ef8f2a9f9b8fd1d592587ac6cf66"
+        }
+      ]
+    },
+    {
+      "folder": "Paper_013_OmniVTLA",
+      "note_count": 5,
+      "title": "OmniVTLA: Vision-Tactile-Language-Action Models With Semantic-Aligned Tactile Sensing",
+      "files": [
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_013_OmniVTLA\\01_论文精读.md",
+          "sha256": "32e7918dd6170474375878c287e999f01990f081aa16f729896aefb144556a97"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_013_OmniVTLA\\02_核心创新与方法.md",
+          "sha256": "ac606a18661804cdf44b50e24550a146593af48dc5185bbfaceaa9c1a60295ec"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_013_OmniVTLA\\03_架构图与流程图.md",
+          "sha256": "cce77e969cc139185543bc955ec05684bc8c84ee071c4f5f74866da96ebbc2b4"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_013_OmniVTLA\\04_术语和公式解释.md",
+          "sha256": "e59099055f7441d9db1099dc65803a134b409c34307bf369935763643af8db4b"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_013_OmniVTLA\\05_科研启发与复现建议.md",
+          "sha256": "f001b5c9db6528b73f7fd58fc109dd95fb1e3f7fb9f62bc689f21bfd95c006e5"
+        }
+      ]
+    },
+    {
+      "folder": "Paper_014_YOPO",
+      "note_count": 5,
+      "title": "You Only Plan Once: A Learning-Based One-Stage Planner With Guidance Learning",
+      "files": [
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_014_YOPO\\01_论文精读.md",
+          "sha256": "112a8210ab8410850b36794c58490c65334eae380cc899edf5fa0e68b677fa65"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_014_YOPO\\02_核心创新与方法.md",
+          "sha256": "3d063f75cd768bf5b1667801ac894d485840f734cd8a1a3372162042ce09e52f"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_014_YOPO\\03_架构图与流程图.md",
+          "sha256": "327dd3ed68e326a257eafa47085595c36d9b7a08953c47ab2a2cd36947cc722f"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_014_YOPO\\04_术语和公式解释.md",
+          "sha256": "e8bae26b909acc3b581a9c8b69c41bca924b0a8b77abb6af66cc9efc182eaf1c"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_014_YOPO\\05_科研启发与复现建议.md",
+          "sha256": "a65d8f3cc303ad75b33b3e62f0f2b0a22fd0855af1c90bd0fd527f53a484c415"
+        }
+      ]
+    },
+    {
+      "folder": "Paper_015_ATE",
+      "note_count": 5,
+      "title": "Anisotropic Terrain-Aware Autonomous Exploration via Image-Domain Perception and Sparse Routing",
+      "files": [
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_015_ATE\\01_论文精读.md",
+          "sha256": "afbc3aaceed7eb0ceb0ed92199406b3b4856e1fe2e0443a54ee783c64293d35b"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_015_ATE\\02_核心创新与方法.md",
+          "sha256": "30885c74c19ccfccb749d2abfaf607e57e5b23cffde0064915580bf7adcb1462"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_015_ATE\\03_架构图与流程图.md",
+          "sha256": "d0cda86f29b83682d7dbe33e4f37df7329af96712558fdb28e72a322de56b0fc"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_015_ATE\\04_术语和公式解释.md",
+          "sha256": "5edc7820e3cbac00bfead3459886a7c5b96c2aaea4b9f24c9a3ffebbd6373594"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_015_ATE\\05_科研启发与复现建议.md",
+          "sha256": "fb5e5ac1d728abaa02c6deb397cc9fcecdaa25cf229a25a72fbdc50557d3704d"
+        }
+      ]
+    },
+    {
+      "folder": "Paper_016_NeuromorphicQP",
+      "note_count": 5,
+      "title": "Neuromorphic Quadratic Programming for Efficient and Scalable Model Predictive Control",
+      "files": [
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_016_NeuromorphicQP\\01_论文精读.md",
+          "sha256": "c2ed0bf3085317805c8ce06db479eaca3541aac1bc36412c3034f512f3c42295"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_016_NeuromorphicQP\\02_核心创新与方法.md",
+          "sha256": "6d3b6bd0f11848ffd4c0b484c8177f4e3cd9d18c7e1df99c2a043a74ff0c3973"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_016_NeuromorphicQP\\03_架构图与流程图.md",
+          "sha256": "85416c0c8e28df2772fbc713555fa2720064047e05c6e73e7dea477c00016d4d"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_016_NeuromorphicQP\\04_术语和公式解释.md",
+          "sha256": "1528297dbea484545d642f32f09dd62b9ac6a9714c5f791ddff22fd65c2b649c"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_016_NeuromorphicQP\\05_科研启发与复现建议.md",
+          "sha256": "8d68340214123fd1524d5ea6a1f4fb06c8f1216effb210191c94a7088bc572be"
+        }
+      ]
+    },
+    {
+      "folder": "Paper_017_ACMPC",
+      "note_count": 5,
+      "title": "Actor–Critic Model Predictive Control: Differentiable Optimization Meets Reinforcement Learning for Agile Flight",
+      "files": [
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_017_ACMPC\\01_论文精读.md",
+          "sha256": "7f0ee6891600f50938104975a65a901b267dc070de5b8f10f601fad87b94456b"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_017_ACMPC\\02_核心创新与方法.md",
+          "sha256": "147192ac30e1d729d02476e47302c7d923d4d04cfb931112f1c42bdb1c185bfd"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_017_ACMPC\\03_架构图与流程图.md",
+          "sha256": "09116b554f38ded539afd74ee341d5fab1a10f379bada68f786f89213fc87090"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_017_ACMPC\\04_术语和公式解释.md",
+          "sha256": "f3f82f9e66243b36afc48cc1847c90c8d01595393b18c887d4754d146246d87b"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_017_ACMPC\\05_科研启发与复现建议.md",
+          "sha256": "0eda3e1ae6d612ab0d578673f4d9c8d044c517b7b03cdc2c65a7ce001f69fd74"
+        }
+      ]
+    },
+    {
+      "folder": "Paper_018_FLORA",
+      "note_count": 5,
+      "title": "Beyond Pixels: Learning Invariant Rewards for Real-World Robotics From a Few Demonstrations",
+      "files": [
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_018_FLORA\\01_论文精读.md",
+          "sha256": "5da6c266cba2e55b017ae3f58b3d123a70781637da0fd014eab347af11e1dd36"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_018_FLORA\\02_核心创新与方法.md",
+          "sha256": "3effd05a74593286d8fd00248f7626e058b7d341f4e82a74207469463fc529f3"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_018_FLORA\\03_架构图与流程图.md",
+          "sha256": "f802b99c8a5469127e930a6150246d5fd58df6d10f78297f791439f9c3a4c962"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_018_FLORA\\04_术语和公式解释.md",
+          "sha256": "0e3be9aeda40ed96f170777750708eac3ddf4d25b7d94fb46a02d50026da9304"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_018_FLORA\\05_科研启发与复现建议.md",
+          "sha256": "43f9ac4b84f06b544256ee424ae8a41b37f3432d104fc5a2b8a1354594b29b18"
+        }
+      ]
+    },
+    {
+      "folder": "Paper_019_Koopman",
+      "note_count": 5,
+      "title": "Koopman Operators in Robot Learning",
+      "files": [
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_019_Koopman\\01_论文精读.md",
+          "sha256": "e958762e8bbeb661186d05ffbe764f9b2824635c73931f9417595445ea3b36ee"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_019_Koopman\\02_核心创新与方法.md",
+          "sha256": "a222cb0053cfca8ba2d6c0707ae66152e68cccfd47f9b8dae671bcad20fadaee"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_019_Koopman\\03_架构图与流程图.md",
+          "sha256": "6b4c68ec5bd426516c3c110e765033f638b3bfed09088faaf378bf2fa0d1f906"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_019_Koopman\\04_术语和公式解释.md",
+          "sha256": "670771353f25cf6aa229985df45d88764956a2c9679a31f07c7508c6ae42d97a"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_019_Koopman\\05_科研启发与复现建议.md",
+          "sha256": "5ade60a268419c72f67416017200abf3df806ed062bd144ac32be76008e579a0"
+        }
+      ]
+    },
+    {
+      "folder": "Paper_020_EuROBIN",
+      "note_count": 5,
+      "title": "Door-to-Door Parcel Delivery From Supply Point to User's Home With Heterogeneous Robot Team: The euROBIN First-Year Robotics Hackathon",
+      "files": [
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_020_EuROBIN\\01_论文精读.md",
+          "sha256": "665221a03780760eee1534296cfcf83c4b9af4dbcd0cc114f3f38854ac62bf7b"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_020_EuROBIN\\02_核心创新与方法.md",
+          "sha256": "c717c1e050e28c251128594bde115552f714623842b1ac9aca9662c16ccafe73"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_020_EuROBIN\\03_架构图与流程图.md",
+          "sha256": "872e53b3c7b0e251b39a42f6a0dd089e8af8c664a238a59cf745c98e1cb10644"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_020_EuROBIN\\04_术语和公式解释.md",
+          "sha256": "2a4ec66b19a7d4daefc65fac5cc82a067af73b4b855a46a161b7113b9eb2b703"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_020_EuROBIN\\05_科研启发与复现建议.md",
+          "sha256": "6ba7caadade8f8470cefc43d8b686e095f1c8718f434cacb57c523565f456461"
+        }
+      ]
+    },
+    {
+      "folder": "Paper_021_VLASurvey",
+      "note_count": 5,
+      "title": "A Survey on Vision-Language-Action Models for Embodied AI",
+      "files": [
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_021_VLASurvey\\01_论文精读.md",
+          "sha256": "2ae7db342a3666a093a938a5a368835b9d0448bc0537b5e61d942e0c33fa91a7"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_021_VLASurvey\\02_核心创新与方法.md",
+          "sha256": "8c31691ee91409924b68537dd4cdb5743bc59a92bdf1283caa4ab0e64c9f6367"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_021_VLASurvey\\03_架构图与流程图.md",
+          "sha256": "4f0b277043a5ee3f9efcdd84cd610994977991a7e87c8b88aae39db5b27e722d"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_021_VLASurvey\\04_术语和公式解释.md",
+          "sha256": "7ad144bb3a4feff4dfa7dcb5607d4604dbb59249b94c41fb98148c5c19e7a04a"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_021_VLASurvey\\05_科研启发与复现建议.md",
+          "sha256": "d517d4eb0fd56f1c7b684a6f144e8e1c442028521e227526d670793d0425f2d7"
+        }
+      ]
+    },
+    {
+      "folder": "Paper_022_DexterousSurvey",
+      "note_count": 5,
+      "title": "The Developments and Challenges Toward Dexterous and Embodied Robotic Manipulation: A Survey",
+      "files": [
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_022_DexterousSurvey\\01_论文精读.md",
+          "sha256": "bf1edd69c91630f60bcdb9662ffc37bafb9db0f0dae2d6f37ebd39e48414a256"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_022_DexterousSurvey\\02_核心创新与方法.md",
+          "sha256": "1aafe8b5ea241cd3f51b98dd3a43c8c72df191e19be71c62474a416223f02929"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_022_DexterousSurvey\\03_架构图与流程图.md",
+          "sha256": "26405b48920d4b8a6e37a5536cd87260ce079e970f3083e3b354e203f8778c54"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_022_DexterousSurvey\\04_术语和公式解释.md",
+          "sha256": "44d4b23ae8d2d646f49e97b811f439400edd81f36690830fb6a074fc103a74b3"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_022_DexterousSurvey\\05_科研启发与复现建议.md",
+          "sha256": "7e064c4c5176f4856dd91a52032957c732663aa77644ab2b2e230bd56ba2a633"
+        }
+      ]
+    },
+    {
+      "folder": "Paper_023_DGMSurvey",
+      "note_count": 5,
+      "title": "A Survey on Deep Generative Models for Robot Learning From Multimodal Demonstrations",
+      "files": [
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_023_DGMSurvey\\01_论文精读.md",
+          "sha256": "f2c7ad7270afc105935cb9acd94778a22d99f4ae90f9cab2b260b7fa38c7e424"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_023_DGMSurvey\\02_核心创新与方法.md",
+          "sha256": "94cb7cf1a7268567112f6f06000c489b28e971be36ad8001c6f96c1a708f1580"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_023_DGMSurvey\\03_架构图与流程图.md",
+          "sha256": "f2e61d303809438b0e5530c2eae7c5b287cd6d11ac2e98b1d7dae01626f55331"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_023_DGMSurvey\\04_术语和公式解释.md",
+          "sha256": "7bcdccb44b8f84d78ecf3b2979c1f689ed12e63e298f83b8bf58ee4a034176d0"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_023_DGMSurvey\\05_科研启发与复现建议.md",
+          "sha256": "56e5bdd738e602921434492bf5ea6c1629e6d260a83160e2d5c40e8948a9e7df"
+        }
+      ]
+    },
+    {
+      "folder": "Paper_024_MiningSurvey",
+      "note_count": 5,
+      "title": "Automation and Artificial Intelligence Technology in Surface Mining: A Brief Introduction to Open-Pit Operations in the Pilbara",
+      "files": [
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_024_MiningSurvey\\01_论文精读.md",
+          "sha256": "a2be3ca2c8d0337048aff83f05b348a0ce4cedc72ef8c2e8ce0ed0895b1580b3"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_024_MiningSurvey\\02_核心创新与方法.md",
+          "sha256": "952e616046d13997493dcd6ec8cc6670c160c1dbf1c2608d3f182111fb6fb019"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_024_MiningSurvey\\03_架构图与流程图.md",
+          "sha256": "bf5b158af91699ed4daed71476a8d5fdb3c38b214a0ff72288c8f9f7214502fe"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_024_MiningSurvey\\04_术语和公式解释.md",
+          "sha256": "0e9db64d34b6f9abe01f84a6b9954e6828704726843bac11705fa61153114aaf"
+        },
+        {
+          "path": "D:\\Desktop\\library\\Literature_Notes\\Paper_024_MiningSurvey\\05_科研启发与复现建议.md",
+          "sha256": "509dcb68a8aad6eae891e05eb593c4b91fc530ef4e8bee416b467784277c2823"
+        }
+      ]
+    }
+  ],
+  "note_count": 120,
+  "personal_reading_count": "unverified; not equated with AI-assisted notes",
+  "identity": "刘鑫宇，来源于旧导师讨论材料明确标记的本人提供姓名，未复用其他个人信息"
+}

@@ -1,0 +1,206 @@
+[
+  {
+    "key": "DiffusionPolicy",
+    "url": "https://raw.githubusercontent.com/real-stanford/diffusion_policy/main/README.md",
+    "error": "TypeError: fetch failed"
+  },
+  {
+    "key": "SmolVLA",
+    "url": "https://raw.githubusercontent.com/huggingface/lerobot/main/pyproject.toml",
+    "error": "TypeError: fetch failed"
+  },
+  {
+    "key": "ACT",
+    "url": "https://raw.githubusercontent.com/tonyzhaozh/act/main/README.md",
+    "error": "TypeError: fetch failed"
+  },
+  {
+    "key": "OpenVLA",
+    "url": "https://raw.githubusercontent.com/openvla/openvla/main/README.md",
+    "error": "TypeError: fetch failed"
+  },
+  {
+    "key": "VLASH",
+    "url": "https://raw.githubusercontent.com/mit-han-lab/vlash/main/pyproject.toml",
+    "error": "TypeError: fetch failed"
+  },
+  {
+    "key": "ForeAct",
+    "url": "https://raw.githubusercontent.com/mit-han-lab/foreact/main/requirements.txt",
+    "error": "TypeError: fetch failed"
+  },
+  {
+    "key": "ForeAct",
+    "url": "https://raw.githubusercontent.com/mit-han-lab/foreact/main/README.md",
+    "error": "TypeError: fetch failed"
+  },
+  {
+    "key": "ForeAct",
+    "url": "https://raw.githubusercontent.com/mit-han-lab/foreact/main/environment_setup.sh",
+    "error": "TypeError: fetch failed"
+  },
+  {
+    "key": "OpenVLAOFT",
+    "url": "https://raw.githubusercontent.com/moojink/openvla-oft/main/README.md",
+    "error": "TypeError: fetch failed"
+  },
+  {
+    "key": "VLASH",
+    "url": "https://raw.githubusercontent.com/mit-han-lab/vlash/main/README.md",
+    "error": "TypeError: fetch failed"
+  },
+  {
+    "key": "AWQ",
+    "url": "https://raw.githubusercontent.com/mit-han-lab/llm-awq/main/README.md",
+    "error": "TypeError: fetch failed"
+  },
+  {
+    "key": "DreamerV3",
+    "url": "https://raw.githubusercontent.com/danijar/dreamerv3/main/README.md",
+    "error": "TypeError: fetch failed"
+  },
+  {
+    "key": "LeRobot",
+    "url": "https://huggingface.co/docs/lerobot/hardware",
+    "error": "TypeError: fetch failed"
+  },
+  {
+    "key": "SmolVLA",
+    "url": "https://huggingface.co/docs/lerobot/smolvla",
+    "error": "TypeError: fetch failed"
+  },
+  {
+    "key": "SmolVLA",
+    "url": "https://huggingface.co/lerobot/smolvla_base/raw/main/README.md",
+    "error": "TypeError: fetch failed"
+  },
+  {
+    "key": "LeRobot",
+    "url": "https://huggingface.co/docs/lerobot/installation",
+    "error": "TypeError: fetch failed"
+  },
+  {
+    "key": "AWQ",
+    "url": "https://hanlab.mit.edu/projects/awq",
+    "http": 200,
+    "bytes": 21933
+  },
+  {
+    "key": "ACT",
+    "url": "https://tonyzhaozh.github.io/aloha/",
+    "http": 200,
+    "bytes": 24346
+  },
+  {
+    "key": "OpenVLAOFT",
+    "url": "https://openvla-oft.github.io/",
+    "http": 200,
+    "bytes": 45901
+  },
+  {
+    "key": "OpenVLA",
+    "url": "https://openvla.github.io/",
+    "http": 200,
+    "bytes": 50293
+  },
+  {
+    "key": "VLACache",
+    "url": "https://vla-cache.github.io/",
+    "http": 200,
+    "bytes": 33599
+  },
+  {
+    "key": "EfficientVLA",
+    "url": "https://arxiv.org/html/2506.10100",
+    "http": 200,
+    "bytes": 263801
+  },
+  {
+    "key": "DreamerV3",
+    "url": "https://danijar.com/project/dreamerv3/",
+    "http": 200,
+    "bytes": 11192
+  },
+  {
+    "key": "RTC",
+    "url": "https://pi.website/research/real_time_chunking",
+    "http": 200,
+    "bytes": 102152
+  },
+  {
+    "key": "DiffusionPolicy",
+    "url": "https://diffusion-policy.cs.columbia.edu/",
+    "http": 200,
+    "bytes": 35695
+  },
+  {
+    "key": "DDPM",
+    "url": "https://hojonathanho.github.io/diffusion/",
+    "http": 200
+  },
+  {
+    "key": "WorldModels",
+    "url": "https://worldmodels.github.io/",
+    "http": 200
+  },
+  {
+    "key": "RT1",
+    "url": "https://robotics-transformer1.github.io/",
+    "http": 200
+  },
+  {
+    "key": "OXE",
+    "url": "https://robotics-transformer-x.github.io/",
+    "http": 200
+  },
+  {
+    "key": "RT2",
+    "url": "https://robotics-transformer2.github.io/",
+    "http": 200
+  },
+  {
+    "key": "Octo",
+    "url": "https://octo-models.github.io/",
+    "http": 200
+  },
+  {
+    "key": "pi0",
+    "url": "https://www.physicalintelligence.company/blog/pi0",
+    "http": 200
+  },
+  {
+    "key": "pi05",
+    "url": "https://pi.website/blog/pi05",
+    "http": 200
+  },
+  {
+    "key": "ReviewRealWorld",
+    "url": "https://vla-survey.github.io/",
+    "http": 200
+  },
+  {
+    "key": "SurveyWAM",
+    "url": "https://rcl-robotics.github.io/Awesome-World-Action-Models",
+    "http": 200
+  },
+  {
+    "key": "FAST",
+    "url": "https://pi.website/research/fast",
+    "http": 200
+  },
+  {
+    "key": "SmoothQuant",
+    "url": "https://hanlab.mit.edu/projects/smoothquant",
+    "http": 200
+  },
+  {
+    "key": "ConsistencyPolicy",
+    "url": "https://consistency-policy.github.io/",
+    "http": 200
+  },
+  {
+    "key": "DP3",
+    "url": "https://3d-diffusion-policy.github.io/",
+    "http": 200
+  }
+]

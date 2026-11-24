@@ -1,0 +1,64 @@
+Loading  HuggingFaceTB/SmolVLM2-500M-Video-Instruct weights ...
+Reducing the number of VLM layers to 16 ...
+{
+  "vlm_snapshot": "/home/lxy/lerobot-smolvla-repro/hf-cache/hub/models--HuggingFaceTB--SmolVLM2-500M-Video-Instruct/snapshots/4cde9d208e19519c36917aa170fffc7e381aa0ad",
+  "ckpt_snapshot": "/home/lxy/lerobot-smolvla-repro/hf-cache/hub/models--lerobot--smolvla_libero/snapshots/a24f1f380461b665158d52acd140152c79e8b36d",
+  "text_config": {
+    "hidden_size": 960,
+    "intermediate_size": 2560,
+    "num_hidden_layers": 32,
+    "num_attention_heads": 15,
+    "num_key_value_heads": 5,
+    "head_dim": 64,
+    "vocab_size": 49280
+  },
+  "vision_config": {
+    "hidden_size": 768,
+    "image_size": 512,
+    "patch_size": 16,
+    "num_hidden_layers": 12
+  },
+  "vlm_params": {
+    "total": 507482304,
+    "vision_model": 86433024,
+    "connector": 11796480,
+    "text_model": 361944000,
+    "text_embed_tokens": 47308800,
+    "lm_head": 47308800,
+    "one_text_layer": 9832320,
+    "first16_text_layers_est": 157317120
+  },
+  "pixel_values_shape": [
+    1,
+    3,
+    512,
+    512
+  ],
+  "vision_patch_tokens": [
+    1,
+    1024,
+    768
+  ],
+  "visual_tokens_per_image": [
+    1,
+    64,
+    960
+  ],
+  "smolvla": {
+    "num_vlm_layers_used": 16,
+    "num_expert_layers": 16,
+    "expert_hidden_size": 720,
+    "vlm_hidden_size": 960
+  },
+  "smolvla_params": {
+    "state_proj": 31680,
+    "action_in_proj": 23760,
+    "action_out_proj": 23072,
+    "action_time_mlp_in": 1037520,
+    "action_time_mlp_out": 519120,
+    "lm_expert": 98245840,
+    "vlm": 350165184,
+    "total": 450046176,
+    "trainable_requires_grad": 392904096
+  }
+}

@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.mplcache/
+newone.py
+.DS_Store
+.vscode/
+paper-local/

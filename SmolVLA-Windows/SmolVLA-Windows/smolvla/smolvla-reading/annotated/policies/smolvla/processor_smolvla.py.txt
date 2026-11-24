@@ -1,0 +1,155 @@
+# 原文件 lerobot/src/lerobot/policies/smolvla/processor_smolvla.py
+# 原行范围 1–82
+# L 后是官方源码或本机文件的原行号。每条中文注释对应紧随其后的原文。
+# 这是静态阅读副本。请在编辑器中阅读。空行保留，节选之间标出跳过的范围。
+# L0001 原作者对相邻代码的说明。
+#!/usr/bin/env python
+
+# L0003 原版权或开源许可声明。
+# Copyright 2025 HuggingFace Inc. team. All rights reserved.
+# L0004 原作者对相邻代码的说明。
+#
+# L0005 原版权或开源许可声明。
+# Licensed under the Apache License, Version 2.0 (the "License");
+# L0006 原版权或开源许可声明。
+# you may not use this file except in compliance with the License.
+# L0007 原版权或开源许可声明。
+# You may obtain a copy of the License at
+# L0008 原作者对相邻代码的说明。
+#
+# L0009 原版权或开源许可声明。
+#     http://www.apache.org/licenses/LICENSE-2.0
+# L0010 原作者对相邻代码的说明。
+#
+# L0011 原作者对相邻代码的说明。
+# Unless required by applicable law or agreed to in writing, software
+# L0012 原版权或开源许可声明。
+# distributed under the License is distributed on an "AS IS" BASIS,
+# L0013 原版权或开源许可声明。
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# L0014 原版权或开源许可声明。
+# See the License for the specific language governing permissions and
+# L0015 原版权或开源许可声明。
+# limitations under the License.
+
+# L0017 从模块 typing 导入 Any。
+from typing import Any
+
+# L0019 导入模块 torch。
+import torch
+
+# L0021 从模块 lerobot.processor 导入下方列出的多个名字。
+from lerobot.processor import (
+    # L0022 “NewLineTaskProcessorStep”是当前括号中的一项，逗号将它与下一项分开。
+    NewLineTaskProcessorStep,
+    # L0023 “PolicyAction”是当前括号中的一项，逗号将它与下一项分开。
+    PolicyAction,
+    # L0024 “PolicyProcessorPipeline”是当前括号中的一项，逗号将它与下一项分开。
+    PolicyProcessorPipeline,
+    # L0025 “TokenizerProcessorStep”是当前括号中的一项，逗号将它与下一项分开。
+    TokenizerProcessorStep,
+    # L0026 “make_default_policy_processor_steps”是当前括号中的一项，逗号将它与下一项分开。
+    make_default_policy_processor_steps,
+    # L0027 “make_policy_processor_pipelines”是当前括号中的一项，逗号将它与下一项分开。
+    make_policy_processor_pipelines,
+# L0028 闭合上方尚未结束的括号。
+)
+
+# L0030 相对导入前的一个点指当前包，用它从同目录配置模块取 SmolVLAConfig。
+from .configuration_smolvla import SmolVLAConfig
+
+
+# L0033 策略从头构建时创建前处理与后处理。这也是理解 checkpoint 中同类步骤的对照代码。
+def make_smolvla_pre_post_processors(
+    # L0034 “config”（配置对象）是当前括号中的一项，逗号将它与下一项分开。
+    config: SmolVLAConfig,
+    # L0035 为“dataset_stats”提供这一项的值，注意它所在的参数表或外层表达式。
+    dataset_stats: dict[str, dict[str, torch.Tensor]] | None = None,
+# L0036 延续上面的语句，) -> tuple[。
+) -> tuple[
+    # L0037 延续上面的语句，PolicyProcessorPipeline[dict[str, Any], dict[str, Any]],。
+    PolicyProcessorPipeline[dict[str, Any], dict[str, Any]],
+    # L0038 延续上面的语句，PolicyProcessorPipeline[PolicyAction, PolicyAction],。
+    PolicyProcessorPipeline[PolicyAction, PolicyAction],
+# L0039 闭合上方尚未结束的括号。
+]:
+    # L0040 文档字符串的边界。
+    """
+    # L0041 原文档中的说明或续行。
+    Constructs pre-processor and post-processor pipelines for the SmolVLA policy.
+
+    # L0043 原文档中的说明或续行。
+    The pre-processing pipeline prepares input data for the model by:
+    # L0044 原文档中的说明或续行。
+    1.  Renaming features to match pretrained configurations.
+    # L0045 原文档中的说明或续行。
+    2.  Normalizing input and output features based on dataset statistics.
+    # L0046 原文档中的说明或续行。
+    3.  Adding a batch dimension.
+    # L0047 原文档中的说明或续行。
+    4.  Ensuring the language task description ends with a newline character.
+    # L0048 原文档中的说明或续行。
+    5.  Tokenizing the language task description.
+    # L0049 原文档中的说明或续行。
+    6.  Moving all data to the specified device.
+
+    # L0051 原文档中的说明或续行。
+    The post-processing pipeline handles the model's output by:
+    # L0052 原文档中的说明或续行。
+    1.  Moving data to the CPU.
+    # L0053 原文档中的说明或续行。
+    2.  Unnormalizing the output actions to their original scale.
+
+    # L0055 以下列出调用参数及其含义。
+    Args:
+        # L0056 原文档对“config”（配置对象）的说明。
+        config: The configuration object for the SmolVLA policy.
+        # L0057 原文档对“dataset_stats”的说明。
+        dataset_stats: A dictionary of statistics for normalization.
+
+    # L0059 以下说明调用者接收到的结果。
+    Returns:
+        # L0060 原文档中的说明或续行。
+        A tuple containing the configured pre-processor and post-processor pipelines.
+    # L0061 文档字符串的边界。
+    """
+
+    # L0063 先按通用策略配置和统计量建立可复用的处理步骤对象。
+    steps = make_default_policy_processor_steps(config, dataset_stats)
+
+    # L0065 前处理代码按列表顺序运行，每一步的输出会传给下一步。
+    input_steps = [
+        # L0066 把当前观测键转换成策略期望的键名。
+        steps.rename_observations,  # To mimic the same processor as pretrained one
+        # L0067 为缺少批次轴的输入补上批次轴。
+        steps.add_batch_dim,
+        # L0068 为自然语言任务补齐末尾换行，以匹配训练时的文本格式。
+        NewLineTaskProcessorStep(),
+        # L0069 构造负责把任务文字转成模型词表编号的分词步骤。
+        TokenizerProcessorStep(
+            # L0070 为“tokenizer_name”提供这一项的值，注意它所在的参数表或外层表达式。
+            tokenizer_name=config.vlm_model_name,
+            # L0071 配置分词的补齐方式。
+            padding=config.pad_language_to,
+            # L0072 用右侧填充对齐短文本序列。
+            padding_side="right",
+            # L0073 把最大文本 token 数传给分词器。
+            max_length=config.tokenizer_max_length,
+        # L0074 闭合上方尚未结束的括号。末尾逗号可用于分隔外层的元素。
+        ),
+        # L0075 将流水线中的张量移到策略设备。
+        steps.to_device,
+        # L0076 用保存的统计量归一化配置指定的特征。
+        steps.normalize,
+    # L0077 闭合上方尚未结束的括号。
+    ]
+    # L0078 创建列表，按给定顺序保留元素给 “output_steps” 赋值。
+    output_steps = [
+        # L0079 用训练统计量把动作恢复为环境所需的数值尺度。
+        steps.unnormalize,
+        # L0080 把预测动作移回 CPU。
+        steps.to_cpu,
+    # L0081 闭合上方尚未结束的括号。
+    ]
+    # L0082 把两组有序步骤分别包装成可调用的前后处理流水线。
+    return make_policy_processor_pipelines(input_steps=input_steps, output_steps=output_steps)

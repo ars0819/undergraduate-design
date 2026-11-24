@@ -1,0 +1,1759 @@
+[
+  {
+    "name": "abs_2304.13705",
+    "url": "https://arxiv.org/abs/2304.13705",
+    "final_url": "https://arxiv.org/abs/2304.13705",
+    "status": 200,
+    "bytes": 40730,
+    "sha256": "bc5f190c682a819c21b8ad55d03079c921d89b5492a4df988490040122288282",
+    "metadata": {
+      "citation_title": [
+        "Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware"
+      ],
+      "citation_author": [
+        "Zhao, Tony Z.",
+        "Kumar, Vikash",
+        "Levine, Sergey",
+        "Finn, Chelsea"
+      ],
+      "citation_date": [
+        "2023/04/23"
+      ],
+      "citation_online_date": [
+        "2023/04/23"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2304.13705"
+      ],
+      "citation_arxiv_id": [
+        "2304.13705"
+      ],
+      "citation_abstract": [
+        "Fine manipulation tasks, such as threading cable ties or slotting a battery, are notoriously difficult for robots because they require precision, careful coordination of contact forces, and closed-loop visual feedback. Performing these tasks typically requires high-end robots, accurate sensors, or careful calibration, which can be expensive and difficult to set up. Can learning enable low-cost and imprecise hardware to perform these fine manipulation tasks? We present a low-cost system that performs end-to-end imitation learning directly from real demonstrations, collected with a custom teleoperation interface. Imitation learning, however, presents its own challenges, particularly in high-precision domains: errors in the policy can compound over time, and human demonstrations can be non-stationary. To address these challenges, we develop a simple yet novel algorithm, Action Chunking with Transformers (ACT), which learns a generative model over action sequences. ACT allows the robot to learn 6 difficult tasks in the real world, such as opening a translucent condiment cup and slotting a battery with 80-90% success, with only 10 minutes worth of demonstrations. Project website: https://tonyzhaozh.github.io/aloha/"
+      ]
+    }
+  },
+  {
+    "name": "abs_2303.04137",
+    "url": "https://arxiv.org/abs/2303.04137",
+    "final_url": "https://arxiv.org/abs/2303.04137",
+    "status": 200,
+    "bytes": 42605,
+    "sha256": "b8fc551fc3847a0292fa23987bf5f829a1a4f1b969715ad16ca6d176048a49eb",
+    "metadata": {
+      "citation_title": [
+        "Diffusion Policy: Visuomotor Policy Learning via Action Diffusion"
+      ],
+      "citation_author": [
+        "Chi, Cheng",
+        "Xu, Zhenjia",
+        "Feng, Siyuan",
+        "Cousineau, Eric",
+        "Du, Yilun",
+        "Burchfiel, Benjamin",
+        "Tedrake, Russ",
+        "Song, Shuran"
+      ],
+      "citation_date": [
+        "2023/03/07"
+      ],
+      "citation_online_date": [
+        "2024/03/14"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2303.04137"
+      ],
+      "citation_arxiv_id": [
+        "2303.04137"
+      ],
+      "citation_abstract": [
+        "This paper introduces Diffusion Policy, a new way of generating robot behavior by representing a robot's visuomotor policy as a conditional denoising diffusion process. We benchmark Diffusion Policy across 12 different tasks from 4 different robot manipulation benchmarks and find that it consistently outperforms existing state-of-the-art robot learning methods with an average improvement of 46.9%. Diffusion Policy learns the gradient of the action-distribution score function and iteratively optimizes with respect to this gradient field during inference via a series of stochastic Langevin dynamics steps. We find that the diffusion formulation yields powerful advantages when used for robot policies, including gracefully handling multimodal action distributions, being suitable for high-dimensional action spaces, and exhibiting impressive training stability. To fully unlock the potential of diffusion models for visuomotor policy learning on physical robots, this paper presents a set of key technical contributions including the incorporation of receding horizon control, visual conditioning, and the time-series diffusion transformer. We hope this work will help motivate a new generation of policy learning techniques that are able to leverage the powerful generative modeling capabilities of diffusion models. Code, data, and training details is publicly available diffusion-policy.cs.columbia.edu"
+      ]
+    }
+  },
+  {
+    "name": "abs_2506.07339",
+    "url": "https://arxiv.org/abs/2506.07339",
+    "final_url": "https://arxiv.org/abs/2506.07339",
+    "status": 200,
+    "bytes": 41630,
+    "sha256": "2f1f3d8d67e728f275bc32ee45a32d1065acf26b8175ba5e531ea91cb3a2acde",
+    "metadata": {
+      "citation_title": [
+        "Real-Time Execution of Action Chunking Flow Policies"
+      ],
+      "citation_author": [
+        "Black, Kevin",
+        "Galliker, Manuel Y.",
+        "Levine, Sergey"
+      ],
+      "citation_date": [
+        "2025/06/09"
+      ],
+      "citation_online_date": [
+        "2025/12/05"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2506.07339"
+      ],
+      "citation_arxiv_id": [
+        "2506.07339"
+      ],
+      "citation_abstract": [
+        "Modern AI systems, especially those interacting with the physical world, increasingly require real-time performance. However, the high latency of state-of-the-art generalist models, including recent vision-language action models (VLAs), poses a significant challenge. While action chunking has enabled temporal consistency in high-frequency control tasks, it does not fully address the latency problem, leading to pauses or out-of-distribution jerky movements at chunk boundaries. This paper presents a novel inference-time algorithm that enables smooth asynchronous execution of action chunking policies. Our method, real-time chunking (RTC), is applicable to any diffusion- or flow-based VLA out of the box with no re-training. It generates the next action chunk while executing the current one, \"freezing\" actions guaranteed to execute and \"inpainting\" the rest. To test RTC, we introduce a new benchmark of 12 highly dynamic tasks in the Kinetix simulator, as well as evaluate 6 challenging real-world bimanual manipulation tasks. Results demonstrate that RTC is fast, performant, and uniquely robust to inference delay, significantly improving task throughput and enabling high success rates in precise tasks $\\unicode{x2013}$ such as lighting a match $\\unicode{x2013}$ even in the presence of significant latency. See https://pi.website/research/real_time_chunking for videos."
+      ]
+    }
+  },
+  {
+    "name": "abs_2607.24008",
+    "url": "https://arxiv.org/abs/2607.24008",
+    "final_url": "https://arxiv.org/abs/2607.24008",
+    "status": 200,
+    "bytes": 42046,
+    "sha256": "6379532284bcd60b4521b1d38abe1fa5c0c7b17f6f2c023858e73318ae01a43c",
+    "metadata": {
+      "citation_title": [
+        "FutureRTC: Real-Time Robot Execution with Anticipatory-Conditioned Action Chunking"
+      ],
+      "citation_author": [
+        "Jiang, Hai",
+        "Zou, Yixian",
+        "Liang, Binbin",
+        "Liu, Boqian",
+        "Meng, Fanman",
+        "Liu, Shuaicheng"
+      ],
+      "citation_date": [
+        "2026/07/27"
+      ],
+      "citation_online_date": [
+        "2026/07/27"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2607.24008"
+      ],
+      "citation_arxiv_id": [
+        "2607.24008"
+      ],
+      "citation_abstract": [
+        "Real-time deployment of Vision-Language-Action (VLA) policies necessitates asynchronous execution, wherein subsequent action chunks are computed concurrently with the execution of the current chunk, leading to prediction-execution misalignment and manifesting as inter-chunk discontinuities. Existing methods either superficially smooth chunk boundaries, require costly policy optimization, or exclusively forward-predict proprioceptive states yet neglect critical visual observations. In this paper, we propose \\textbf{FutureRTC}, a plug-and-play adaptation framework that predicts execution-time observations and states for asynchronous VLA control without modifying the underlying policy. Specifically, FutureRTC features a state correction module to compensate for the discrepancy between rolled-forward and actual execution-time proprioceptive states and an observation prediction module that forecasts execution-time visual representations by leveraging robot motion as an explicit physical prior through motion-aware feature transport and reconstruction. Furthermore, we introduce a policy consistency loss to align the action chunks generated from predicted contexts with those produced under the expected execution-time inputs of the VLA policy. Extensive experiments across simulated and real-world environments demonstrate that FutureRTC achieves superior robustness to inference delays, resulting in smoother trajectories, faster execution, and consistently higher task success rates."
+      ]
+    }
+  },
+  {
+    "name": "abs_2609.00908",
+    "url": "https://arxiv.org/abs/2609.00908",
+    "final_url": "https://arxiv.org/abs/2609.00908",
+    "status": 200,
+    "bytes": 42093,
+    "sha256": "ace28e4c33a1cc4109370aad132b00281de7d3f1e682d1c9479bb2d47b9b2c35",
+    "metadata": {
+      "citation_title": [
+        "Knowing When to Stop: Adaptive Action Chunking via Internal Cross-Attention Dynamics in VLAs"
+      ],
+      "citation_author": [
+        "Xu, Runze",
+        "Shan, Xiaolong",
+        "Dai, Shuang",
+        "Wang, Yu",
+        "Yu, Jincheng"
+      ],
+      "citation_date": [
+        "2026/09/01"
+      ],
+      "citation_online_date": [
+        "2026/09/16"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2609.00908"
+      ],
+      "citation_arxiv_id": [
+        "2609.00908"
+      ],
+      "citation_abstract": [
+        "Action chunking is a standard execution strategy in modern Vision-Language-Action (VLA) frameworks, but fixed execution horizons impose a trade-off between efficiency and accuracy. Short chunks require frequent inference and may cause oscillatory behavior, whereas long chunks can become misaligned with newly observed states. We address this limitation with an adaptive action chunking approach based on internal cross-attention dynamics in the action expert. We observe that, as the prediction horizon extends, action-to-observation cross-attention becomes increasingly dispersed and its entropy rises toward a plateau. This pattern is associated with higher action prediction error and provides an online signal that the current observation offers limited grounding for further open-loop execution. Based on this observation, we introduce a training-free truncation mechanism that detects sustained high-entropy plateaus and dynamically selects the execution horizon during inference. The method uses attention weights already computed by the policy and introduces negligible additional overhead. Evaluations on $\\pi_{0.5}$ and X-VLA across RoboTwin 2.0, LIBERO, and three real-world manipulation tasks show improved average task success over fixed-horizon and adaptive chunking baselines, while preserving efficient closed-loop control. These results show that cross-attention dynamics can provide a practical internal signal for adaptive action execution in VLAs."
+      ]
+    }
+  },
+  {
+    "name": "abs_2603.19131",
+    "url": "https://arxiv.org/abs/2603.19131",
+    "final_url": "https://arxiv.org/abs/2603.19131",
+    "status": 200,
+    "bytes": 43795,
+    "sha256": "0306b98ef19cc1218659e71ed2961878e157ac889c60c4e621f65538f679fd7e",
+    "metadata": {
+      "citation_title": [
+        "From Inference Efficiency to Embodied Efficiency: Revisiting Efficiency Metrics for Vision-Language-Action Models"
+      ],
+      "citation_author": [
+        "Li, Zhuofan",
+        "Yang, Hongkun",
+        "Chen, Zhenyang",
+        "Chen, Yangxuan",
+        "Yingyan",
+        "Lin",
+        "Li, Chaojian"
+      ],
+      "citation_date": [
+        "2026/03/19"
+      ],
+      "citation_online_date": [
+        "2026/03/19"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2603.19131"
+      ],
+      "citation_arxiv_id": [
+        "2603.19131"
+      ],
+      "citation_abstract": [
+        "Vision-Language-Action (VLA) models have recently enabled embodied agents to perform increasingly complex tasks by jointly reasoning over visual, linguistic, and motor modalities. However, we find that the prevailing notion of ``efficiency'' in current VLA research, characterized by parameters, FLOPs, or token decoding throughput, does not reflect actual performance on robotic platforms. In real-world execution, efficiency is determined by system-level embodied behaviors such as task completion time, trajectory smoothness, cumulative joint rotation, and motion energy. Through controlled studies across model compression, token sparsification, and action sequence compression, we make several observations that challenge common assumptions. (1) Methods that reduce computation under conventional metrics often increase end-to-end execution cost or degrade motion quality, despite maintaining task success rates. (2) System-level embodied efficiency metrics reveal performance differences in the learned action policies that remain hidden under conventional evaluations. (3) Common adaptation methods such as in-context prompting or supervised fine-tuning show only mild and metric-specific improvements in embodied efficiency. While these methods can reduce targeted embodied-efficiency metrics such as jerk or action rate, the resulting gains may come with trade-offs in other metrics, such as longer completion time. Taken together, our results suggest that conventional inference efficiency metrics can overlook important aspects of embodied execution. Incorporating embodied efficiency provides a more complete view of policy behavior and practical performance, enabling fairer and more comprehensive comparisons of VLA models."
+      ]
+    }
+  },
+  {
+    "name": "abs_2506.01844",
+    "url": "https://arxiv.org/abs/2506.01844",
+    "final_url": "https://arxiv.org/abs/2506.01844",
+    "status": 200,
+    "bytes": 44019,
+    "sha256": "1960cb66eb6ebbc03e05c192d366ed0cffca0a236d5b3119481919d53ddbaa68",
+    "metadata": {
+      "citation_title": [
+        "SmolVLA: A Vision-Language-Action Model for Affordable and Efficient Robotics"
+      ],
+      "citation_author": [
+        "Shukor, Mustafa",
+        "Aubakirova, Dana",
+        "Capuano, Francesco",
+        "Kooijmans, Pepijn",
+        "Palma, Steven",
+        "Zouitine, Adil",
+        "Aractingi, Michel",
+        "Pascal, Caroline",
+        "Russi, Martino",
+        "Marafioti, Andres",
+        "Alibert, Simon",
+        "Cord, Matthieu",
+        "Wolf, Thomas",
+        "Cadene, Remi"
+      ],
+      "citation_date": [
+        "2025/06/02"
+      ],
+      "citation_online_date": [
+        "2025/06/02"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2506.01844"
+      ],
+      "citation_arxiv_id": [
+        "2506.01844"
+      ],
+      "citation_abstract": [
+        "Vision-language models (VLMs) pretrained on large-scale multimodal datasets encode rich visual and linguistic knowledge, making them a strong foundation for robotics. Rather than training robotic policies from scratch, recent approaches adapt VLMs into vision-language-action (VLA) models that enable natural language-driven perception and control. However, existing VLAs are typically massive--often with billions of parameters--leading to high training costs and limited real-world deployability. Moreover, they rely on academic and industrial datasets, overlooking the growing availability of community-collected data from affordable robotic platforms. In this work, we present SmolVLA, a small, efficient, and community-driven VLA that drastically reduces both training and inference costs, while retaining competitive performance. SmolVLA is designed to be trained on a single GPU and deployed on consumer-grade GPUs or even CPUs. To further improve responsiveness, we introduce an asynchronous inference stack decoupling perception and action prediction from action execution, allowing higher control rates with chunked action generation. Despite its compact size, SmolVLA achieves performance comparable to VLAs that are 10x larger. We evaluate SmolVLA on a range of both simulated as well as real-world robotic benchmarks and release all code, pretrained models, and training data."
+      ]
+    }
+  },
+  {
+    "name": "abs_2609.25376",
+    "url": "https://arxiv.org/abs/2609.25376",
+    "final_url": "https://arxiv.org/abs/2609.25376",
+    "status": 200,
+    "bytes": 42839,
+    "sha256": "9fb744e0fe07b69929a86cd96b4d4b79a39d0beb8f1304bec4641ceb03d4290f",
+    "metadata": {
+      "citation_title": [
+        "VLAQuantBench: Closed-Loop Evaluation of Post-Training Quantization for Vision-Language-Action Models"
+      ],
+      "citation_author": [
+        "Xu, Jiuyi",
+        "Jin, Qing",
+        "Chen, Meida",
+        "Wang, Song",
+        "Sui, Yang",
+        "Shi, Yangming"
+      ],
+      "citation_date": [
+        "2026/09/21"
+      ],
+      "citation_online_date": [
+        "2026/09/21"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2609.25376"
+      ],
+      "citation_arxiv_id": [
+        "2609.25376"
+      ],
+      "citation_abstract": [
+        "Post-training quantization reduces the memory requirements of vision-language-action (VLA) models, but precision selection must account for the interaction between layer scope, numerical format, and calibration. We introduce \\textbf{VLAQuantBench}, a controlled evaluation with 409 runs and 94,574 simulation episodes: four models on LIBERO, with X-VLA additionally evaluated on three simulation benchmark families. Under uncalibrated W4A4 round-to-nearest quantization, expanding a $\\pi_{0.5}$ action-head subset from 126 to 167 layers raises success from 7.0\\% to 70.5\\%. Fixed-observation replay confirms a corresponding numerical recovery. Two-episode calibration removes the severe joint failures in the tested subsets, whereas the same smoothing-and-clipping recipe lowers $\\pi_0$ success and does not recover OpenVLA-OFT end-to-end. For OpenVLA-OFT, protecting one 28,672-parameter output projection instead restores near-baseline success: the remaining 441 eligible linear layers retain W3 on LIBERO-Long or eight-bit activations across all four suites. Task-clustered intervals support the large failure and recovery contrasts. These results establish recipe-dependent interactions and identify concrete precision assignments, rather than universal layer-sensitivity rules. Real-kernel and physical-robot measurements complement the accuracy analysis. Code, configurations, and episode records are publicly available at https://github.com/jiuyixu25/VLAQuantBench."
+      ]
+    }
+  },
+  {
+    "name": "abs_2406.09246",
+    "url": "https://arxiv.org/abs/2406.09246",
+    "final_url": "https://arxiv.org/abs/2406.09246",
+    "status": 200,
+    "bytes": 46221,
+    "sha256": "6eee376f1fe547b781dc37cf881690453e55929b51d7b3c00720f9c436228545",
+    "metadata": {
+      "citation_title": [
+        "OpenVLA: An Open-Source Vision-Language-Action Model"
+      ],
+      "citation_author": [
+        "Kim, Moo Jin",
+        "Pertsch, Karl",
+        "Karamcheti, Siddharth",
+        "Xiao, Ted",
+        "Balakrishna, Ashwin",
+        "Nair, Suraj",
+        "Rafailov, Rafael",
+        "Foster, Ethan",
+        "Lam, Grace",
+        "Sanketi, Pannag",
+        "Vuong, Quan",
+        "Kollar, Thomas",
+        "Burchfiel, Benjamin",
+        "Tedrake, Russ",
+        "Sadigh, Dorsa",
+        "Levine, Sergey",
+        "Liang, Percy",
+        "Finn, Chelsea"
+      ],
+      "citation_date": [
+        "2024/06/13"
+      ],
+      "citation_online_date": [
+        "2024/09/05"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2406.09246"
+      ],
+      "citation_arxiv_id": [
+        "2406.09246"
+      ],
+      "citation_abstract": [
+        "Large policies pretrained on a combination of Internet-scale vision-language data and diverse robot demonstrations have the potential to change how we teach robots new skills: rather than training new behaviors from scratch, we can fine-tune such vision-language-action (VLA) models to obtain robust, generalizable policies for visuomotor control. Yet, widespread adoption of VLAs for robotics has been challenging as 1) existing VLAs are largely closed and inaccessible to the public, and 2) prior work fails to explore methods for efficiently fine-tuning VLAs for new tasks, a key component for adoption. Addressing these challenges, we introduce OpenVLA, a 7B-parameter open-source VLA trained on a diverse collection of 970k real-world robot demonstrations. OpenVLA builds on a Llama 2 language model combined with a visual encoder that fuses pretrained features from DINOv2 and SigLIP. As a product of the added data diversity and new model components, OpenVLA demonstrates strong results for generalist manipulation, outperforming closed models such as RT-2-X (55B) by 16.5% in absolute task success rate across 29 tasks and multiple robot embodiments, with 7x fewer parameters. We further show that we can effectively fine-tune OpenVLA for new settings, with especially strong generalization results in multi-task environments involving multiple objects and strong language grounding abilities, and outperform expressive from-scratch imitation learning methods such as Diffusion Policy by 20.4%. We also explore compute efficiency; as a separate contribution, we show that OpenVLA can be fine-tuned on consumer GPUs via modern low-rank adaptation methods and served efficiently via quantization without a hit to downstream success rate. Finally, we release model checkpoints, fine-tuning notebooks, and our PyTorch codebase with built-in support for training VLAs at scale on Open X-Embodiment datasets."
+      ]
+    }
+  },
+  {
+    "name": "abs_2502.19645",
+    "url": "https://arxiv.org/abs/2502.19645",
+    "final_url": "https://arxiv.org/abs/2502.19645",
+    "status": 200,
+    "bytes": 43186,
+    "sha256": "8c01e38147c6acaccfcab055a4f20fa8e75922840331e48f1d34aac417cbc05d",
+    "metadata": {
+      "citation_title": [
+        "Fine-Tuning Vision-Language-Action Models: Optimizing Speed and Success"
+      ],
+      "citation_author": [
+        "Kim, Moo Jin",
+        "Finn, Chelsea",
+        "Liang, Percy"
+      ],
+      "citation_date": [
+        "2025/02/27"
+      ],
+      "citation_online_date": [
+        "2025/04/28"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2502.19645"
+      ],
+      "citation_arxiv_id": [
+        "2502.19645"
+      ],
+      "citation_abstract": [
+        "Recent vision-language-action models (VLAs) build upon pretrained vision-language models and leverage diverse robot datasets to demonstrate strong task execution, language following ability, and semantic generalization. Despite these successes, VLAs struggle with novel robot setups and require fine-tuning to achieve good performance, yet how to most effectively fine-tune them is unclear given many possible strategies. In this work, we study key VLA adaptation design choices such as different action decoding schemes, action representations, and learning objectives for fine-tuning, using OpenVLA as our representative base model. Our empirical analysis informs an Optimized Fine-Tuning (OFT) recipe that integrates parallel decoding, action chunking, a continuous action representation, and a simple L1 regression-based learning objective to altogether improve inference efficiency, policy performance, and flexibility in the model's input-output specifications. We propose OpenVLA-OFT, an instantiation of this recipe, which sets a new state of the art on the LIBERO simulation benchmark, significantly boosting OpenVLA's average success rate across four task suites from 76.5% to 97.1% while increasing action generation throughput by 26$\\times$. In real-world evaluations, our fine-tuning recipe enables OpenVLA to successfully execute dexterous, high-frequency control tasks on a bimanual ALOHA robot and outperform other VLAs ($\\pi_0$ and RDT-1B) fine-tuned using their default recipes, as well as strong imitation learning policies trained from scratch (Diffusion Policy and ACT) by up to 15% (absolute) in average success rate. We release code for OFT and pretrained model checkpoints at https://openvla-oft.github.io/."
+      ]
+    }
+  },
+  {
+    "name": "abs_2604.04161",
+    "url": "https://arxiv.org/abs/2604.04161",
+    "final_url": "https://arxiv.org/abs/2604.04161",
+    "status": 200,
+    "bytes": 41838,
+    "sha256": "a96c49fe3234d5e5e2ae33b25f0d09c78b5a3ffc7695bd4c9aafa57b9812c341",
+    "metadata": {
+      "citation_title": [
+        "Adaptive Action Chunking at Inference-time for Vision-Language-Action Models"
+      ],
+      "citation_author": [
+        "Liang, Yuanchang",
+        "Wang, Xiaobo",
+        "Wang, Kai",
+        "Wang, Shuo",
+        "Peng, Xiaojiang",
+        "Chen, Haoyu",
+        "Chua, David Kim Huat",
+        "Vadakkepat, Prahlad"
+      ],
+      "citation_date": [
+        "2026/04/05"
+      ],
+      "citation_online_date": [
+        "2026/04/10"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2604.04161"
+      ],
+      "citation_arxiv_id": [
+        "2604.04161"
+      ],
+      "citation_abstract": [
+        "In Vision-Language-Action (VLA) models, action chunking (i.e., executing a sequence of actions without intermediate replanning) is a key technique to improve robotic manipulation abilities. However, a large chunk size reduces the model's responsiveness to new information, while a small one increases the likelihood of mode-jumping, jerky behavior resulting from discontinuities between chunks. Therefore, selecting the optimal chunk size is an urgent demand to balance the model's reactivity and consistency. Unfortunately, a dominant trend in current VLA models is an empirical fixed chunk length at inference-time, hindering their superiority and scalability across diverse manipulation tasks. To address this issue, we propose a novel Adaptive Action Chunking (AAC) strategy, which exploits action entropy as the cue to adaptively determine the chunk size based on current predictions. Extensive experiments on a wide range of simulated and real-world robotic manipulation tasks have demonstrated that our approach substantially improves performance over the state-of-the-art alternatives. The videos and source code are publicly available at https://lance-lot.github.io/adaptive-chunking.github.io/."
+      ]
+    }
+  },
+  {
+    "name": "abs_2410.24164",
+    "url": "https://arxiv.org/abs/2410.24164",
+    "final_url": "https://arxiv.org/abs/2410.24164",
+    "status": 200,
+    "bytes": 46244,
+    "sha256": "ac4d3d6e424fab1597bee3db5469e08337700c5f3ac51afd1afe8bf18938650f",
+    "metadata": {
+      "citation_title": [
+        "$\\pi_0$: A Vision-Language-Action Flow Model for General Robot Control"
+      ],
+      "citation_author": [
+        "Black, Kevin",
+        "Brown, Noah",
+        "Driess, Danny",
+        "Esmail, Adnan",
+        "Equi, Michael",
+        "Finn, Chelsea",
+        "Fusai, Niccolo",
+        "Groom, Lachy",
+        "Hausman, Karol",
+        "Ichter, Brian",
+        "Jakubczak, Szymon",
+        "Jones, Tim",
+        "Ke, Liyiming",
+        "Levine, Sergey",
+        "Li-Bell, Adrian",
+        "Mothukuri, Mohith",
+        "Nair, Suraj",
+        "Pertsch, Karl",
+        "Shi, Lucy Xiaoyang",
+        "Tanner, James",
+        "Vuong, Quan",
+        "Walling, Anna",
+        "Wang, Haohuan",
+        "Zhilinsky, Ury"
+      ],
+      "citation_date": [
+        "2024/10/31"
+      ],
+      "citation_online_date": [
+        "2026/01/08"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2410.24164"
+      ],
+      "citation_arxiv_id": [
+        "2410.24164"
+      ],
+      "citation_abstract": [
+        "Robot learning holds tremendous promise to unlock the full potential of flexible, general, and dexterous robot systems, as well as to address some of the deepest questions in artificial intelligence. However, bringing robot learning to the level of generality required for effective real-world systems faces major obstacles in terms of data, generalization, and robustness. In this paper, we discuss how generalist robot policies (i.e., robot foundation models) can address these challenges, and how we can design effective generalist robot policies for complex and highly dexterous tasks. We propose a novel flow matching architecture built on top of a pre-trained vision-language model (VLM) to inherit Internet-scale semantic knowledge. We then discuss how this model can be trained on a large and diverse dataset from multiple dexterous robot platforms, including single-arm robots, dual-arm robots, and mobile manipulators. We evaluate our model in terms of its ability to perform tasks in zero shot after pre-training, follow language instructions from people and from a high-level VLM policy, and its ability to acquire new skills via fine-tuning. Our results cover a wide variety of tasks, such as laundry folding, table cleaning, and assembling boxes."
+      ]
+    }
+  },
+  {
+    "name": "abs_2504.16054",
+    "url": "https://arxiv.org/abs/2504.16054",
+    "final_url": "https://arxiv.org/abs/2504.16054",
+    "status": 200,
+    "bytes": 46526,
+    "sha256": "0ad5d17a417369ed14be80f5571550bda2a72c5ae82bd1f8f278f696dff4e29c",
+    "metadata": {
+      "citation_title": [
+        "$\\pi_{0.5}$: a Vision-Language-Action Model with Open-World Generalization"
+      ],
+      "citation_author": [
+        "Intelligence, Physical",
+        "Black, Kevin",
+        "Brown, Noah",
+        "Darpinian, James",
+        "Dhabalia, Karan",
+        "Driess, Danny",
+        "Esmail, Adnan",
+        "Equi, Michael",
+        "Finn, Chelsea",
+        "Fusai, Niccolo",
+        "Galliker, Manuel Y.",
+        "Ghosh, Dibya",
+        "Groom, Lachy",
+        "Hausman, Karol",
+        "Ichter, Brian",
+        "Jakubczak, Szymon",
+        "Jones, Tim",
+        "Ke, Liyiming",
+        "LeBlanc, Devin",
+        "Levine, Sergey",
+        "Li-Bell, Adrian",
+        "Mothukuri, Mohith",
+        "Nair, Suraj",
+        "Pertsch, Karl",
+        "Ren, Allen Z.",
+        "Shi, Lucy Xiaoyang",
+        "Smith, Laura",
+        "Springenberg, Jost Tobias",
+        "Stachowicz, Kyle",
+        "Tanner, James",
+        "Vuong, Quan",
+        "Walke, Homer",
+        "Walling, Anna",
+        "Wang, Haohuan",
+        "Yu, Lili",
+        "Zhilinsky, Ury"
+      ],
+      "citation_date": [
+        "2025/04/22"
+      ],
+      "citation_online_date": [
+        "2025/04/22"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2504.16054"
+      ],
+      "citation_arxiv_id": [
+        "2504.16054"
+      ],
+      "citation_abstract": [
+        "In order for robots to be useful, they must perform practically relevant tasks in the real world, outside of the lab. While vision-language-action (VLA) models have demonstrated impressive results for end-to-end robot control, it remains an open question how far such models can generalize in the wild. We describe $\\pi_{0.5}$, a new model based on $\\pi_{0}$ that uses co-training on heterogeneous tasks to enable broad generalization. $\\pi_{0.5}$\\ uses data from multiple robots, high-level semantic prediction, web data, and other sources to enable broadly generalizable real-world robotic manipulation. Our system uses a combination of co-training and hybrid multi-modal examples that combine image observations, language commands, object detections, semantic subtask prediction, and low-level actions. Our experiments show that this kind of knowledge transfer is essential for effective generalization, and we demonstrate for the first time that an end-to-end learning-enabled robotic system can perform long-horizon and dexterous manipulation skills, such as cleaning a kitchen or bedroom, in entirely new homes."
+      ]
+    }
+  },
+  {
+    "name": "abs_2212.06817",
+    "url": "https://arxiv.org/abs/2212.06817",
+    "final_url": "https://arxiv.org/abs/2212.06817",
+    "status": 200,
+    "bytes": 49867,
+    "sha256": "3481756943c4b0ef6fa67ecd757546a373d556a1f468143d8028f6fde59862fd",
+    "metadata": {
+      "citation_title": [
+        "RT-1: Robotics Transformer for Real-World Control at Scale"
+      ],
+      "citation_author": [
+        "Brohan, Anthony",
+        "Brown, Noah",
+        "Carbajal, Justice",
+        "Chebotar, Yevgen",
+        "Dabis, Joseph",
+        "Finn, Chelsea",
+        "Gopalakrishnan, Keerthana",
+        "Hausman, Karol",
+        "Herzog, Alex",
+        "Hsu, Jasmine",
+        "Ibarz, Julian",
+        "Ichter, Brian",
+        "Irpan, Alex",
+        "Jackson, Tomas",
+        "Jesmonth, Sally",
+        "Joshi, Nikhil J",
+        "Julian, Ryan",
+        "Kalashnikov, Dmitry",
+        "Kuang, Yuheng",
+        "Leal, Isabel",
+        "Lee, Kuang-Huei",
+        "Levine, Sergey",
+        "Lu, Yao",
+        "Malla, Utsav",
+        "Manjunath, Deeksha",
+        "Mordatch, Igor",
+        "Nachum, Ofir",
+        "Parada, Carolina",
+        "Peralta, Jodilyn",
+        "Perez, Emily",
+        "Pertsch, Karl",
+        "Quiambao, Jornell",
+        "Rao, Kanishka",
+        "Ryoo, Michael",
+        "Salazar, Grecia",
+        "Sanketi, Pannag",
+        "Sayed, Kevin",
+        "Singh, Jaspiar",
+        "Sontakke, Sumedh",
+        "Stone, Austin",
+        "Tan, Clayton",
+        "Tran, Huong",
+        "Vanhoucke, Vincent",
+        "Vega, Steve",
+        "Vuong, Quan",
+        "Xia, Fei",
+        "Xiao, Ted",
+        "Xu, Peng",
+        "Xu, Sichun",
+        "Yu, Tianhe",
+        "Zitkovich, Brianna"
+      ],
+      "citation_date": [
+        "2022/12/13"
+      ],
+      "citation_online_date": [
+        "2023/08/11"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2212.06817"
+      ],
+      "citation_arxiv_id": [
+        "2212.06817"
+      ],
+      "citation_abstract": [
+        "By transferring knowledge from large, diverse, task-agnostic datasets, modern machine learning models can solve specific downstream tasks either zero-shot or with small task-specific datasets to a high level of performance. While this capability has been demonstrated in other fields such as computer vision, natural language processing or speech recognition, it remains to be shown in robotics, where the generalization capabilities of the models are particularly critical due to the difficulty of collecting real-world robotic data. We argue that one of the keys to the success of such general robotic models lies with open-ended task-agnostic training, combined with high-capacity architectures that can absorb all of the diverse, robotic data. In this paper, we present a model class, dubbed Robotics Transformer, that exhibits promising scalable model properties. We verify our conclusions in a study of different model classes and their ability to generalize as a function of the data size, model size, and data diversity based on a large-scale data collection on real robots performing real-world tasks. The project's website and videos can be found at robotics-transformer1.github.io"
+      ]
+    }
+  },
+  {
+    "name": "abs_2307.15818",
+    "url": "https://arxiv.org/abs/2307.15818",
+    "final_url": "https://arxiv.org/abs/2307.15818",
+    "status": 200,
+    "bytes": 52009,
+    "sha256": "9792023270649ffc0b0767e3b2c1439ab5cb98b699fc5221826e599442bed3a2",
+    "metadata": {
+      "citation_title": [
+        "RT-2: Vision-Language-Action Models Transfer Web Knowledge to Robotic Control"
+      ],
+      "citation_author": [
+        "Brohan, Anthony",
+        "Brown, Noah",
+        "Carbajal, Justice",
+        "Chebotar, Yevgen",
+        "Chen, Xi",
+        "Choromanski, Krzysztof",
+        "Ding, Tianli",
+        "Driess, Danny",
+        "Dubey, Avinava",
+        "Finn, Chelsea",
+        "Florence, Pete",
+        "Fu, Chuyuan",
+        "Arenas, Montse Gonzalez",
+        "Gopalakrishnan, Keerthana",
+        "Han, Kehang",
+        "Hausman, Karol",
+        "Herzog, Alexander",
+        "Hsu, Jasmine",
+        "Ichter, Brian",
+        "Irpan, Alex",
+        "Joshi, Nikhil",
+        "Julian, Ryan",
+        "Kalashnikov, Dmitry",
+        "Kuang, Yuheng",
+        "Leal, Isabel",
+        "Lee, Lisa",
+        "Lee, Tsang-Wei Edward",
+        "Levine, Sergey",
+        "Lu, Yao",
+        "Michalewski, Henryk",
+        "Mordatch, Igor",
+        "Pertsch, Karl",
+        "Rao, Kanishka",
+        "Reymann, Krista",
+        "Ryoo, Michael",
+        "Salazar, Grecia",
+        "Sanketi, Pannag",
+        "Sermanet, Pierre",
+        "Singh, Jaspiar",
+        "Singh, Anikait",
+        "Soricut, Radu",
+        "Tran, Huong",
+        "Vanhoucke, Vincent",
+        "Vuong, Quan",
+        "Wahid, Ayzaan",
+        "Welker, Stefan",
+        "Wohlhart, Paul",
+        "Wu, Jialin",
+        "Xia, Fei",
+        "Xiao, Ted",
+        "Xu, Peng",
+        "Xu, Sichun",
+        "Yu, Tianhe",
+        "Zitkovich, Brianna"
+      ],
+      "citation_date": [
+        "2023/07/28"
+      ],
+      "citation_online_date": [
+        "2023/07/28"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2307.15818"
+      ],
+      "citation_arxiv_id": [
+        "2307.15818"
+      ],
+      "citation_abstract": [
+        "We study how vision-language models trained on Internet-scale data can be incorporated directly into end-to-end robotic control to boost generalization and enable emergent semantic reasoning. Our goal is to enable a single end-to-end trained model to both learn to map robot observations to actions and enjoy the benefits of large-scale pretraining on language and vision-language data from the web. To this end, we propose to co-fine-tune state-of-the-art vision-language models on both robotic trajectory data and Internet-scale vision-language tasks, such as visual question answering. In contrast to other approaches, we propose a simple, general recipe to achieve this goal: in order to fit both natural language responses and robotic actions into the same format, we express the actions as text tokens and incorporate them directly into the training set of the model in the same way as natural language tokens. We refer to such category of models as vision-language-action models (VLA) and instantiate an example of such a model, which we call RT-2. Our extensive evaluation (6k evaluation trials) shows that our approach leads to performant robotic policies and enables RT-2 to obtain a range of emergent capabilities from Internet-scale training. This includes significantly improved generalization to novel objects, the ability to interpret commands not present in the robot training data (such as placing an object onto a particular number or icon), and the ability to perform rudimentary reasoning in response to user commands (such as picking up the smallest or largest object, or the one closest to another object). We further show that incorporating chain of thought reasoning allows RT-2 to perform multi-stage semantic reasoning, for example figuring out which object to pick up for use as an improvised hammer (a rock), or which type of drink is best suited for someone who is tired (an energy drink)."
+      ]
+    }
+  },
+  {
+    "name": "abs_2501.09747",
+    "url": "https://arxiv.org/abs/2501.09747",
+    "final_url": "https://arxiv.org/abs/2501.09747",
+    "status": 200,
+    "bytes": 42431,
+    "sha256": "2acf0a35eda5f8ecb010cbe7f235e0de7c22c09d7be1505e8ee483cd349d7470",
+    "metadata": {
+      "citation_title": [
+        "FAST: Efficient Action Tokenization for Vision-Language-Action Models"
+      ],
+      "citation_author": [
+        "Pertsch, Karl",
+        "Stachowicz, Kyle",
+        "Ichter, Brian",
+        "Driess, Danny",
+        "Nair, Suraj",
+        "Vuong, Quan",
+        "Mees, Oier",
+        "Finn, Chelsea",
+        "Levine, Sergey"
+      ],
+      "citation_date": [
+        "2025/01/16"
+      ],
+      "citation_online_date": [
+        "2025/01/16"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2501.09747"
+      ],
+      "citation_arxiv_id": [
+        "2501.09747"
+      ],
+      "citation_abstract": [
+        "Autoregressive sequence models, such as Transformer-based vision-language action (VLA) policies, can be tremendously effective for capturing complex and generalizable robotic behaviors. However, such models require us to choose a tokenization of our continuous action signals, which determines how the discrete symbols predicted by the model map to continuous robot actions. We find that current approaches for robot action tokenization, based on simple per-dimension, per-timestep binning schemes, typically perform poorly when learning dexterous skills from high-frequency robot data. To address this challenge, we propose a new compression-based tokenization scheme for robot actions, based on the discrete cosine transform. Our tokenization approach, Frequency-space Action Sequence Tokenization (FAST), enables us to train autoregressive VLAs for highly dexterous and high-frequency tasks where standard discretization methods fail completely. Based on FAST, we release FAST+, a universal robot action tokenizer, trained on 1M real robot action trajectories. It can be used as a black-box tokenizer for a wide range of robot action sequences, with diverse action spaces and control frequencies. Finally, we show that, when combined with the pi0 VLA, our method can scale to training on 10k hours of robot data and match the performance of diffusion VLAs, while reducing training time by up to 5x."
+      ]
+    }
+  },
+  {
+    "name": "abs_2306.03310",
+    "url": "https://arxiv.org/abs/2306.03310",
+    "final_url": "https://arxiv.org/abs/2306.03310",
+    "status": 200,
+    "bytes": 42823,
+    "sha256": "5dcc99cc099dea6c3382c92c246181d89cc920cb2f16ed35049ead8ee5e9e590",
+    "metadata": {
+      "citation_title": [
+        "LIBERO: Benchmarking Knowledge Transfer for Lifelong Robot Learning"
+      ],
+      "citation_author": [
+        "Liu, Bo",
+        "Zhu, Yifeng",
+        "Gao, Chongkai",
+        "Feng, Yihao",
+        "Liu, Qiang",
+        "Zhu, Yuke",
+        "Stone, Peter"
+      ],
+      "citation_date": [
+        "2023/06/05"
+      ],
+      "citation_online_date": [
+        "2023/10/14"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2306.03310"
+      ],
+      "citation_arxiv_id": [
+        "2306.03310"
+      ],
+      "citation_abstract": [
+        "Lifelong learning offers a promising paradigm of building a generalist agent that learns and adapts over its lifespan. Unlike traditional lifelong learning problems in image and text domains, which primarily involve the transfer of declarative knowledge of entities and concepts, lifelong learning in decision-making (LLDM) also necessitates the transfer of procedural knowledge, such as actions and behaviors. To advance research in LLDM, we introduce LIBERO, a novel benchmark of lifelong learning for robot manipulation. Specifically, LIBERO highlights five key research topics in LLDM: 1) how to efficiently transfer declarative knowledge, procedural knowledge, or the mixture of both; 2) how to design effective policy architectures and 3) effective algorithms for LLDM; 4) the robustness of a lifelong learner with respect to task ordering; and 5) the effect of model pretraining for LLDM. We develop an extendible procedural generation pipeline that can in principle generate infinitely many tasks. For benchmarking purpose, we create four task suites (130 tasks in total) that we use to investigate the above-mentioned research topics. To support sample-efficient learning, we provide high-quality human-teleoperated demonstration data for all tasks. Our extensive experiments present several insightful or even unexpected discoveries: sequential finetuning outperforms existing lifelong learning methods in forward transfer, no single visual encoder architecture excels at all types of knowledge transfer, and naive supervised pretraining can hinder agents' performance in the subsequent LLDM. Check the website at https://libero-project.github.io for the code and the datasets."
+      ]
+    }
+  },
+  {
+    "name": "abs_2503.02310",
+    "url": "https://arxiv.org/abs/2503.02310",
+    "final_url": "https://arxiv.org/abs/2503.02310",
+    "status": 200,
+    "bytes": 42844,
+    "sha256": "e596c2d7e0146e96b935acc3434dcde720f81974fa9f56f938abe44a1b4ec2ef",
+    "metadata": {
+      "citation_title": [
+        "PD-VLA: Accelerating Vision-Language-Action Model Integrated with Action Chunking via Parallel Decoding"
+      ],
+      "citation_author": [
+        "Song, Wenxuan",
+        "Chen, Jiayi",
+        "Ding, Pengxiang",
+        "Zhao, Han",
+        "Zhao, Wei",
+        "Zhong, Zhide",
+        "Ge, Zongyuan",
+        "Li, Zhijun",
+        "Wang, Donglin",
+        "Ma, Jun",
+        "Wang, Lujia",
+        "Li, Haoang"
+      ],
+      "citation_date": [
+        "2025/03/04"
+      ],
+      "citation_online_date": [
+        "2026/02/25"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2503.02310"
+      ],
+      "citation_arxiv_id": [
+        "2503.02310"
+      ],
+      "citation_abstract": [
+        "Vision-Language-Action (VLA) models demonstrate remarkable potential for generalizable robotic manipulation. The performance of VLA models can be improved by integrating with action chunking, a critical technique for effective control. However, action chunking linearly scales up action dimensions in VLA models with increased chunking sizes. This reduces the inference efficiency. To tackle this problem, we propose PD-VLA, the first parallel decoding framework for VLA models integrated with action chunking. Our framework reformulates autoregressive decoding as a nonlinear system solved by parallel fixed-point iterations. This approach preserves model performance with mathematical guarantees while significantly improving decoding speed. In addition, it enables training-free acceleration without architectural changes, as well as seamless synergy with existing acceleration techniques. Extensive simulations validate that our PD-VLA maintains competitive success rates while achieving 2.52 times execution frequency on manipulators (with 7 degrees of freedom) compared with the fundamental VLA model. Furthermore, we experimentally identify the most effective settings for acceleration. Finally, real-world experiments validate its high applicability across different tasks."
+      ]
+    }
+  },
+  {
+    "name": "abs_2502.02175",
+    "url": "https://arxiv.org/abs/2502.02175",
+    "final_url": "https://arxiv.org/abs/2502.02175",
+    "status": 200,
+    "bytes": 43490,
+    "sha256": "3c5624c8a2de7bfe0b4a5715d967515730848c3467a844a92c9059cd38bc6215",
+    "metadata": {
+      "citation_title": [
+        "VLA-Cache: Efficient Vision-Language-Action Manipulation via Adaptive Token Caching"
+      ],
+      "citation_author": [
+        "Xu, Siyu",
+        "Wang, Yunke",
+        "Xia, Chenghao",
+        "Zhu, Dihao",
+        "Huang, Tao",
+        "Xu, Chang"
+      ],
+      "citation_date": [
+        "2025/02/04"
+      ],
+      "citation_online_date": [
+        "2025/10/21"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2502.02175"
+      ],
+      "citation_arxiv_id": [
+        "2502.02175"
+      ],
+      "citation_abstract": [
+        "Vision-Language-Action (VLA) models have demonstrated strong multi-modal reasoning capabilities, enabling direct action generation from visual perception and language instructions in an end-to-end manner. However, their substantial computational cost poses a challenge for real-time robotic control, where rapid decision-making is essential. This paper introduces VLA-Cache, a training-free inference acceleration method that reduces computational overhead by adaptively caching and reusing static visual tokens across frames. Exploiting the temporal continuity in robotic manipulation, VLA-Cache identifies minimally changed tokens between adjacent frames and reuses their cached key-value representations, thereby circumventing redundant computations. Additionally, to maintain action precision, VLA-Cache selectively re-computes task-relevant tokens that are environmentally sensitive, ensuring the fidelity of critical visual information. To further optimize efficiency, we introduce a layer adaptive token reusing strategy that dynamically adjusts the reuse ratio based on attention concentration across decoder layers, prioritizing critical tokens for recomputation. Extensive experiments on two simulation platforms (LIBERO and SIMPLER) and a real-world robotic system demonstrate that VLA-Cache achieves up to 1.7x speedup in CUDA latency and a 15% increase in control frequency, with negligible loss on task success rate. The code and videos can be found at our project page: https://vla-cache.github.io."
+      ]
+    }
+  },
+  {
+    "name": "abs_2510.24795",
+    "url": "https://arxiv.org/abs/2510.24795",
+    "final_url": "https://arxiv.org/abs/2510.24795",
+    "status": 200,
+    "bytes": 43692,
+    "sha256": "0bfa07a6a93907b22570fc0be1b154174d76067679ef55f4f89d651508663b98",
+    "metadata": {
+      "citation_title": [
+        "A Survey on Efficient Vision-Language-Action Models"
+      ],
+      "citation_author": [
+        "Yu, Zhaoshu",
+        "Wang, Bo",
+        "Zeng, Pengpeng",
+        "Zhang, Haonan",
+        "Zhang, Ji",
+        "Wang, Zheng",
+        "Gao, Lianli",
+        "Song, Jingkuan",
+        "Sebe, Nicu",
+        "Shen, Heng Tao"
+      ],
+      "citation_date": [
+        "2025/10/27"
+      ],
+      "citation_online_date": [
+        "2026/09/28"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2510.24795"
+      ],
+      "citation_arxiv_id": [
+        "2510.24795"
+      ],
+      "citation_abstract": [
+        "Vision-Language-Action models (VLAs) represent a significant frontier in embodied intelligence, aiming to bridge digital knowledge with physical-world interaction. Despite their remarkable performance, foundational VLAs are hindered by the prohibitive computational and data demands inherent to their large-scale architectures. To this end, recent studies improve VLA efficiency from different views, e.g., real-time inference, training computation, and scalable data collection. However, these efforts are mostly studied separately. A unified view is still missing for understanding how efficiency should be optimized across the full VLA lifecycle. To bridge this gap, this survey presents the first comprehensive review of Efficient Vision-Language-Action models (Efficient VLAs) across the entire model-training-data pipeline. Specifically, we introduce a unified taxonomy to systematically organize the disparate efforts in this domain, categorizing current techniques into three core pillars: (1) Efficient Model Design, focusing on efficient architectures and model compression; (2) Efficient Training, which reduces computational burdens during model learning; and (3) Efficient Data Collection, which addresses the bottlenecks in acquiring and utilizing robotic data. Through a critical review of state-of-the-art methods within this framework, this survey provides an organized reference for the community and summarizes representative applications, delineates key challenges, and charts a roadmap for future research. We maintain a continuously updated project page to track our latest developments: https://evla-survey.github.io/."
+      ]
+    }
+  },
+  {
+    "name": "abs_2506.07530",
+    "url": "https://arxiv.org/abs/2506.07530",
+    "final_url": "https://arxiv.org/abs/2506.07530",
+    "status": 200,
+    "bytes": 42050,
+    "sha256": "2d1838b97627358de26e9f63982a758f00b0999c7cbbbb2d7c0216a5a1a146b5",
+    "metadata": {
+      "citation_title": [
+        "BitVLA: 1-bit Vision-Language-Action Models for Robotics Manipulation"
+      ],
+      "citation_author": [
+        "Wang, Hongyu",
+        "Xiong, Chuyan",
+        "Wang, Ruiping",
+        "Chen, Xilin"
+      ],
+      "citation_date": [
+        "2025/06/09"
+      ],
+      "citation_online_date": [
+        "2026/03/01"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2506.07530"
+      ],
+      "citation_arxiv_id": [
+        "2506.07530"
+      ],
+      "citation_abstract": [
+        "Deploying powerful Vision-Language-Action (VLA) models on edge devices is limited by their massive size. In this paper, we take a deployment-oriented view of VLA training: we target efficiency through model design and optimization, rather than relying solely on post-hoc compression. Thus, we propose BitVLA, a fully native 1-bit VLA model for robotic manipulation, where every parameters is ternary, i.e., {-1,0,1}. BitVLA is built on the publicly available 1-bit LLM BitNet b1.58 2B4T, and is trained as a vision-language-action policy that inherits the compactness of 1-bit pretraining while retaining strong task performance. To further reduce the memory footprint of the vision backbone, we introduce Quantize-then-Distill, a post-training quantization-aware training strategy that compresses a full-precision vision encoder to 1.58-bit weights, while a full-precision teacher guides representation alignment during training. Across simulation benchmarks and real-world tasks, BitVLA matches the performance of the full-precision OpenVLA-OFT baseline, while reducing model memory by 11.0x and end-to-end latency by 4.4x. These results suggest a practical path toward training-time efficiency-accuracy co-design for embodied policies, enabling competitive manipulation capability on memory-constrained edge robotic platforms. We release the code in https://github.com/ustcwhy/BitVLA, model weights in https://huggingface.co/lxsy/bitvla-bf16."
+      ]
+    }
+  },
+  {
+    "name": "abs_2602.03782",
+    "url": "https://arxiv.org/abs/2602.03782",
+    "final_url": "https://arxiv.org/abs/2602.03782",
+    "status": 200,
+    "bytes": 43931,
+    "sha256": "06a9f2e6c224cd63e2d876ee523fc8fea5f2c0ea3367e1ef145d7e8cbbd332aa",
+    "metadata": {
+      "citation_title": [
+        "QVLA: Not All Channels Are Equal in Vision-Language-Action Model's Quantization"
+      ],
+      "citation_author": [
+        "Xu, Yuhao",
+        "Yang, Yantai",
+        "Fan, Zhenyang",
+        "Liu, Yufan",
+        "Li, Yuming",
+        "Li, Bing",
+        "Zhang, Zhipeng"
+      ],
+      "citation_date": [
+        "2026/02/03"
+      ],
+      "citation_online_date": [
+        "2026/02/03"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2602.03782"
+      ],
+      "citation_arxiv_id": [
+        "2602.03782"
+      ],
+      "citation_abstract": [
+        "The advent of Vision-Language-Action (VLA) models represents a significant leap for embodied intelligence, yet their immense computational demands critically hinder deployment on resource-constrained robotic platforms. Intuitively, low-bit quantization is a prevalent and preferred technique for large-scale model compression. However, we find that a systematic analysis of VLA model's quantization is fundamentally lacking. We argue that naively applying uniform-bit quantization from Large Language Models (LLMs) to robotics is flawed, as these methods prioritize passive data fidelity while ignoring how minor action deviations compound into catastrophic task failures. To bridge this gap, we introduce QVLA, the first action-centric quantization framework specifically designed for embodied control. In a sharp departure from the rigid, uniform-bit quantization of LLM-based methods, QVLA introduces a highly granular, channel-wise bit allocation strategy. Its core mechanism is to directly measure the final action-space sensitivity when quantizing each individual channel to various bit-widths. This process yields a precise, per-channel importance metric that guides a global optimization, which elegantly unifies quantization and pruning (0-bit) into a single, cohesive framework. Extensive evaluations on different baselines demonstrate the superiority of our approach. In the LIBERO, the quantization version of OpenVLA-OFT with our method requires only 29.2% of the original model's VRAM while maintaining 98.9% of its original performance and achieving a 1.49x speedup. This translates to a 22.6% performance improvement over the LLM-derived method SmoothQuant. Our work establishes a new, principled foundation for compressing VLA models in robotics, paving the way for deploying powerful, large-scale models on real-world hardware. Code will be released."
+      ]
+    }
+  },
+  {
+    "name": "abs_2606.03798",
+    "url": "https://arxiv.org/abs/2606.03798",
+    "final_url": "https://arxiv.org/abs/2606.03798",
+    "status": 200,
+    "bytes": 40918,
+    "sha256": "d6b5e8c09c522c96deb55349312da969181912b949e7ee3d22bb4b87d08f3de5",
+    "metadata": {
+      "citation_title": [
+        "Optimal Design and Analytical Modeling of a Soft Fin-Ray Effect Gripper Finger Using the Finite Rigid Elements Method"
+      ],
+      "citation_author": [
+        "Adeli, Sara",
+        "Sayyaadi, Hassan"
+      ],
+      "citation_date": [
+        "2026/06/02"
+      ],
+      "citation_online_date": [
+        "2026/06/02"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2606.03798"
+      ],
+      "citation_arxiv_id": [
+        "2606.03798"
+      ],
+      "citation_abstract": [
+        "Fin Ray-inspired soft grippers offer a promising solution for gently handling delicate, irregular objects, especially in agriculture. The objective of this research is to design, fabricate, and model a Fin Ray Effect (FRE) soft gripper finger to enable precise force control in future applications. This design aims to gently grasp delicate agricultural products, such as tomatoes, that require both adaptability and accurate force application. To address the inherent challenges of soft robotics, including nonlinear behavior, infinite degrees of freedom, and variable material properties, the Finite Rigid Elements Method (FREM) was employed for modeling. This method preserves analytical accuracy while providing a reliable foundation for the development of a force controller in later stages. A detailed Finite Element Model (FEM) was created using ANSYS, and the analytical results were validated through simulation and experimental testing. The gripper's fingers were optimized based on four key criteria: tip displacement, total deflection, stress distribution, and contact force. The optimal finger configuration includes a length of 30 mm, rib spacing of 10 mm, seven ribs angled at -15 deg, and a rib thickness of 1 mm. Theoretical modeling using the FREM predicted finger deformation with a 3% error, while the ANSYS numerical model achieved 2% error."
+      ]
+    }
+  },
+  {
+    "name": "abs_2311.10611",
+    "url": "https://arxiv.org/abs/2311.10611",
+    "final_url": "https://arxiv.org/abs/2311.10611",
+    "status": 200,
+    "bytes": 42372,
+    "sha256": "45a11aa334ca2e9e777f7733119eb551523dcce04c22b4d8595a3b2902ee782f",
+    "metadata": {
+      "citation_title": [
+        "TacFR-Gripper: A Reconfigurable Fin Ray-Based Compliant Robotic Gripper with Tactile Skin for In-Hand Manipulation"
+      ],
+      "citation_author": [
+        "Cong, Qingzheng",
+        "Fan, Wen",
+        "Zhang, Dandan"
+      ],
+      "citation_date": [
+        "2023/11/17"
+      ],
+      "citation_online_date": [
+        "2023/11/17"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2311.10611"
+      ],
+      "citation_arxiv_id": [
+        "2311.10611"
+      ],
+      "citation_abstract": [
+        "This paper introduces the TacFR-Gripper, a reconfigurable Fin Ray-based soft and compliant robotic gripper equipped with tactile skin, which can be used for dexterous in-hand manipulation tasks. This gripper can adaptively grasp objects of diverse shapes and stiffness levels. An array of Force Sensitive Resistor (FSR) sensors is embedded within the robotic finger to serve as the tactile skin, enabling the robot to perceive contact information during manipulation. We provide theoretical analysis for gripper design, including kinematic analysis, workspace analysis, and finite element analysis to identify the relationship between the gripper's load and its deformation. Moreover, we implemented a Graph Neural Network (GNN)-based tactile perception approach to enable reliable grasping without accidental slip or excessive force. Three physical experiments were conducted to quantify the performance of the TacFR-Gripper. These experiments aimed to i) assess the grasp success rate across various everyday objects through different configurations, ii) verify the effectiveness of tactile skin with the GNN algorithm in grasping, iii) evaluate the gripper's in-hand manipulation capabilities for object pose control. The experimental results indicate that the TacFR-Gripper can grasp a wide range of complex-shaped objects with a high success rate and deliver dexterous in-hand manipulation. Additionally, the integration of tactile skin with the GNN algorithm enhances grasp stability by incorporating tactile feedback during manipulations. For more details of this project, please view our website: https://sites.google.com/view/tacfr-gripper/homepage."
+      ]
+    }
+  },
+  {
+    "name": "abs_2504.18064",
+    "url": "https://arxiv.org/abs/2504.18064",
+    "final_url": "https://arxiv.org/abs/2504.18064",
+    "status": 200,
+    "bytes": 41048,
+    "sha256": "f246d6fd80bcbab6cf22f5da7cdf4bc56f82532d9a1572808d4fb9e329134f8b",
+    "metadata": {
+      "citation_title": [
+        "AllTact Fin Ray: A Compliant Robot Gripper with Omni-Directional Tactile Sensing"
+      ],
+      "citation_author": [
+        "Liang, Siwei",
+        "Guan, Yixuan",
+        "Xu, Jing",
+        "Qian, Hongyu",
+        "Zhang, Xiangjun",
+        "Wu, Dan",
+        "Ding, Wenbo",
+        "Chen, Rui"
+      ],
+      "citation_date": [
+        "2025/04/25"
+      ],
+      "citation_online_date": [
+        "2025/04/25"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2504.18064"
+      ],
+      "citation_arxiv_id": [
+        "2504.18064"
+      ],
+      "citation_abstract": [
+        "Tactile sensing plays a crucial role in robot grasping and manipulation by providing essential contact information between the robot and the environment. In this paper, we present AllTact Fin Ray, a novel compliant gripper design with omni-directional and local tactile sensing capabilities. The finger body is unibody-casted using transparent elastic silicone, and a camera positioned at the base of the finger captures the deformation of the whole body and the contact face. Due to the global deformation of the adaptive structure, existing vision-based tactile sensing approaches that assume constant illumination are no longer applicable. To address this, we propose a novel sensing method where the global deformation is first reconstructed from the image using edge features and spatial constraints. Then, detailed contact geometry is computed from the brightness difference against a dynamically retrieved reference image. Extensive experiments validate the effectiveness of our proposed gripper design and sensing method in contact detection, force estimation, object grasping, and precise manipulation."
+      ]
+    }
+  },
+  {
+    "name": "abs_2204.07146",
+    "url": "https://arxiv.org/abs/2204.07146",
+    "final_url": "https://arxiv.org/abs/2204.07146",
+    "status": 200,
+    "bytes": 42040,
+    "sha256": "989fa75a8532a3b275239727d056e75cfb40b0306c2a6a2a6a6a69595b62a29b",
+    "metadata": {
+      "citation_title": [
+        "GelSight Fin Ray: Incorporating Tactile Sensing into a Soft Compliant Robotic Gripper"
+      ],
+      "citation_author": [
+        "Liu, Sandra Q.",
+        "Adelson, Edward H."
+      ],
+      "citation_date": [
+        "2022/04/14"
+      ],
+      "citation_online_date": [
+        "2022/04/14"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2204.07146"
+      ],
+      "citation_arxiv_id": [
+        "2204.07146"
+      ],
+      "citation_abstract": [
+        "To adapt to constantly changing environments and be safe for human interaction, robots should have compliant and soft characteristics as well as the ability to sense the world around them. Even so, the incorporation of tactile sensing into a soft compliant robot, like the Fin Ray finger, is difficult due to its deformable structure. Not only does the frame need to be modified to allow room for a vision sensor, which enables intricate tactile sensing, the robot must also retain its original mechanically compliant properties. However, adding high-resolution tactile sensors to soft fingers is difficult since many sensorized fingers, such as GelSight-based ones, are rigid and function under the assumption that changes in the sensing region are only from tactile contact and not from finger compliance. A sensorized soft robotic finger needs to be able to separate its overall proprioceptive changes from its tactile information. To this end, this paper introduces the novel design of a GelSight Fin Ray, which embodies both the ability to passively adapt to any object it grasps and the ability to perform high-resolution tactile reconstruction, object orientation estimation, and marker tracking for shear and torsional forces. Having these capabilities allow soft and compliant robots to perform more manipulation tasks that require sensing. One such task the finger is able to perform successfully is a kitchen task: wine glass reorientation and placement, which is difficult to do with external vision sensors but is easy with tactile sensing. The development of this sensing technology could also potentially be applied to other soft compliant grippers, increasing their viability in many different fields."
+      ]
+    }
+  },
+  {
+    "name": "abs_2303.14883",
+    "url": "https://arxiv.org/abs/2303.14883",
+    "final_url": "https://arxiv.org/abs/2303.14883",
+    "status": 200,
+    "bytes": 42918,
+    "sha256": "e91c4c67e0e0a59088cbe2e9fcdcd04d823abc74e88660ceb78a3d6ee077565b",
+    "metadata": {
+      "citation_title": [
+        "GelSight Baby Fin Ray: A Compact, Compliant, Flexible Finger with High-Resolution Tactile Sensing"
+      ],
+      "citation_author": [
+        "Liu, Sandra Q.",
+        "Ma, Yuxiang",
+        "Adelson, Edward H."
+      ],
+      "citation_date": [
+        "2023/03/27"
+      ],
+      "citation_online_date": [
+        "2023/03/27"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2303.14883"
+      ],
+      "citation_arxiv_id": [
+        "2303.14883"
+      ],
+      "citation_abstract": [
+        "The synthesis of tactile sensing with compliance is essential to many fields, from agricultural usages like fruit picking, to sustainability practices such as sorting recycling, to the creation of safe home-care robots for the elderly to age with dignity. From tactile sensing, we can discern material properties, recognize textures, and determine softness, while with compliance, we are able to securely and safely interact with the objects and the environment around us. These two abilities can culminate into a useful soft robotic gripper, such as the original GelSight Fin Ray, which is able to grasp a large variety of different objects and also perform a simple household manipulation task: wine glass reorientation. Although the original GelSight Fin Ray solves the problem of interfacing a generally rigid, high-resolution sensor with a soft, compliant structure, we can improve the robustness of the sensor and implement techniques that make such camera-based tactile sensors applicable to a wider variety of soft robot designs. We first integrate flexible mirrors and incorporate the rigid electronic components into the base of the gripper, which greatly improves the compliance of the Fin Ray structure. Then, we synthesize a flexible and high-elongation silicone adhesive-based fluorescent paint, which can provide good quality 2D tactile localization results for our sensor. Finally, we incorporate all of these techniques into a new design: the Baby Fin Ray, which we use to dig through clutter, and perform successful classification of nuts in their shells. The supplementary video can be found here: https://youtu.be/_oD_QFtYTPM"
+      ]
+    }
+  },
+  {
+    "name": "abs_2510.10273",
+    "url": "https://arxiv.org/abs/2510.10273",
+    "final_url": "https://arxiv.org/abs/2510.10273",
+    "status": 200,
+    "bytes": 43591,
+    "sha256": "f149adfacbb861e7b9aa90336377673a4868a3e2f328cdecf60997508267a9cc",
+    "metadata": {
+      "citation_title": [
+        "Integration of the TIAGo Robot into Isaac Sim with Mecanum Drive Modeling and Learned S-Curve Velocity Profiles"
+      ],
+      "citation_author": [
+        "Schoenbach, Vincent",
+        "Wiedemann, Marvin",
+        "Memmesheimer, Raphael",
+        "Mosbach, Malte",
+        "Behnke, Sven"
+      ],
+      "citation_doi": [
+        "10.1109/CASE58245.2025.11163930"
+      ],
+      "citation_date": [
+        "2025/10/11"
+      ],
+      "citation_online_date": [
+        "2025/10/14"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2510.10273"
+      ],
+      "citation_arxiv_id": [
+        "2510.10273"
+      ],
+      "citation_abstract": [
+        "Efficient physics simulation has significantly accelerated research progress in robotics applications such as grasping and assembly. The advent of GPU-accelerated simulation frameworks like Isaac Sim has particularly empowered learning-based methods, enabling them to tackle increasingly complex tasks. The PAL Robotics TIAGo++ Omni is a versatile mobile manipulator equipped with a mecanum-wheeled base, allowing omnidirectional movement and a wide range of task capabilities. However, until now, no model of the robot has been available in Isaac Sim. In this paper, we introduce such a model, calibrated to approximate the behavior of the real robot, with a focus on its omnidirectional drive dynamics. We present two control models for the omnidirectional drive: a physically accurate model that replicates real-world wheel dynamics and a lightweight velocity-based model optimized for learning-based applications. With these models, we introduce a learning-based calibration approach to approximate the real robot's S-shaped velocity profile using minimal trajectory data recordings. This simulation should allow researchers to experiment with the robot and perform efficient learning-based control in diverse environments. We provide the integration publicly at https://github.com/AIS-Bonn/tiago_isaac."
+      ]
+    }
+  },
+  {
+    "name": "abs_2307.01350",
+    "url": "https://arxiv.org/abs/2307.01350",
+    "final_url": "https://arxiv.org/abs/2307.01350",
+    "status": 200,
+    "bytes": 40642,
+    "sha256": "3d648a0b2b9161a5f46128231dd61964879da29dfafce9b35a23b8a9c7b36160",
+    "metadata": {
+      "citation_title": [
+        "Dynamic Mobile Manipulation via Whole-Body Bilateral Teleoperation of a Wheeled Humanoid"
+      ],
+      "citation_author": [
+        "Purushottam, Amartya",
+        "Jung, Yeongtae",
+        "Xu, Christopher",
+        "Ramos, Joao"
+      ],
+      "citation_date": [
+        "2023/07/03"
+      ],
+      "citation_online_date": [
+        "2023/07/03"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2307.01350"
+      ],
+      "citation_arxiv_id": [
+        "2307.01350"
+      ],
+      "citation_abstract": [
+        "Humanoid robots have the potential to help human workers by realizing physically demanding manipulation tasks such as moving large boxes within warehouses. We define such tasks as Dynamic Mobile Manipulation (DMM). This paper presents a framework for DMM via whole-body teleoperation, built upon three key contributions: Firstly, a teleoperation framework employing a Human Machine Interface (HMI) and a bi-wheeled humanoid, SATYRR, is proposed. Secondly, the study introduces a dynamic locomotion mapping, utilizing human-robot reduced order models, and a kinematic retargeting strategy for manipulation tasks. Additionally, the paper discusses the role of whole-body haptic feedback for wheeled humanoid control. Finally, the system's effectiveness and mappings for DMM are validated through locomanipulation experiments and heavy box pushing tasks. Here we show two forms of DMM: grasping a target moving at an average speed of 0.4 m/s, and pushing boxes weighing up to 105\\% of the robot's weight. By simultaneously adjusting their pitch and using their arms, the pilot adjusts the robot pose to apply larger contact forces and move a heavy box at a constant velocity of 0.2 m/s."
+      ]
+    }
+  },
+  {
+    "name": "abs_2410.06911",
+    "url": "https://arxiv.org/abs/2410.06911",
+    "final_url": "https://arxiv.org/abs/2410.06911",
+    "status": 200,
+    "bytes": 42307,
+    "sha256": "160929057492edcee8fd73689ae6fa1b281eda2dc8140b4fd34bc7b12968c6b3",
+    "metadata": {
+      "citation_title": [
+        "Combining Planning and Diffusion for Mobility with Unknown Dynamics"
+      ],
+      "citation_author": [
+        "Ravan, Yajvan",
+        "Yang, Zhutian",
+        "Chen, Tao",
+        "Lozano-Pérez, Tomás",
+        "Kaelbling, Leslie Pack"
+      ],
+      "citation_date": [
+        "2024/10/09"
+      ],
+      "citation_online_date": [
+        "2024/10/09"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2410.06911"
+      ],
+      "citation_arxiv_id": [
+        "2410.06911"
+      ],
+      "citation_abstract": [
+        "Manipulation of large objects over long horizons (such as carts in a warehouse) is an essential skill for deployable robotic systems. Large objects require mobile manipulation which involves simultaneous manipulation, navigation, and movement with the object in tow. In many real-world situations, object dynamics are incredibly complex, such as the interaction of an office chair (with a rotating base and five caster wheels) and the ground. We present a hierarchical algorithm for long-horizon robot manipulation problems in which the dynamics are partially unknown. We observe that diffusion-based behavior cloning is highly effective for short-horizon problems with unknown dynamics, so we decompose the problem into an abstract high-level, obstacle-aware motion-planning problem that produces a waypoint sequence. We use a short-horizon, relative-motion diffusion policy to achieve the waypoints in sequence. We train mobile manipulation policies on a Spot robot that has to push and pull an office chair. Our hierarchical manipulation policy performs consistently better, especially when the horizon increases, compared to a diffusion policy trained on long-horizon demonstrations or motion planning assuming a rigidly-attached object (success rate of 8 (versus 0 and 5 respectively) out of 10 runs). Importantly, our learned policy generalizes to new layouts, grasps, chairs, and flooring that induces more friction, without any further training, showing promise for other complex mobile manipulation problems. Project Page: https://yravan.github.io/plannerorderedpolicy/"
+      ]
+    }
+  },
+  {
+    "name": "abs_2611.00283",
+    "url": "https://arxiv.org/abs/2611.00283",
+    "final_url": "https://arxiv.org/abs/2611.00283",
+    "status": 200,
+    "bytes": 42732,
+    "sha256": "2fa604260462049136ab3c3ea1a5aa5dc26f0c630cf119337b8cb50d4739d1df",
+    "metadata": {
+      "citation_title": [
+        "Does Validation Loss Predict Real-Robot Success? Evidence from Four Imitation-Learning Policies on a Low-Cost Arm"
+      ],
+      "citation_author": [
+        "Cowling, Simon"
+      ],
+      "citation_date": [
+        "2026/10/30"
+      ],
+      "citation_online_date": [
+        "2026/10/30"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2611.00283"
+      ],
+      "citation_arxiv_id": [
+        "2611.00283"
+      ],
+      "citation_abstract": [
+        "Held-out validation loss is the standard offline signal for choosing checkpoints and comparing models, but its relation to closed-loop success on a real robot is rarely measured. We measure it for ACT, Diffusion Policy, SmolVLA and $\\pi_{0.5}$ (action expert only), trained on nested subsets of 12 to 200 demonstrations of a pick-and-place task on an SO-101 arm. We score 82 checkpoints on 25 held-out demonstrations, with each policy's training loss and with the error of the actions it outputs, and compare the scores with 930 bench rollouts. We also score all 700 intermediate checkpoints of 70 training runs, and recover the ball positions of every training, held-out and bench episode from the front camera. Within each policy, hold-out action error correlates with bench success (Spearman $\\rho$ from -0.23 to -0.88), but no more strongly than the number of training episodes alone, and not at all among seeds trained on the same data. Across policies the ranking is inverted ($\\rho$ = +0.90 at 200 episodes): the policy with the lowest hold-out error succeeded in 3 of 110 rollouts. The most common failure, the arm never leaving its rest pose, ended 96% of rollouts for Diffusion Policy trained on untrimmed demonstrations and 47% for SmolVLA, and cannot occur in a hold-out set made of demonstrations. Among rollouts in which the arm moved, SmolVLA's hold-out action error predicts success well ($\\rho$ = -0.81). For the diffusion and flow-matching policies, hold-out loss rises two- to five-fold during training while hold-out action error falls by up to 29%. Held-out metrics are a sound diagnostic of learning but no substitute for evaluation on the robot, and we recommend reporting initiation failure and success among started rollouts as separate bench outcomes."
+      ]
+    }
+  },
+  {
+    "name": "abs_2610.34717",
+    "url": "https://arxiv.org/abs/2610.34717",
+    "final_url": "https://arxiv.org/abs/2610.34717",
+    "status": 200,
+    "bytes": 43502,
+    "sha256": "dc74f4e4d708a7c9841d69dcc0f96bb9b3fc4dedc2b6b7733cc53b3c15197969",
+    "metadata": {
+      "citation_title": [
+        "VLA-HWBench: Where the Time Goes When VLA Models Run on Edge Hardware"
+      ],
+      "citation_author": [
+        "Xu, Borui",
+        "Tan, Hongshi",
+        "Jiang, Wenqi",
+        "He, Bingsheng",
+        "Wu, Ming",
+        "Zeng, Jason",
+        "Heinrich, Michael"
+      ],
+      "citation_date": [
+        "2026/10/26"
+      ],
+      "citation_online_date": [
+        "2026/10/27"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2610.34717"
+      ],
+      "citation_arxiv_id": [
+        "2610.34717"
+      ],
+      "citation_abstract": [
+        "Vision-language-action (VLA) models increasingly run on edge devices aboard robots, where inference latency constrains closed-loop robot control. However, it remains unclear how to design VLA models, their inference software and edge hardware so that robots can run VLA inference in real time. Most VLA models report only task success, while prior studies cover limited action-generation strategies, divide inference into at most three stages, and lack comparisons of inference optimizations on the same models. Therefore, we introduce VLA-HWBench, a benchmark that measures 18 open VLA models on NVIDIA Jetson AGX Thor and AMD Ryzen AI Max+ PRO 395, with a seven-stage inference breakdown. Our study reveals three insights. First, action-generation strategy matters more than model size. It dominates 14 of 19 Jetson configurations, latency varies by $82\\times$ on Jetson and $157\\times$ on AMD, and parameter count explains at most 15% of latency variance. Models that generate long action chunks in a few flow-matching steps keep up with control, whereas token-by-token decoding does not. Second, kernel fusion with 4-bit weights helps most, running $\\pi_{0.5}$ and GR00T N1.7 2.6-2.9$\\times$ faster than PyTorch with torch.compile, but it exists for only these two models and only on the Jetson. Optimization also moves the time to the stages it shortens least, as CPU preprocessing grows from 12% to 39% of the GR00T N1.7 call. Third, after optimization, memory bandwidth limits only the stages that process few tokens on the Jetson, such as the denoising steps, whereas software limits all other stages, from unfused kernels to serial preprocessing on the host CPU. Overall, low-latency edge VLAs should use few action-generation iterations, inference software should extend kernel fusion and low-bit weights to more models and platforms, and edge hardware needs high memory bandwidth and a fast host CPU."
+      ]
+    }
+  },
+  {
+    "name": "abs_2611.03103",
+    "url": "https://arxiv.org/abs/2611.03103",
+    "final_url": "https://arxiv.org/abs/2611.03103",
+    "status": 200,
+    "bytes": 43160,
+    "sha256": "e3992e008af1dcb54a038d93ca94990f19b591af91f85d02ec1793eab4daf37d",
+    "metadata": {
+      "citation_title": [
+        "VLALagBench: Understanding When and Why VLA Inference Latency Matters"
+      ],
+      "citation_author": [
+        "Wen, Qi",
+        "Xu, Borui",
+        "Amro, Hussein",
+        "Tan, Hongshi",
+        "Lin, Hanmin",
+        "Ruan, Chaoyi",
+        "Liu, Shanghao",
+        "Yang, Gang",
+        "Liu, Yuejiang",
+        "Duan, Jiafei",
+        "He, Bingsheng",
+        "Clemons, Jason",
+        "Kozyrakis, Christos",
+        "Jiang, Wenqi"
+      ],
+      "citation_date": [
+        "2026/11/02"
+      ],
+      "citation_online_date": [
+        "2026/11/02"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2611.03103"
+      ],
+      "citation_arxiv_id": [
+        "2611.03103"
+      ],
+      "citation_abstract": [
+        "Vision-language-action (VLA) models offer a promising path toward general-purpose robot manipulation. While inference latency can affect task success in a constantly evolving physical world, the relationship between latency and task success rate remains poorly understood. In this paper, we introduce VLALagBench, a comprehensive benchmark for studying VLA inference latency sensitivity across task types, object speeds, execution modes (synchronous and asynchronous), and VLA policies. Using VLALagBench, we find that even a modest inference latency of 100 ms can nearly halve task success on moving targets, with sensitivity varying substantially across tasks and policies. These differences reflect task-specific requirements for precision and continuous motion. By overlapping inference with action execution, asynchronous execution can recover some of the lost success at the cost of more frequent inference requests. Building on these findings, we develop an empirical model that predicts task success from limited calibration data, achieving root-mean-square prediction errors of only 5.7-7.8% across various VLA policies. Given an inference system's latency and per-robot throughput, these predictions guide the selection of system-specific VLA algorithm configurations to maximize task success. We believe VLALagBench and these findings provide a solid foundation for future robotics algorithm-system co-design."
+      ]
+    }
+  },
+  {
+    "name": "abs_2610.36420",
+    "url": "https://arxiv.org/abs/2610.36420",
+    "final_url": "https://arxiv.org/abs/2610.36420",
+    "status": 200,
+    "bytes": 41039,
+    "sha256": "a4d8ce562d0bc8085d09e574a6dd1dc95f65b0f43f4872f19ec68336d5461746",
+    "metadata": {
+      "citation_title": [
+        "SO-101 Bench: Accessible Spatial Manipulation"
+      ],
+      "citation_author": [
+        "Hickok, Truman"
+      ],
+      "citation_date": [
+        "2026/10/27"
+      ],
+      "citation_online_date": [
+        "2026/10/27"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2610.36420"
+      ],
+      "citation_arxiv_id": [
+        "2610.36420"
+      ],
+      "citation_abstract": [
+        "Low-cost arms such as the SO-101 have become the most common entry point to robot learning, yet no released policy performs spatially constrained, language-conditioned tasks on them out of the box, and existing SO-101 benchmarks run only on physical hardware with simple tasks and few held-out objects. We introduce SO-101 Bench, a simulated benchmark for language-conditioned spatial manipulation built on an Isaac Lab digital twin of a real SO-101 setup. It has four tasks scored as five families, 138 objects in seen, unseen-instance and unseen-class splits, 916 evaluation episodes with subsets for held-out appearances, rotate-to-fit planning and occlusion memory, and 3,629 simulated demonstrations on which every learned policy is fine-tuned under an equal compute budget. The twin ranks policies as the real robot does: five policies trained without real data, four VLAs and an LLM agent, keep their exact ranking when the same weights run on the physical arm in an unseen environment with unseen objects (Spearman rho = 1.00, MMRV = 0.000), although simulation overestimates success. Across nine VLAs and world-action models, the best learned policies score near 61%, with spatial placement, unseen object classes and rotate-to-fit planning remaining open. An LLM agent that writes code and hands grasping to a learned policy scores 83.2%, and an ablation shows that this lead comes from the choice of harness and the choice of language model."
+      ]
+    }
+  },
+  {
+    "name": "abs_2606.08881",
+    "url": "https://arxiv.org/abs/2606.08881",
+    "final_url": "https://arxiv.org/abs/2606.08881",
+    "status": 200,
+    "bytes": 42213,
+    "sha256": "296b67f43a112f03bae362ed60cc89ec418af26424fd59effd7750a4fc06ad95",
+    "metadata": {
+      "citation_title": [
+        "Benchmarking Vision-Language-Action Models on SO-101: Failure and Recovery Analysis"
+      ],
+      "citation_author": [
+        "Yu, Yi",
+        "Qiu, Xinchuan"
+      ],
+      "citation_date": [
+        "2026/06/07"
+      ],
+      "citation_online_date": [
+        "2026/06/11"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2606.08881"
+      ],
+      "citation_arxiv_id": [
+        "2606.08881"
+      ],
+      "citation_abstract": [
+        "Vision-Language-Action (VLA) models have demonstrated strong generalization in robotic manipulation, yet existing evaluations are primarily conducted in simulation or on expensive robotic platforms, leaving their robustness on affordable real-world robots largely unexplored. We present a standardized real-world benchmark for evaluating representative VLA and imitation learning policies on the low-cost SO-101 robotic platform. The benchmark comprises four representative manipulation tasks together with unified evaluation protocols, enabling systematic comparison under embodiment uncertainty. Using real-world teleoperated demonstrations, we fine-tune and evaluate $\\pi_{0.5}$, SmolVLA, Wall-X, and ACT directly on the physical platform. Beyond conventional task success rates, the benchmark incorporates a structured failure taxonomy, semantic- and execution-level failure decomposition, and recovery-aware evaluation metrics to characterize policy robustness. Experimental results show that stronger pretrained VLA policies generally outperform the imitation learning baseline, although performance remains highly task-dependent under low-cost robotic deployment conditions. Execution instability emerges as the dominant failure source, while recovery capability varies substantially across architectures. These results highlight the importance of failure and recovery analysis beyond binary task success and establish SO-101 as a practical benchmark for evaluating embodied AI systems under realistic low-cost robotic deployment conditions."
+      ]
+    }
+  },
+  {
+    "name": "abs_2603.13966",
+    "url": "https://arxiv.org/abs/2603.13966",
+    "final_url": "https://arxiv.org/abs/2603.13966",
+    "status": 200,
+    "bytes": 42972,
+    "sha256": "b0af87fe0cfb5074da6a84f3df3c081762eeaaa0aa2a58c60228c7c1c1045c24",
+    "metadata": {
+      "citation_title": [
+        "vla-eval: A Unified Evaluation Harness for Vision-Language-Action Models"
+      ],
+      "citation_author": [
+        "Choi, Suhwan",
+        "Lee, Yunsung",
+        "Park, Yubeen",
+        "Kim, Chris Dongjoo",
+        "Krishna, Ranjay",
+        "Fox, Dieter",
+        "Yu, Youngjae"
+      ],
+      "citation_date": [
+        "2026/03/14"
+      ],
+      "citation_online_date": [
+        "2026/09/14"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2603.13966"
+      ],
+      "citation_arxiv_id": [
+        "2603.13966"
+      ],
+      "citation_abstract": [
+        "Vision-Language-Action (VLA) models are increasingly evaluated across multiple simulation benchmarks, yet adding each benchmark to an evaluation pipeline requires resolving incompatible dependencies, matching underspecified evaluation protocols, and reverse-engineering undocumented preprocessing. This burden scales with the number of models and benchmarks, making comprehensive evaluation impractical for most teams. We present vla-eval, an open-source evaluation harness that eliminates this per-benchmark cost by decoupling model inference from benchmark execution through a WebSocket+msgpack protocol with Docker-based environment isolation. Models integrate once by implementing a single predict() method; benchmarks integrate once via a four-method interface; the full cross-evaluation matrix works automatically. The framework supports 14 simulation benchmarks and six model servers. Parallel evaluation via episode sharding and batch inference achieves up to 47x wall-clock speedup, completing 2,000 LIBERO episodes in ~18 minutes. To validate the framework, we reproduce published scores across six VLA codebases and three benchmarks, documenting previously undocumented pitfalls. We additionally release a VLA leaderboard aggregating 657 published results across 17 benchmarks. Framework, evaluation configs, and all reproduction results are publicly available at https://github.com/allenai/vla-evaluation-harness and https://allenai.github.io/vla-evaluation-harness/leaderboard."
+      ]
+    }
+  },
+  {
+    "name": "abs_2610.14603",
+    "url": "https://arxiv.org/abs/2610.14603",
+    "final_url": "https://arxiv.org/abs/2610.14603",
+    "status": 200,
+    "bytes": 43154,
+    "sha256": "ede2ee9614e8cc6c953c5ae662f48536d3000e33657f26137ef241696f20933d",
+    "metadata": {
+      "citation_title": [
+        "AnyRank: Reliable Anytime Policy Ranking via Sequential Testing"
+      ],
+      "citation_author": [
+        "Badithela, Apurva",
+        "Snyder, David",
+        "Yin, Tenny",
+        "Sceats, Jade",
+        "Pappas, George",
+        "Matni, Nikolai",
+        "Itkina, Masha",
+        "Nishimura, Haruki",
+        "Majumdar, Anirudha"
+      ],
+      "citation_date": [
+        "2026/10/10"
+      ],
+      "citation_online_date": [
+        "2026/10/16"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2610.14603"
+      ],
+      "citation_arxiv_id": [
+        "2610.14603"
+      ],
+      "citation_abstract": [
+        "Due to the high cost of hardware experiments, robot policies are predominantly evaluated by comparing their empirical performance on a limited number of hardware trials. However, finite-sample statistical uncertainty can lead to erroneous conclusions, especially when ranking multiple policies using a fixed batch of evaluation data. We propose AnyRank: a sequential method for multi-policy ranking that (i) adaptively allocates trials to hard-to-separate policies, (ii) provides (partial) rankings at any stopping time while bounding the probability of an incorrect ranking, and (iii) optionally exploits prior information to prioritize hardware evaluations more efficiently. This prior information could be informed from expert intuition, a small set of held-out hardware evaluations, or from policy rollouts in a simulator or an action-conditioned video world model. Notably, the prior can be imperfect; while a strong prior can provide efficiency gains on hardware, any inaccuracies in prior policy rankings do not invalidate the statistical assurances of AnyRank. We achieve the aforementioned properties through novel theoretical contributions that combine sequential testing with multiple-hypothesis graphical testing approaches. Experiments in simulation and real-world policy evaluation benchmarks show that AnyRank requires up to 50% fewer hardware evaluations compared to existing statistically rigorous approaches, while guarding against the incorrect rankings produced by heuristic methods used by state-of-the-art benchmarks."
+      ]
+    }
+  },
+  {
+    "name": "abs_2609.00065",
+    "url": "https://arxiv.org/abs/2609.00065",
+    "final_url": "https://arxiv.org/abs/2609.00065",
+    "status": 200,
+    "bytes": 41709,
+    "sha256": "67cc1bf1d1a285943f563765900dcd3bd12c7ecf884903c05468e261b94068ce",
+    "metadata": {
+      "citation_title": [
+        "Scientific Agent Skills: A Library of Procedural Knowledge for Research Agents"
+      ],
+      "citation_author": [
+        "Kassis, Timothy",
+        "Agarwal, Vinayak",
+        "He, Yuhuan",
+        "Patel, Darshil",
+        "Brueckner, Aubrey M."
+      ],
+      "citation_date": [
+        "2026/08/30"
+      ],
+      "citation_online_date": [
+        "2026/09/02"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2609.00065"
+      ],
+      "citation_arxiv_id": [
+        "2609.00065"
+      ],
+      "citation_abstract": [
+        "A language-model agent asked to analyse an experiment will usually return working code. Whether the analysis is defensible is a different question. A defensible analysis depends on procedural choices: which test the field accepts, which identifier namespace is authoritative, and which caveats must accompany a result. We present Scientific Agent Skills, an open library of 163 such procedures in 16 areas of practice, including genomics, cheminformatics, medical imaging, study design and scientific communication. Each skill is a directory built around a versioned, human-readable instruction file. An agent loads the file only when a task calls for it; the directory often also contains reference material and runnable scripts. We report no task-level evaluation and no host selection rate. We measure two properties of the documentation corpus: the always-resident descriptions of all 163 skills cost 7.1% of a 200,000-token window, and the median documented workflow fits within 23.9% of it, although 29 of 46 would overflow if every reference file were loaded. Openly licensed and available at https://github.com/K-Dense-AI/scientific-agent-skills."
+      ]
+    }
+  },
+  {
+    "name": "full_2610.36420v1",
+    "url": "https://arxiv.org/html/2610.36420v1",
+    "final_url": "https://arxiv.org/html/2610.36420v1",
+    "status": 200,
+    "bytes": 752231,
+    "sha256": "980910c666a90fd163f23156c714111681bdc032fa6f75325abff9ba0bdc3e45",
+    "metadata": {}
+  },
+  {
+    "name": "full_2606.08881v2",
+    "url": "https://arxiv.org/html/2606.08881v2",
+    "final_url": "https://arxiv.org/html/2606.08881v2",
+    "status": 200,
+    "bytes": 143247,
+    "sha256": "93a7a21959e10c09d165b7b2fb7e34a3271a1998ba4832baba25c1746a11b2e9",
+    "metadata": {}
+  },
+  {
+    "name": "full_2603.13966v3",
+    "url": "https://arxiv.org/html/2603.13966v3",
+    "final_url": "https://arxiv.org/html/2603.13966v3",
+    "status": 200,
+    "bytes": 141049,
+    "sha256": "c81688d37d30fbe0e98a5ea33cc76917d9af88ee23dbef4ae484f387de07bf2c",
+    "metadata": {}
+  },
+  {
+    "name": "full_2610.14603v1",
+    "url": "https://arxiv.org/html/2610.14603v1",
+    "final_url": "https://arxiv.org/html/2610.14603v1",
+    "status": 200,
+    "bytes": 503586,
+    "sha256": "ee9762c7fb4b6ea642358b0aee25fa81521c7a87ba2be1877b8358e50206aa9e",
+    "metadata": {}
+  },
+  {
+    "name": "full_2506.07339v2",
+    "url": "https://arxiv.org/html/2506.07339v2",
+    "final_url": "https://arxiv.org/html/2506.07339v2",
+    "status": 200,
+    "bytes": 304104,
+    "sha256": "ea4da7f778faab1857641ae243e5ad02cc745f91b87c8e654f521ba90d2c3e02",
+    "metadata": {}
+  },
+  {
+    "name": "full_2502.19645v2",
+    "url": "https://arxiv.org/html/2502.19645v2",
+    "final_url": "https://arxiv.org/html/2502.19645v2",
+    "status": 200,
+    "bytes": 326889,
+    "sha256": "4f8fdc96a3777b7c74a992b17cda1055fd9ad89ec9b3ae0bea589f2cbea2ab13",
+    "metadata": {}
+  },
+  {
+    "name": "full_2506.01844v1",
+    "url": "https://arxiv.org/html/2506.01844v1",
+    "final_url": "https://arxiv.org/html/2506.01844v1",
+    "status": 200,
+    "bytes": 353178,
+    "sha256": "17df10c0a01c0afb0479a736807250be0af3598f055a806f62be9783c209de11",
+    "metadata": {}
+  },
+  {
+    "name": "full_2604.04161v2",
+    "url": "https://arxiv.org/html/2604.04161v2",
+    "final_url": "https://arxiv.org/html/2604.04161v2",
+    "status": 200,
+    "bytes": 300409,
+    "sha256": "02cb3977290f3e510e3ce140c3810d0ce080d748919d3277438c86119137db12",
+    "metadata": {}
+  },
+  {
+    "name": "full_2609.00908v3",
+    "url": "https://arxiv.org/html/2609.00908v3",
+    "final_url": "https://arxiv.org/html/2609.00908v3",
+    "status": 200,
+    "bytes": 210902,
+    "sha256": "dd53ada57821b45c211c394989732027af9f82f8555ca59f745f4c070f4a4873",
+    "metadata": {}
+  },
+  {
+    "name": "full_2607.24008v1",
+    "url": "https://arxiv.org/html/2607.24008v1",
+    "final_url": "https://arxiv.org/html/2607.24008v1",
+    "status": 200,
+    "bytes": 398893,
+    "sha256": "e3c91273a589b60f4efb5523bbd60542f3cc81e661f742991c238ccd0fb5c649",
+    "metadata": {}
+  },
+  {
+    "name": "full_2609.25376v1",
+    "url": "https://arxiv.org/html/2609.25376v1",
+    "final_url": "https://arxiv.org/html/2609.25376v1",
+    "status": 200,
+    "bytes": 620764,
+    "sha256": "7c67ec2c5d40267fa3dac59c189e59231f0120e6fbf0b816685334fbdc8a3573",
+    "metadata": {}
+  },
+  {
+    "name": "doc_so101",
+    "url": "https://huggingface.co/docs/lerobot/so101",
+    "final_url": "https://huggingface.co/docs/lerobot/so101",
+    "status": 200,
+    "bytes": 180652,
+    "sha256": "981f39e77d2f5d0eed6b53ac56053d499b31b152d006d729d47ad187ff88b585",
+    "metadata": {}
+  },
+  {
+    "name": "doc_installation",
+    "url": "https://huggingface.co/docs/lerobot/installation",
+    "final_url": "https://huggingface.co/docs/lerobot/installation",
+    "status": 200,
+    "bytes": 173301,
+    "sha256": "d6f3cb3654aaa6d192d346b2f8fc1d8fb8380964d3860f41e41e802e5e3bd5b6",
+    "metadata": {}
+  },
+  {
+    "name": "doc_smolvla",
+    "url": "https://huggingface.co/docs/lerobot/smolvla",
+    "final_url": "https://huggingface.co/docs/lerobot/smolvla",
+    "status": 200,
+    "bytes": 137910,
+    "sha256": "82cb8e125098fd57430f174aa10b4f2f02531751366753bf61f2dcfe863adc27",
+    "metadata": {}
+  },
+  {
+    "name": "doc_pi05",
+    "url": "https://huggingface.co/docs/lerobot/pi05",
+    "final_url": "https://huggingface.co/docs/lerobot/pi05",
+    "status": 200,
+    "bytes": 172945,
+    "sha256": "4a558517b02894fa05c52274916c022b713d4787545cf5427fdf289bf3680062",
+    "metadata": {}
+  },
+  {
+    "name": "doc_teleoperate",
+    "url": "https://huggingface.co/docs/lerobot/teleoperate",
+    "final_url": "https://huggingface.co/docs/lerobot/teleoperate",
+    "status": 200,
+    "bytes": 204,
+    "sha256": "a25b94d4fef09ba80927a456d213e77cd75b7c2cef127139dc3d73ed6e514576",
+    "metadata": {}
+  },
+  {
+    "name": "doc_record",
+    "url": "https://huggingface.co/docs/lerobot/record",
+    "final_url": "https://huggingface.co/docs/lerobot/record",
+    "status": 200,
+    "bytes": 194,
+    "sha256": "149b09c6b3a366ed3164001aef9ac878d287418dd791451181577bbb0c4c357c",
+    "metadata": {}
+  },
+  {
+    "name": "doc_phone",
+    "url": "https://huggingface.co/docs/lerobot/phone",
+    "final_url": "https://huggingface.co/docs/lerobot/phone",
+    "status": 200,
+    "bytes": 192,
+    "sha256": "2ae1795134052b085d97bb14251c0e001b33899486f3eaf6ff1a2695216ec29c",
+    "metadata": {}
+  },
+  {
+    "name": "doc_async",
+    "url": "https://huggingface.co/docs/lerobot/async",
+    "final_url": "https://huggingface.co/docs/lerobot/async",
+    "status": 200,
+    "bytes": 156003,
+    "sha256": "94661020cd85da8b5ce104b565a289a345d5a6634c5a247b369ef57ef6c5da70",
+    "metadata": {}
+  },
+  {
+    "name": "doc_rtc",
+    "url": "https://huggingface.co/docs/lerobot/rtc",
+    "final_url": "https://huggingface.co/docs/lerobot/rtc",
+    "status": 200,
+    "bytes": 154435,
+    "sha256": "7458db43575490580bbec48e7002d6371e0617f7412528594fda64279377f817",
+    "metadata": {}
+  },
+  {
+    "name": "doc_cameras",
+    "url": "https://huggingface.co/docs/lerobot/cameras",
+    "final_url": "https://huggingface.co/docs/lerobot/cameras",
+    "status": 200,
+    "bytes": 144539,
+    "sha256": "c906ce44645897ee46edcfcff938ade86f0ac938468a28922c7bf05c816748f9",
+    "metadata": {}
+  },
+  {
+    "name": "doc_act",
+    "url": "https://huggingface.co/docs/lerobot/act",
+    "final_url": "https://huggingface.co/docs/lerobot/act",
+    "status": 200,
+    "bytes": 140001,
+    "sha256": "cee724e3b145f3d446dfe23e1109aee4540c5b8cb93824ea22dea5121259411a",
+    "metadata": {}
+  },
+  {
+    "name": "lerobot_readme",
+    "url": "https://raw.githubusercontent.com/huggingface/lerobot/main/README.md",
+    "final_url": "https://raw.githubusercontent.com/huggingface/lerobot/main/README.md",
+    "status": 200,
+    "bytes": 15079,
+    "sha256": "19f89b043842b99c1a1be12e918f37821a98077db95e048c199e715419c3e155",
+    "metadata": {}
+  },
+  {
+    "name": "lerobot_pyproject",
+    "url": "https://raw.githubusercontent.com/huggingface/lerobot/main/pyproject.toml",
+    "final_url": "https://raw.githubusercontent.com/huggingface/lerobot/main/pyproject.toml",
+    "status": 200,
+    "bytes": 25826,
+    "sha256": "e0e320b5f2095251d034f4e57460b45c8db0f9e106610928f9555a8bdb7d9fe7",
+    "metadata": {}
+  },
+  {
+    "name": "openpi_readme",
+    "url": "https://raw.githubusercontent.com/Physical-Intelligence/openpi/main/README.md",
+    "final_url": "https://raw.githubusercontent.com/Physical-Intelligence/openpi/main/README.md",
+    "status": 200,
+    "bytes": 23254,
+    "sha256": "567fc57766bd736664f50126cab8145af4071ca16cc5e238f2b11e369169c3b5",
+    "metadata": {}
+  },
+  {
+    "name": "so101_bom",
+    "url": "https://raw.githubusercontent.com/TheRobotStudio/SO-ARM100/main/README.md",
+    "final_url": "https://raw.githubusercontent.com/TheRobotStudio/SO-ARM100/main/README.md",
+    "status": 200,
+    "bytes": 26605,
+    "sha256": "7e9bdd089aab15532f7304e65e748707315aaee359204143e3997ecfc568d01e",
+    "metadata": {}
+  }
+]

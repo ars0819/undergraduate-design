@@ -1,0 +1,2561 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/Xd/v0gkL7O/qpbodRTZdaVE5XVg</id>
+  <title>arXiv Query: search_query=&amp;id_list=2212.06817,2307.15818,2406.09246,2502.19645,2506.01844,2410.24164,2504.16054,2303.04137,2304.13705,2506.07339,2607.24008,2611.01390,2611.05155,2607.14695,2611.01011,2611.03103,2610.34717,2502.19417,2503.20020,2510.03342,2506.09985,2601.21998,2607.08639,2606.00537,2605.25537,2611.02101,2204.01691,2307.01848,2303.11366,2309.17453,2609.00065&amp;start=0&amp;max_results=40</title>
+  <updated>2026-11-05T08:39:22Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=&amp;start=0&amp;max_results=40&amp;id_list=2212.06817,2307.15818,2406.09246,2502.19645,2506.01844,2410.24164,2504.16054,2303.04137,2304.13705,2506.07339,2607.24008,2611.01390,2611.05155,2607.14695,2611.01011,2611.03103,2610.34717,2502.19417,2503.20020,2510.03342,2506.09985,2601.21998,2607.08639,2606.00537,2605.25537,2611.02101,2204.01691,2307.01848,2303.11366,2309.17453,2609.00065" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>40</opensearch:itemsPerPage>
+  <opensearch:totalResults>31</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2212.06817v2</id>
+    <title>RT-1: Robotics Transformer for Real-World Control at Scale</title>
+    <updated>2023-08-11T17:45:27Z</updated>
+    <link href="https://arxiv.org/abs/2212.06817v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2212.06817v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>By transferring knowledge from large, diverse, task-agnostic datasets, modern machine learning models can solve specific downstream tasks either zero-shot or with small task-specific datasets to a high level of performance. While this capability has been demonstrated in other fields such as computer vision, natural language processing or speech recognition, it remains to be shown in robotics, where the generalization capabilities of the models are particularly critical due to the difficulty of collecting real-world robotic data. We argue that one of the keys to the success of such general robotic models lies with open-ended task-agnostic training, combined with high-capacity architectures that can absorb all of the diverse, robotic data. In this paper, we present a model class, dubbed Robotics Transformer, that exhibits promising scalable model properties. We verify our conclusions in a study of different model classes and their ability to generalize as a function of the data size, model size, and data diversity based on a large-scale data collection on real robots performing real-world tasks. The project's website and videos can be found at robotics-transformer1.github.io</summary>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2022-12-13T18:55:15Z</published>
+    <arxiv:comment>See website at robotics-transformer1.github.io</arxiv:comment>
+    <arxiv:primary_category term="cs.RO"/>
+    <author>
+      <name>Anthony Brohan</name>
+    </author>
+    <author>
+      <name>Noah Brown</name>
+    </author>
+    <author>
+      <name>Justice Carbajal</name>
+    </author>
+    <author>
+      <name>Yevgen Chebotar</name>
+    </author>
+    <author>
+      <name>Joseph Dabis</name>
+    </author>
+    <author>
+      <name>Chelsea Finn</name>
+    </author>
+    <author>
+      <name>Keerthana Gopalakrishnan</name>
+    </author>
+    <author>
+      <name>Karol Hausman</name>
+    </author>
+    <author>
+      <name>Alex Herzog</name>
+    </author>
+    <author>
+      <name>Jasmine Hsu</name>
+    </author>
+    <author>
+      <name>Julian Ibarz</name>
+    </author>
+    <author>
+      <name>Brian Ichter</name>
+    </author>
+    <author>
+      <name>Alex Irpan</name>
+    </author>
+    <author>
+      <name>Tomas Jackson</name>
+    </author>
+    <author>
+      <name>Sally Jesmonth</name>
+    </author>
+    <author>
+      <name>Nikhil J Joshi</name>
+    </author>
+    <author>
+      <name>Ryan Julian</name>
+    </author>
+    <author>
+      <name>Dmitry Kalashnikov</name>
+    </author>
+    <author>
+      <name>Yuheng Kuang</name>
+    </author>
+    <author>
+      <name>Isabel Leal</name>
+    </author>
+    <author>
+      <name>Kuang-Huei Lee</name>
+    </author>
+    <author>
+      <name>Sergey Levine</name>
+    </author>
+    <author>
+      <name>Yao Lu</name>
+    </author>
+    <author>
+      <name>Utsav Malla</name>
+    </author>
+    <author>
+      <name>Deeksha Manjunath</name>
+    </author>
+    <author>
+      <name>Igor Mordatch</name>
+    </author>
+    <author>
+      <name>Ofir Nachum</name>
+    </author>
+    <author>
+      <name>Carolina Parada</name>
+    </author>
+    <author>
+      <name>Jodilyn Peralta</name>
+    </author>
+    <author>
+      <name>Emily Perez</name>
+    </author>
+    <author>
+      <name>Karl Pertsch</name>
+    </author>
+    <author>
+      <name>Jornell Quiambao</name>
+    </author>
+    <author>
+      <name>Kanishka Rao</name>
+    </author>
+    <author>
+      <name>Michael Ryoo</name>
+    </author>
+    <author>
+      <name>Grecia Salazar</name>
+    </author>
+    <author>
+      <name>Pannag Sanketi</name>
+    </author>
+    <author>
+      <name>Kevin Sayed</name>
+    </author>
+    <author>
+      <name>Jaspiar Singh</name>
+    </author>
+    <author>
+      <name>Sumedh Sontakke</name>
+    </author>
+    <author>
+      <name>Austin Stone</name>
+    </author>
+    <author>
+      <name>Clayton Tan</name>
+    </author>
+    <author>
+      <name>Huong Tran</name>
+    </author>
+    <author>
+      <name>Vincent Vanhoucke</name>
+    </author>
+    <author>
+      <name>Steve Vega</name>
+    </author>
+    <author>
+      <name>Quan Vuong</name>
+    </author>
+    <author>
+      <name>Fei Xia</name>
+    </author>
+    <author>
+      <name>Ted Xiao</name>
+    </author>
+    <author>
+      <name>Peng Xu</name>
+    </author>
+    <author>
+      <name>Sichun Xu</name>
+    </author>
+    <author>
+      <name>Tianhe Yu</name>
+    </author>
+    <author>
+      <name>Brianna Zitkovich</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2309.17453v4</id>
+    <title>Efficient Streaming Language Models with Attention Sinks</title>
+    <updated>2024-04-07T00:56:53Z</updated>
+    <link href="https://arxiv.org/abs/2309.17453v4" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2309.17453v4" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Deploying Large Language Models (LLMs) in streaming applications such as multi-round dialogue, where long interactions are expected, is urgently needed but poses two major challenges. Firstly, during the decoding stage, caching previous tokens' Key and Value states (KV) consumes extensive memory. Secondly, popular LLMs cannot generalize to longer texts than the training sequence length. Window attention, where only the most recent KVs are cached, is a natural approach -- but we show that it fails when the text length surpasses the cache size. We observe an interesting phenomenon, namely attention sink, that keeping the KV of initial tokens will largely recover the performance of window attention. In this paper, we first demonstrate that the emergence of attention sink is due to the strong attention scores towards initial tokens as a "sink" even if they are not semantically important. Based on the above analysis, we introduce StreamingLLM, an efficient framework that enables LLMs trained with a finite length attention window to generalize to infinite sequence lengths without any fine-tuning. We show that StreamingLLM can enable Llama-2, MPT, Falcon, and Pythia to perform stable and efficient language modeling with up to 4 million tokens and more. In addition, we discover that adding a placeholder token as a dedicated attention sink during pre-training can further improve streaming deployment. In streaming settings, StreamingLLM outperforms the sliding window recomputation baseline by up to 22.2x speedup. Code and datasets are provided at https://github.com/mit-han-lab/streaming-llm.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-09-29T17:59:56Z</published>
+    <arxiv:comment>ICLR 2024</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Guangxuan Xiao</name>
+    </author>
+    <author>
+      <name>Yuandong Tian</name>
+    </author>
+    <author>
+      <name>Beidi Chen</name>
+    </author>
+    <author>
+      <name>Song Han</name>
+    </author>
+    <author>
+      <name>Mike Lewis</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2503.20020v1</id>
+    <title>Gemini Robotics: Bringing AI into the Physical World</title>
+    <updated>2025-03-25T19:02:56Z</updated>
+    <link href="https://arxiv.org/abs/2503.20020v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2503.20020v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Recent advancements in large multimodal models have led to the emergence of remarkable generalist capabilities in digital domains, yet their translation to physical agents such as robots remains a significant challenge. This report introduces a new family of AI models purposefully designed for robotics and built upon the foundation of Gemini 2.0. We present Gemini Robotics, an advanced Vision-Language-Action (VLA) generalist model capable of directly controlling robots. Gemini Robotics executes smooth and reactive movements to tackle a wide range of complex manipulation tasks while also being robust to variations in object types and positions, handling unseen environments as well as following diverse, open vocabulary instructions. We show that with additional fine-tuning, Gemini Robotics can be specialized to new capabilities including solving long-horizon, highly dexterous tasks, learning new short-horizon tasks from as few as 100 demonstrations and adapting to completely novel robot embodiments. This is made possible because Gemini Robotics builds on top of the Gemini Robotics-ER model, the second model we introduce in this work. Gemini Robotics-ER (Embodied Reasoning) extends Gemini's multimodal reasoning capabilities into the physical world, with enhanced spatial and temporal understanding. This enables capabilities relevant to robotics including object detection, pointing, trajectory and grasp prediction, as well as multi-view correspondence and 3D bounding box predictions. We show how this novel combination can support a variety of robotics applications. We also discuss and address important safety considerations related to this new class of robotics foundation models. The Gemini Robotics family marks a substantial step towards developing general-purpose robots that realizes AI's potential in the physical world.</summary>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-03-25T19:02:56Z</published>
+    <arxiv:primary_category term="cs.RO"/>
+    <author>
+      <name> Gemini Robotics Team</name>
+    </author>
+    <author>
+      <name>Saminda Abeyruwan</name>
+    </author>
+    <author>
+      <name>Joshua Ainslie</name>
+    </author>
+    <author>
+      <name>Jean-Baptiste Alayrac</name>
+    </author>
+    <author>
+      <name>Montserrat Gonzalez Arenas</name>
+    </author>
+    <author>
+      <name>Travis Armstrong</name>
+    </author>
+    <author>
+      <name>Ashwin Balakrishna</name>
+    </author>
+    <author>
+      <name>Robert Baruch</name>
+    </author>
+    <author>
+      <name>Maria Bauza</name>
+    </author>
+    <author>
+      <name>Michiel Blokzijl</name>
+    </author>
+    <author>
+      <name>Steven Bohez</name>
+    </author>
+    <author>
+      <name>Konstantinos Bousmalis</name>
+    </author>
+    <author>
+      <name>Anthony Brohan</name>
+    </author>
+    <author>
+      <name>Thomas Buschmann</name>
+    </author>
+    <author>
+      <name>Arunkumar Byravan</name>
+    </author>
+    <author>
+      <name>Serkan Cabi</name>
+    </author>
+    <author>
+      <name>Ken Caluwaerts</name>
+    </author>
+    <author>
+      <name>Federico Casarini</name>
+    </author>
+    <author>
+      <name>Oscar Chang</name>
+    </author>
+    <author>
+      <name>Jose Enrique Chen</name>
+    </author>
+    <author>
+      <name>Xi Chen</name>
+    </author>
+    <author>
+      <name>Hao-Tien Lewis Chiang</name>
+    </author>
+    <author>
+      <name>Krzysztof Choromanski</name>
+    </author>
+    <author>
+      <name>David D'Ambrosio</name>
+    </author>
+    <author>
+      <name>Sudeep Dasari</name>
+    </author>
+    <author>
+      <name>Todor Davchev</name>
+    </author>
+    <author>
+      <name>Coline Devin</name>
+    </author>
+    <author>
+      <name>Norman Di Palo</name>
+    </author>
+    <author>
+      <name>Tianli Ding</name>
+    </author>
+    <author>
+      <name>Adil Dostmohamed</name>
+    </author>
+    <author>
+      <name>Danny Driess</name>
+    </author>
+    <author>
+      <name>Yilun Du</name>
+    </author>
+    <author>
+      <name>Debidatta Dwibedi</name>
+    </author>
+    <author>
+      <name>Michael Elabd</name>
+    </author>
+    <author>
+      <name>Claudio Fantacci</name>
+    </author>
+    <author>
+      <name>Cody Fong</name>
+    </author>
+    <author>
+      <name>Erik Frey</name>
+    </author>
+    <author>
+      <name>Chuyuan Fu</name>
+    </author>
+    <author>
+      <name>Marissa Giustina</name>
+    </author>
+    <author>
+      <name>Keerthana Gopalakrishnan</name>
+    </author>
+    <author>
+      <name>Laura Graesser</name>
+    </author>
+    <author>
+      <name>Leonard Hasenclever</name>
+    </author>
+    <author>
+      <name>Nicolas Heess</name>
+    </author>
+    <author>
+      <name>Brandon Hernaez</name>
+    </author>
+    <author>
+      <name>Alexander Herzog</name>
+    </author>
+    <author>
+      <name>R. Alex Hofer</name>
+    </author>
+    <author>
+      <name>Jan Humplik</name>
+    </author>
+    <author>
+      <name>Atil Iscen</name>
+    </author>
+    <author>
+      <name>Mithun George Jacob</name>
+    </author>
+    <author>
+      <name>Deepali Jain</name>
+    </author>
+    <author>
+      <name>Ryan Julian</name>
+    </author>
+    <author>
+      <name>Dmitry Kalashnikov</name>
+    </author>
+    <author>
+      <name>M. Emre Karagozler</name>
+    </author>
+    <author>
+      <name>Stefani Karp</name>
+    </author>
+    <author>
+      <name>Chase Kew</name>
+    </author>
+    <author>
+      <name>Jerad Kirkland</name>
+    </author>
+    <author>
+      <name>Sean Kirmani</name>
+    </author>
+    <author>
+      <name>Yuheng Kuang</name>
+    </author>
+    <author>
+      <name>Thomas Lampe</name>
+    </author>
+    <author>
+      <name>Antoine Laurens</name>
+    </author>
+    <author>
+      <name>Isabel Leal</name>
+    </author>
+    <author>
+      <name>Alex X. Lee</name>
+    </author>
+    <author>
+      <name>Tsang-Wei Edward Lee</name>
+    </author>
+    <author>
+      <name>Jacky Liang</name>
+    </author>
+    <author>
+      <name>Yixin Lin</name>
+    </author>
+    <author>
+      <name>Sharath Maddineni</name>
+    </author>
+    <author>
+      <name>Anirudha Majumdar</name>
+    </author>
+    <author>
+      <name>Assaf Hurwitz Michaely</name>
+    </author>
+    <author>
+      <name>Robert Moreno</name>
+    </author>
+    <author>
+      <name>Michael Neunert</name>
+    </author>
+    <author>
+      <name>Francesco Nori</name>
+    </author>
+    <author>
+      <name>Carolina Parada</name>
+    </author>
+    <author>
+      <name>Emilio Parisotto</name>
+    </author>
+    <author>
+      <name>Peter Pastor</name>
+    </author>
+    <author>
+      <name>Acorn Pooley</name>
+    </author>
+    <author>
+      <name>Kanishka Rao</name>
+    </author>
+    <author>
+      <name>Krista Reymann</name>
+    </author>
+    <author>
+      <name>Dorsa Sadigh</name>
+    </author>
+    <author>
+      <name>Stefano Saliceti</name>
+    </author>
+    <author>
+      <name>Pannag Sanketi</name>
+    </author>
+    <author>
+      <name>Pierre Sermanet</name>
+    </author>
+    <author>
+      <name>Dhruv Shah</name>
+    </author>
+    <author>
+      <name>Mohit Sharma</name>
+    </author>
+    <author>
+      <name>Kathryn Shea</name>
+    </author>
+    <author>
+      <name>Charles Shu</name>
+    </author>
+    <author>
+      <name>Vikas Sindhwani</name>
+    </author>
+    <author>
+      <name>Sumeet Singh</name>
+    </author>
+    <author>
+      <name>Radu Soricut</name>
+    </author>
+    <author>
+      <name>Jost Tobias Springenberg</name>
+    </author>
+    <author>
+      <name>Rachel Sterneck</name>
+    </author>
+    <author>
+      <name>Razvan Surdulescu</name>
+    </author>
+    <author>
+      <name>Jie Tan</name>
+    </author>
+    <author>
+      <name>Jonathan Tompson</name>
+    </author>
+    <author>
+      <name>Vincent Vanhoucke</name>
+    </author>
+    <author>
+      <name>Jake Varley</name>
+    </author>
+    <author>
+      <name>Grace Vesom</name>
+    </author>
+    <author>
+      <name>Giulia Vezzani</name>
+    </author>
+    <author>
+      <name>Oriol Vinyals</name>
+    </author>
+    <author>
+      <name>Ayzaan Wahid</name>
+    </author>
+    <author>
+      <name>Stefan Welker</name>
+    </author>
+    <author>
+      <name>Paul Wohlhart</name>
+    </author>
+    <author>
+      <name>Fei Xia</name>
+    </author>
+    <author>
+      <name>Ted Xiao</name>
+    </author>
+    <author>
+      <name>Annie Xie</name>
+    </author>
+    <author>
+      <name>Jinyu Xie</name>
+    </author>
+    <author>
+      <name>Peng Xu</name>
+    </author>
+    <author>
+      <name>Sichun Xu</name>
+    </author>
+    <author>
+      <name>Ying Xu</name>
+    </author>
+    <author>
+      <name>Zhuo Xu</name>
+    </author>
+    <author>
+      <name>Yuxiang Yang</name>
+    </author>
+    <author>
+      <name>Rui Yao</name>
+    </author>
+    <author>
+      <name>Sergey Yaroshenko</name>
+    </author>
+    <author>
+      <name>Wenhao Yu</name>
+    </author>
+    <author>
+      <name>Wentao Yuan</name>
+    </author>
+    <author>
+      <name>Jingwei Zhang</name>
+    </author>
+    <author>
+      <name>Tingnan Zhang</name>
+    </author>
+    <author>
+      <name>Allan Zhou</name>
+    </author>
+    <author>
+      <name>Yuxiang Zhou</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2506.07339v2</id>
+    <title>Real-Time Execution of Action Chunking Flow Policies</title>
+    <updated>2025-12-05T07:35:35Z</updated>
+    <link href="https://arxiv.org/abs/2506.07339v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2506.07339v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Modern AI systems, especially those interacting with the physical world, increasingly require real-time performance. However, the high latency of state-of-the-art generalist models, including recent vision-language action models (VLAs), poses a significant challenge. While action chunking has enabled temporal consistency in high-frequency control tasks, it does not fully address the latency problem, leading to pauses or out-of-distribution jerky movements at chunk boundaries. This paper presents a novel inference-time algorithm that enables smooth asynchronous execution of action chunking policies. Our method, real-time chunking (RTC), is applicable to any diffusion- or flow-based VLA out of the box with no re-training. It generates the next action chunk while executing the current one, "freezing" actions guaranteed to execute and "inpainting" the rest. To test RTC, we introduce a new benchmark of 12 highly dynamic tasks in the Kinetix simulator, as well as evaluate 6 challenging real-world bimanual manipulation tasks. Results demonstrate that RTC is fast, performant, and uniquely robust to inference delay, significantly improving task throughput and enabling high success rates in precise tasks $\unicode{x2013}$ such as lighting a match $\unicode{x2013}$ even in the presence of significant latency. See https://pi.website/research/real_time_chunking for videos.</summary>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-06-09T01:01:59Z</published>
+    <arxiv:comment>published in NeurIPS 2025</arxiv:comment>
+    <arxiv:primary_category term="cs.RO"/>
+    <author>
+      <name>Kevin Black</name>
+    </author>
+    <author>
+      <name>Manuel Y. Galliker</name>
+    </author>
+    <author>
+      <name>Sergey Levine</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2502.19417v2</id>
+    <title>Hi Robot: Open-Ended Instruction Following with Hierarchical Vision-Language-Action Models</title>
+    <updated>2025-07-15T17:44:28Z</updated>
+    <link href="https://arxiv.org/abs/2502.19417v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2502.19417v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Generalist robots that can perform a range of different tasks in open-world settings must be able to not only reason about the steps needed to accomplish their goals, but also process complex instructions, prompts, and even feedback during task execution. Intricate instructions (e.g., "Could you make me a vegetarian sandwich?" or "I don't like that one") require not just the ability to physically perform the individual steps, but the ability to situate complex commands and feedback in the physical world. In this work, we describe a system that uses vision-language models in a hierarchical structure, first reasoning over complex prompts and user feedback to deduce the most appropriate next step to fulfill the task, and then performing that step with low-level actions. In contrast to direct instruction following methods that can fulfill simple commands ("pick up the cup"), our system can reason through complex prompts and incorporate situated feedback during task execution ("that's not trash"). We evaluate our system across three robotic platforms, including single-arm, dual-arm, and dual-arm mobile robots, demonstrating its ability to handle tasks such as cleaning messy tables, making sandwiches, and grocery shopping. Videos are available at https://www.pi.website/research/hirobot</summary>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-02-26T18:58:41Z</published>
+    <arxiv:comment>ICML 2025</arxiv:comment>
+    <arxiv:primary_category term="cs.RO"/>
+    <author>
+      <name>Lucy Xiaoyang Shi</name>
+    </author>
+    <author>
+      <name>Brian Ichter</name>
+    </author>
+    <author>
+      <name>Michael Equi</name>
+    </author>
+    <author>
+      <name>Liyiming Ke</name>
+    </author>
+    <author>
+      <name>Karl Pertsch</name>
+    </author>
+    <author>
+      <name>Quan Vuong</name>
+    </author>
+    <author>
+      <name>James Tanner</name>
+    </author>
+    <author>
+      <name>Anna Walling</name>
+    </author>
+    <author>
+      <name>Haohuan Wang</name>
+    </author>
+    <author>
+      <name>Niccolo Fusai</name>
+    </author>
+    <author>
+      <name>Adrian Li-Bell</name>
+    </author>
+    <author>
+      <name>Danny Driess</name>
+    </author>
+    <author>
+      <name>Lachy Groom</name>
+    </author>
+    <author>
+      <name>Sergey Levine</name>
+    </author>
+    <author>
+      <name>Chelsea Finn</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2611.01390v1</id>
+    <title>Same Path, Less Time: Training-Free Fast Execution of Vision-Language-Action Models under Inference Latency</title>
+    <updated>2026-11-01T00:53:26Z</updated>
+    <link href="https://arxiv.org/abs/2611.01390v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2611.01390v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Vision-language-action (VLA) models predict chunks of future actions, yet deployed robots waste time in two ways that are independent of model capability: they halt while the next chunk is inferred, and they move at the speed of slow, cautious demonstrations. Existing remedies remove one loss each, and stacking them fails, because asynchrony and speed-up each change the correspondence between planned progress and executed motion. We present Path-preserving Time Scaling (PTS), a training-free execution layer for frozen action-chunking policies built on one principle: the robot's motion is a time reparameterization of a reference path, and the path changes only in response to new observations. A path layer decodes every replan deterministically in one step and enters it at the progress consumed during inference. A time layer sums the planned increments, keeps the arm at 1x while the gripper moves, and caps the rate by the actuator's linear range and by chunk feasibility under latency. We show that misaligned entry and stochastic sampling add a bias and a variance to the continuation error, and derive a break-even success rate that states when speeding up pays off. On LIBERO with two frozen VLAs under injected inference latency, PTS raises task throughput over the strongest deployable baseline by 33% for pi0.5 and 104% for SmolVLA while matching or improving the success rate, is best on all six model-suite combinations, and exceeds zero-latency 1x execution. Against asynchronous 1x execution with the same one-step decoder, the time layer alone adds 28% and 38%. On LIBERO-Dynamic it improves on stop-and-wait execution by 38% and is comparable to asynchronous 1x execution.</summary>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-11-01T00:53:26Z</published>
+    <arxiv:comment>22 pages, 11 figures</arxiv:comment>
+    <arxiv:primary_category term="cs.RO"/>
+    <author>
+      <name>Fuyi Chen</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2611.01011v1</id>
+    <title>Leap-VLA: High-Rate Robot Control from a Low-Rate VLM Backbone</title>
+    <updated>2026-10-31T14:53:16Z</updated>
+    <link href="https://arxiv.org/abs/2611.01011v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2611.01011v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Vision-language-action (VLA) models re-encode the full observation through a multi-billion-parameter vision-language model (VLM) at every control step, even though scene semantics evolve at roughly 1 Hz while reactive control requires 20-50 Hz. We present a VLA that decouples the two: a VLM runs as a low-frequency semantic anchor whose cached context is reused across control steps, while a flow-matching action expert operates at high frequency, consuming the cached semantics with a fresh, low-latency visual stream from a compact encoder pretrained on robot video with masked reconstruction, optical flow, and depth. The measured age $τ$ of the cache conditions the expert through adaptive layer normalization. Reusing the cache makes the policy a function of its age, and training covers that function explicitly: cache ages sampled from real episode history, plus an age-ramped pixel corruption that erases the stale snapshot the way deployed staleness corrupts content. On the asynchronous deployment stack, the recipe closes most of the staleness gap: on LIBERO-Spatial, 61.4% to 95.5% at a 2 s semantic refresh (95.9% at 1 s, within 1.6 points of the frequency-matched anchor); averaged over the four LIBERO suites, the deployed policy holds 95.2% at a 1 s refresh and 94.5% at 2 s against a 96.3% matched anchor. A forward-only chunk-boundary correction (soft-nudge), an autograd-free reformulation of real-time-chunking guidance, carries per-control-step re-planning without loss (97.1%) at zero added latency. The same lens exposes a second defect: under an instruction-scene mismatch the policy keeps manipulating the scene, and a chain-of-thought verdict gate trained on zero-cost negative episodes freezes execution exactly on mismatched instructions without hurting feasible success.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-10-31T14:53:16Z</published>
+    <arxiv:comment>21 pages, 14 figures. Corresponding author: Lin Yang</arxiv:comment>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Lin Yang</name>
+    </author>
+    <author>
+      <name>Yunjie Shen</name>
+    </author>
+    <author>
+      <name>Zheyu Li</name>
+    </author>
+    <author>
+      <name>Zhenjie Tian</name>
+    </author>
+    <author>
+      <name>Yongli Wang</name>
+    </author>
+    <author>
+      <name>Dongze Huang</name>
+    </author>
+    <author>
+      <name>Weiqi Wang</name>
+    </author>
+    <author>
+      <name>Yucheng Zhu</name>
+    </author>
+    <author>
+      <name>Zhaoquan Jiang</name>
+    </author>
+    <author>
+      <name>Guofeng Xie</name>
+    </author>
+    <author>
+      <name>Peigen Fang</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2611.02101v1</id>
+    <title>When Delay Meets Drift: Physical Safety of Robot Foundation Models Is a Cross-Layer Problem</title>
+    <updated>2026-11-01T18:14:05Z</updated>
+    <link href="https://arxiv.org/abs/2611.02101v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2611.02101v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Robot foundation models now act in a closed loop, yet their safety is evaluated one variation at a time: robustness benchmarks perturb the scene while assuming instantaneous inference, and real-time execution methods study inference delay in nominal scenes. We argue that physical safety is not a property of the model alone, but emerges from how variations in the physical environment, the model, the computing platform, and execution interact in closed loop. We formalize this as cross-layer variation propagation across these system layers and use an interaction contrast to measure when joint variation creates more risk than the sum of its parts. In 4,000 paired closed-loop episodes of the pi0.5 vision-language-action model on LIBERO, a 400 ms inference delay raises the safety-violation rate by 3.5 percentage points under the training viewpoint but by 37 percentage points under a 60-degree camera shift: 33.5 percentage points (95% CI: 25-43) more than the two effects combined. We close with a research agenda toward predictable physical intelligence: predicting when variation becomes risk, and adapting compute, power, and control accordingly.</summary>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.ET" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-11-01T18:14:05Z</published>
+    <arxiv:comment>11 pages, 3 figures</arxiv:comment>
+    <arxiv:primary_category term="cs.RO"/>
+    <author>
+      <name>Liangkai Liu</name>
+    </author>
+    <author>
+      <name>Bimal Thapa Magar</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2406.09246v3</id>
+    <title>OpenVLA: An Open-Source Vision-Language-Action Model</title>
+    <updated>2024-09-05T19:46:34Z</updated>
+    <link href="https://arxiv.org/abs/2406.09246v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2406.09246v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Large policies pretrained on a combination of Internet-scale vision-language data and diverse robot demonstrations have the potential to change how we teach robots new skills: rather than training new behaviors from scratch, we can fine-tune such vision-language-action (VLA) models to obtain robust, generalizable policies for visuomotor control. Yet, widespread adoption of VLAs for robotics has been challenging as 1) existing VLAs are largely closed and inaccessible to the public, and 2) prior work fails to explore methods for efficiently fine-tuning VLAs for new tasks, a key component for adoption. Addressing these challenges, we introduce OpenVLA, a 7B-parameter open-source VLA trained on a diverse collection of 970k real-world robot demonstrations. OpenVLA builds on a Llama 2 language model combined with a visual encoder that fuses pretrained features from DINOv2 and SigLIP. As a product of the added data diversity and new model components, OpenVLA demonstrates strong results for generalist manipulation, outperforming closed models such as RT-2-X (55B) by 16.5% in absolute task success rate across 29 tasks and multiple robot embodiments, with 7x fewer parameters. We further show that we can effectively fine-tune OpenVLA for new settings, with especially strong generalization results in multi-task environments involving multiple objects and strong language grounding abilities, and outperform expressive from-scratch imitation learning methods such as Diffusion Policy by 20.4%. We also explore compute efficiency; as a separate contribution, we show that OpenVLA can be fine-tuned on consumer GPUs via modern low-rank adaptation methods and served efficiently via quantization without a hit to downstream success rate. Finally, we release model checkpoints, fine-tuning notebooks, and our PyTorch codebase with built-in support for training VLAs at scale on Open X-Embodiment datasets.</summary>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-06-13T15:46:55Z</published>
+    <arxiv:comment>Website: https://openvla.github.io/</arxiv:comment>
+    <arxiv:primary_category term="cs.RO"/>
+    <author>
+      <name>Moo Jin Kim</name>
+    </author>
+    <author>
+      <name>Karl Pertsch</name>
+    </author>
+    <author>
+      <name>Siddharth Karamcheti</name>
+    </author>
+    <author>
+      <name>Ted Xiao</name>
+    </author>
+    <author>
+      <name>Ashwin Balakrishna</name>
+    </author>
+    <author>
+      <name>Suraj Nair</name>
+    </author>
+    <author>
+      <name>Rafael Rafailov</name>
+    </author>
+    <author>
+      <name>Ethan Foster</name>
+    </author>
+    <author>
+      <name>Grace Lam</name>
+    </author>
+    <author>
+      <name>Pannag Sanketi</name>
+    </author>
+    <author>
+      <name>Quan Vuong</name>
+    </author>
+    <author>
+      <name>Thomas Kollar</name>
+    </author>
+    <author>
+      <name>Benjamin Burchfiel</name>
+    </author>
+    <author>
+      <name>Russ Tedrake</name>
+    </author>
+    <author>
+      <name>Dorsa Sadigh</name>
+    </author>
+    <author>
+      <name>Sergey Levine</name>
+    </author>
+    <author>
+      <name>Percy Liang</name>
+    </author>
+    <author>
+      <name>Chelsea Finn</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2601.21998v2</id>
+    <title>Causal World Modeling for Robot Control</title>
+    <updated>2026-03-22T15:37:40Z</updated>
+    <link href="https://arxiv.org/abs/2601.21998v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2601.21998v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>This work highlights that video world modeling, alongside vision-language pre-training, establishes a fresh and independent foundation for robot learning. Intuitively, video world models provide the ability to imagine the near future by understanding the causality between actions and visual dynamics. Inspired by this, we introduce LingBot-VA, an autoregressive diffusion framework that learns frame prediction and policy execution simultaneously. Our model features three carefully crafted designs: (1) a shared latent space, integrating vision and action tokens, driven by a Mixture-of-Transformers (MoT) architecture, (2) a closed-loop rollout mechanism, allowing for ongoing acquisition of environmental feedback with ground-truth observations, (3) an asynchronous inference pipeline, parallelizing action prediction and motor execution to support efficient control. We evaluate our model on both simulation benchmarks and real-world scenarios, where it shows significant promise in long-horizon manipulation, data efficiency in post-training, and strong generalizability to novel configurations. The code and model are made publicly available to facilitate the community.</summary>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-01-29T17:07:43Z</published>
+    <arxiv:comment>Project page: https://technology.robbyant.com/lingbot-va Code: https://github.com/robbyant/lingbot-va</arxiv:comment>
+    <arxiv:primary_category term="cs.CV"/>
+    <author>
+      <name>Lin Li</name>
+    </author>
+    <author>
+      <name>Qihang Zhang</name>
+    </author>
+    <author>
+      <name>Yiming Luo</name>
+    </author>
+    <author>
+      <name>Shuai Yang</name>
+    </author>
+    <author>
+      <name>Ruilin Wang</name>
+    </author>
+    <author>
+      <name>Fei Han</name>
+    </author>
+    <author>
+      <name>Mingrui Yu</name>
+    </author>
+    <author>
+      <name>Zelin Gao</name>
+    </author>
+    <author>
+      <name>Nan Xue</name>
+    </author>
+    <author>
+      <name>Xing Zhu</name>
+    </author>
+    <author>
+      <name>Yujun Shen</name>
+    </author>
+    <author>
+      <name>Yinghao Xu</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2607.08639v2</id>
+    <title>Native Video-Action Pretraining for Generalizable Robot Control</title>
+    <updated>2026-07-16T15:02:19Z</updated>
+    <link href="https://arxiv.org/abs/2607.08639v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2607.08639v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>The advent of video-action models offers a promising path for robot control. Nevertheless, we argue that repurposing video generative models designed for digital content creation is inherently inadequate for physical environments. To bridge this gap, we present LingBot-VA 2.0, a video-action foundation model built from the ground up for embodiment. Four core design principles showcase its evolution from LingBot-VA. (1) Departing from traditional reconstruction-focused VAEs, we introduce a semantic visual-action tokenizer, which aligns visual representations with both semantics and actions, improving instruction following and action precision in subsequent policy learning. (2) Given the strictly causal nature of temporal dynamics, we adopt a causal pretraining paradigm, training from scratch to circumvent the catastrophic forgetting that frequently occurs when adapting bidirectional architectures. (3) To meet the demands of high-frequency inference, our model employs a sparse MoE backbone, expanding model capacity without compromising efficiency. (4) Real-time closed-loop control is realized through an enhanced asynchronous inference scheme, which predicts future latents in parallel with action execution while re-grounding each rollout on the latest observation via learned forward dynamics. Real-world deployment validates LingBot-VA 2.0 as a robust foundation model, as evidenced by its few-shot generalization across complex manipulation tasks.</summary>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-07-09T16:15:43Z</published>
+    <arxiv:primary_category term="cs.RO"/>
+    <author>
+      <name>Qihang Zhang</name>
+    </author>
+    <author>
+      <name>Lin Li</name>
+    </author>
+    <author>
+      <name>Luyao Zhang</name>
+    </author>
+    <author>
+      <name>Shuai Yang</name>
+    </author>
+    <author>
+      <name>Yiming Luo</name>
+    </author>
+    <author>
+      <name>Shuaiting Li</name>
+    </author>
+    <author>
+      <name>Ruilin Wang</name>
+    </author>
+    <author>
+      <name>Junke Wang</name>
+    </author>
+    <author>
+      <name>Jiahao Shao</name>
+    </author>
+    <author>
+      <name>Gangwei Xu</name>
+    </author>
+    <author>
+      <name>Jiaming Zhou</name>
+    </author>
+    <author>
+      <name>Yishu Shen</name>
+    </author>
+    <author>
+      <name>Yudong Jin</name>
+    </author>
+    <author>
+      <name>Fangyi Xu</name>
+    </author>
+    <author>
+      <name>Shuailei Ma</name>
+    </author>
+    <author>
+      <name>Jiaqi Liao</name>
+    </author>
+    <author>
+      <name>Guanxing Lu</name>
+    </author>
+    <author>
+      <name>Zifan Shi</name>
+    </author>
+    <author>
+      <name>Yongkun Wen</name>
+    </author>
+    <author>
+      <name>Yujie Zhao</name>
+    </author>
+    <author>
+      <name>Weixuan Tang</name>
+    </author>
+    <author>
+      <name>Xinyang Wang</name>
+    </author>
+    <author>
+      <name>Chaojian Li</name>
+    </author>
+    <author>
+      <name>Jiapeng Zhu</name>
+    </author>
+    <author>
+      <name>Ka Leong Cheng</name>
+    </author>
+    <author>
+      <name>Nan Xue</name>
+    </author>
+    <author>
+      <name>Xing Zhu</name>
+    </author>
+    <author>
+      <name>Yujun Shen</name>
+    </author>
+    <author>
+      <name>Yinghao Xu</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2607.24008v1</id>
+    <title>FutureRTC: Real-Time Robot Execution with Anticipatory-Conditioned Action Chunking</title>
+    <updated>2026-07-27T05:10:16Z</updated>
+    <link href="https://arxiv.org/abs/2607.24008v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2607.24008v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Real-time deployment of Vision-Language-Action (VLA) policies necessitates asynchronous execution, wherein subsequent action chunks are computed concurrently with the execution of the current chunk, leading to prediction-execution misalignment and manifesting as inter-chunk discontinuities. Existing methods either superficially smooth chunk boundaries, require costly policy optimization, or exclusively forward-predict proprioceptive states yet neglect critical visual observations. In this paper, we propose \textbf{FutureRTC}, a plug-and-play adaptation framework that predicts execution-time observations and states for asynchronous VLA control without modifying the underlying policy. Specifically, FutureRTC features a state correction module to compensate for the discrepancy between rolled-forward and actual execution-time proprioceptive states and an observation prediction module that forecasts execution-time visual representations by leveraging robot motion as an explicit physical prior through motion-aware feature transport and reconstruction. Furthermore, we introduce a policy consistency loss to align the action chunks generated from predicted contexts with those produced under the expected execution-time inputs of the VLA policy. Extensive experiments across simulated and real-world environments demonstrate that FutureRTC achieves superior robustness to inference delays, resulting in smoother trajectories, faster execution, and consistently higher task success rates.</summary>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-07-27T05:10:16Z</published>
+    <arxiv:comment>Project Website: https://jianghaiscu.github.io/FutureRTC_proj/</arxiv:comment>
+    <arxiv:primary_category term="cs.RO"/>
+    <author>
+      <name>Hai Jiang</name>
+    </author>
+    <author>
+      <name>Yixian Zou</name>
+    </author>
+    <author>
+      <name>Binbin Liang</name>
+    </author>
+    <author>
+      <name>Boqian Liu</name>
+    </author>
+    <author>
+      <name>Fanman Meng</name>
+    </author>
+    <author>
+      <name>Shuaicheng Liu</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2610.34717v2</id>
+    <title>VLA-HWBench: Where the Time Goes When VLA Models Run on Edge Hardware</title>
+    <updated>2026-10-27T12:56:57Z</updated>
+    <link href="https://arxiv.org/abs/2610.34717v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2610.34717v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Vision-language-action (VLA) models increasingly run on edge devices aboard robots, where inference latency constrains closed-loop robot control. However, it remains unclear how to design VLA models, their inference software and edge hardware so that robots can run VLA inference in real time. Most VLA models report only task success, while prior studies cover limited action-generation strategies, divide inference into at most three stages, and lack comparisons of inference optimizations on the same models. Therefore, we introduce VLA-HWBench, a benchmark that measures 18 open VLA models on NVIDIA Jetson AGX Thor and AMD Ryzen AI Max+ PRO 395, with a seven-stage inference breakdown. Our study reveals three insights. First, action-generation strategy matters more than model size. It dominates 14 of 19 Jetson configurations, latency varies by $82\times$ on Jetson and $157\times$ on AMD, and parameter count explains at most 15% of latency variance. Models that generate long action chunks in a few flow-matching steps keep up with control, whereas token-by-token decoding does not. Second, kernel fusion with 4-bit weights helps most, running $π_{0.5}$ and GR00T N1.7 2.6-2.9$\times$ faster than PyTorch with torch.compile, but it exists for only these two models and only on the Jetson. Optimization also moves the time to the stages it shortens least, as CPU preprocessing grows from 12% to 39% of the GR00T N1.7 call. Third, after optimization, memory bandwidth limits only the stages that process few tokens on the Jetson, such as the denoising steps, whereas software limits all other stages, from unfused kernels to serial preprocessing on the host CPU. Overall, low-latency edge VLAs should use few action-generation iterations, inference software should extend kernel fusion and low-bit weights to more models and platforms, and edge hardware needs high memory bandwidth and a fast host CPU.</summary>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-10-26T02:07:42Z</published>
+    <arxiv:primary_category term="cs.RO"/>
+    <author>
+      <name>Borui Xu</name>
+    </author>
+    <author>
+      <name>Hongshi Tan</name>
+    </author>
+    <author>
+      <name>Wenqi Jiang</name>
+    </author>
+    <author>
+      <name>Bingsheng He</name>
+    </author>
+    <author>
+      <name>Ming Wu</name>
+    </author>
+    <author>
+      <name>Jason Zeng</name>
+    </author>
+    <author>
+      <name>Michael Heinrich</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2204.01691v2</id>
+    <title>Do As I Can, Not As I Say: Grounding Language in Robotic Affordances</title>
+    <updated>2022-08-16T16:06:33Z</updated>
+    <link href="https://arxiv.org/abs/2204.01691v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2204.01691v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Large language models can encode a wealth of semantic knowledge about the world. Such knowledge could be extremely useful to robots aiming to act upon high-level, temporally extended instructions expressed in natural language. However, a significant weakness of language models is that they lack real-world experience, which makes it difficult to leverage them for decision making within a given embodiment. For example, asking a language model to describe how to clean a spill might result in a reasonable narrative, but it may not be applicable to a particular agent, such as a robot, that needs to perform this task in a particular environment. We propose to provide real-world grounding by means of pretrained skills, which are used to constrain the model to propose natural language actions that are both feasible and contextually appropriate. The robot can act as the language model's "hands and eyes," while the language model supplies high-level semantic knowledge about the task. We show how low-level skills can be combined with large language models so that the language model provides high-level knowledge about the procedures for performing complex and temporally-extended instructions, while value functions associated with these skills provide the grounding necessary to connect this knowledge to a particular physical environment. We evaluate our method on a number of real-world robotic tasks, where we show the need for real-world grounding and that this approach is capable of completing long-horizon, abstract, natural language instructions on a mobile manipulator. The project's website and the video can be found at https://say-can.github.io/.</summary>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2022-04-04T17:57:11Z</published>
+    <arxiv:comment>See website at https://say-can.github.io/ V1. Initial Upload. V2. Added PaLM results. Added study about new capabilities (drawer manipulation, chain of thought prompting, multilingual instructions). Added an ablation study of language model size. Added an open-source version of \algname on a simulated tabletop environment. Improved readability</arxiv:comment>
+    <arxiv:primary_category term="cs.RO"/>
+    <author>
+      <name>Michael Ahn</name>
+    </author>
+    <author>
+      <name>Anthony Brohan</name>
+    </author>
+    <author>
+      <name>Noah Brown</name>
+    </author>
+    <author>
+      <name>Yevgen Chebotar</name>
+    </author>
+    <author>
+      <name>Omar Cortes</name>
+    </author>
+    <author>
+      <name>Byron David</name>
+    </author>
+    <author>
+      <name>Chelsea Finn</name>
+    </author>
+    <author>
+      <name>Chuyuan Fu</name>
+    </author>
+    <author>
+      <name>Keerthana Gopalakrishnan</name>
+    </author>
+    <author>
+      <name>Karol Hausman</name>
+    </author>
+    <author>
+      <name>Alex Herzog</name>
+    </author>
+    <author>
+      <name>Daniel Ho</name>
+    </author>
+    <author>
+      <name>Jasmine Hsu</name>
+    </author>
+    <author>
+      <name>Julian Ibarz</name>
+    </author>
+    <author>
+      <name>Brian Ichter</name>
+    </author>
+    <author>
+      <name>Alex Irpan</name>
+    </author>
+    <author>
+      <name>Eric Jang</name>
+    </author>
+    <author>
+      <name>Rosario Jauregui Ruano</name>
+    </author>
+    <author>
+      <name>Kyle Jeffrey</name>
+    </author>
+    <author>
+      <name>Sally Jesmonth</name>
+    </author>
+    <author>
+      <name>Nikhil J Joshi</name>
+    </author>
+    <author>
+      <name>Ryan Julian</name>
+    </author>
+    <author>
+      <name>Dmitry Kalashnikov</name>
+    </author>
+    <author>
+      <name>Yuheng Kuang</name>
+    </author>
+    <author>
+      <name>Kuang-Huei Lee</name>
+    </author>
+    <author>
+      <name>Sergey Levine</name>
+    </author>
+    <author>
+      <name>Yao Lu</name>
+    </author>
+    <author>
+      <name>Linda Luu</name>
+    </author>
+    <author>
+      <name>Carolina Parada</name>
+    </author>
+    <author>
+      <name>Peter Pastor</name>
+    </author>
+    <author>
+      <name>Jornell Quiambao</name>
+    </author>
+    <author>
+      <name>Kanishka Rao</name>
+    </author>
+    <author>
+      <name>Jarek Rettinghouse</name>
+    </author>
+    <author>
+      <name>Diego Reyes</name>
+    </author>
+    <author>
+      <name>Pierre Sermanet</name>
+    </author>
+    <author>
+      <name>Nicolas Sievers</name>
+    </author>
+    <author>
+      <name>Clayton Tan</name>
+    </author>
+    <author>
+      <name>Alexander Toshev</name>
+    </author>
+    <author>
+      <name>Vincent Vanhoucke</name>
+    </author>
+    <author>
+      <name>Fei Xia</name>
+    </author>
+    <author>
+      <name>Ted Xiao</name>
+    </author>
+    <author>
+      <name>Peng Xu</name>
+    </author>
+    <author>
+      <name>Sichun Xu</name>
+    </author>
+    <author>
+      <name>Mengyuan Yan</name>
+    </author>
+    <author>
+      <name>Andy Zeng</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2304.13705v1</id>
+    <title>Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware</title>
+    <updated>2023-04-23T19:10:53Z</updated>
+    <link href="https://arxiv.org/abs/2304.13705v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2304.13705v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Fine manipulation tasks, such as threading cable ties or slotting a battery, are notoriously difficult for robots because they require precision, careful coordination of contact forces, and closed-loop visual feedback. Performing these tasks typically requires high-end robots, accurate sensors, or careful calibration, which can be expensive and difficult to set up. Can learning enable low-cost and imprecise hardware to perform these fine manipulation tasks? We present a low-cost system that performs end-to-end imitation learning directly from real demonstrations, collected with a custom teleoperation interface. Imitation learning, however, presents its own challenges, particularly in high-precision domains: errors in the policy can compound over time, and human demonstrations can be non-stationary. To address these challenges, we develop a simple yet novel algorithm, Action Chunking with Transformers (ACT), which learns a generative model over action sequences. ACT allows the robot to learn 6 difficult tasks in the real world, such as opening a translucent condiment cup and slotting a battery with 80-90% success, with only 10 minutes worth of demonstrations. Project website: https://tonyzhaozh.github.io/aloha/</summary>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-04-23T19:10:53Z</published>
+    <arxiv:primary_category term="cs.RO"/>
+    <author>
+      <name>Tony Z. Zhao</name>
+    </author>
+    <author>
+      <name>Vikash Kumar</name>
+    </author>
+    <author>
+      <name>Sergey Levine</name>
+    </author>
+    <author>
+      <name>Chelsea Finn</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2307.01848v1</id>
+    <title>Embodied Task Planning with Large Language Models</title>
+    <updated>2023-07-04T17:58:25Z</updated>
+    <link href="https://arxiv.org/abs/2307.01848v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2307.01848v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Equipping embodied agents with commonsense is important for robots to successfully complete complex human instructions in general environments. Recent large language models (LLM) can embed rich semantic knowledge for agents in plan generation of complex tasks, while they lack the information about the realistic world and usually yield infeasible action sequences. In this paper, we propose a TAsk Planing Agent (TaPA) in embodied tasks for grounded planning with physical scene constraint, where the agent generates executable plans according to the existed objects in the scene by aligning LLMs with the visual perception models. Specifically, we first construct a multimodal dataset containing triplets of indoor scenes, instructions and action plans, where we provide the designed prompts and the list of existing objects in the scene for GPT-3.5 to generate a large number of instructions and corresponding planned actions. The generated data is leveraged for grounded plan tuning of pre-trained LLMs. During inference, we discover the objects in the scene by extending open-vocabulary object detectors to multi-view RGB images collected in different achievable locations. Experimental results show that the generated plan from our TaPA framework can achieve higher success rate than LLaVA and GPT-3.5 by a sizable margin, which indicates the practicality of embodied task planning in general and complex environments.</summary>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-07-04T17:58:25Z</published>
+    <arxiv:comment>Project Page: https://gary3410.github.io/TaPA</arxiv:comment>
+    <arxiv:primary_category term="cs.CV"/>
+    <author>
+      <name>Zhenyu Wu</name>
+    </author>
+    <author>
+      <name>Ziwei Wang</name>
+    </author>
+    <author>
+      <name>Xiuwei Xu</name>
+    </author>
+    <author>
+      <name>Jiwen Lu</name>
+    </author>
+    <author>
+      <name>Haibin Yan</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2410.24164v4</id>
+    <title>$π_0$: A Vision-Language-Action Flow Model for General Robot Control</title>
+    <updated>2026-01-08T17:01:05Z</updated>
+    <link href="https://arxiv.org/abs/2410.24164v4" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2410.24164v4" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Robot learning holds tremendous promise to unlock the full potential of flexible, general, and dexterous robot systems, as well as to address some of the deepest questions in artificial intelligence. However, bringing robot learning to the level of generality required for effective real-world systems faces major obstacles in terms of data, generalization, and robustness. In this paper, we discuss how generalist robot policies (i.e., robot foundation models) can address these challenges, and how we can design effective generalist robot policies for complex and highly dexterous tasks. We propose a novel flow matching architecture built on top of a pre-trained vision-language model (VLM) to inherit Internet-scale semantic knowledge. We then discuss how this model can be trained on a large and diverse dataset from multiple dexterous robot platforms, including single-arm robots, dual-arm robots, and mobile manipulators. We evaluate our model in terms of its ability to perform tasks in zero shot after pre-training, follow language instructions from people and from a high-level VLM policy, and its ability to acquire new skills via fine-tuning. Our results cover a wide variety of tasks, such as laundry folding, table cleaning, and assembling boxes.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-10-31T17:22:30Z</published>
+    <arxiv:comment>See project website for videos: https://physicalintelligence.company/blog/pi0 Published in RSS 2025</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Kevin Black</name>
+    </author>
+    <author>
+      <name>Noah Brown</name>
+    </author>
+    <author>
+      <name>Danny Driess</name>
+    </author>
+    <author>
+      <name>Adnan Esmail</name>
+    </author>
+    <author>
+      <name>Michael Equi</name>
+    </author>
+    <author>
+      <name>Chelsea Finn</name>
+    </author>
+    <author>
+      <name>Niccolo Fusai</name>
+    </author>
+    <author>
+      <name>Lachy Groom</name>
+    </author>
+    <author>
+      <name>Karol Hausman</name>
+    </author>
+    <author>
+      <name>Brian Ichter</name>
+    </author>
+    <author>
+      <name>Szymon Jakubczak</name>
+    </author>
+    <author>
+      <name>Tim Jones</name>
+    </author>
+    <author>
+      <name>Liyiming Ke</name>
+    </author>
+    <author>
+      <name>Sergey Levine</name>
+    </author>
+    <author>
+      <name>Adrian Li-Bell</name>
+    </author>
+    <author>
+      <name>Mohith Mothukuri</name>
+    </author>
+    <author>
+      <name>Suraj Nair</name>
+    </author>
+    <author>
+      <name>Karl Pertsch</name>
+    </author>
+    <author>
+      <name>Lucy Xiaoyang Shi</name>
+    </author>
+    <author>
+      <name>James Tanner</name>
+    </author>
+    <author>
+      <name>Quan Vuong</name>
+    </author>
+    <author>
+      <name>Anna Walling</name>
+    </author>
+    <author>
+      <name>Haohuan Wang</name>
+    </author>
+    <author>
+      <name>Ury Zhilinsky</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2510.03342v3</id>
+    <title>Gemini Robotics 1.5: Pushing the Frontier of Generalist Robots with Advanced Embodied Reasoning, Thinking, and Motion Transfer</title>
+    <updated>2025-11-28T18:57:04Z</updated>
+    <link href="https://arxiv.org/abs/2510.03342v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2510.03342v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>General-purpose robots need a deep understanding of the physical world, advanced reasoning, and general and dexterous control. This report introduces the latest generation of the Gemini Robotics model family: Gemini Robotics 1.5, a multi-embodiment Vision-Language-Action (VLA) model, and Gemini Robotics-ER 1.5, a state-of-the-art Embodied Reasoning (ER) model. We are bringing together three major innovations. First, Gemini Robotics 1.5 features a novel architecture and a Motion Transfer (MT) mechanism, which enables it to learn from heterogeneous, multi-embodiment robot data and makes the VLA more general. Second, Gemini Robotics 1.5 interleaves actions with a multi-level internal reasoning process in natural language. This enables the robot to "think before acting" and notably improves its ability to decompose and execute complex, multi-step tasks, and also makes the robot's behavior more interpretable to the user. Third, Gemini Robotics-ER 1.5 establishes a new state-of-the-art for embodied reasoning, i.e., for reasoning capabilities that are critical for robots, such as visual and spatial understanding, task planning, and progress estimation. Together, this family of models takes us a step towards an era of physical agents-enabling robots to perceive, think and then act so they can solve complex multi-step tasks.</summary>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-10-02T14:32:45Z</published>
+    <arxiv:primary_category term="cs.RO"/>
+    <author>
+      <name> Gemini Robotics Team</name>
+    </author>
+    <author>
+      <name>Abbas Abdolmaleki</name>
+    </author>
+    <author>
+      <name>Saminda Abeyruwan</name>
+    </author>
+    <author>
+      <name>Joshua Ainslie</name>
+    </author>
+    <author>
+      <name>Jean-Baptiste Alayrac</name>
+    </author>
+    <author>
+      <name>Montserrat Gonzalez Arenas</name>
+    </author>
+    <author>
+      <name>Ashwin Balakrishna</name>
+    </author>
+    <author>
+      <name>Nathan Batchelor</name>
+    </author>
+    <author>
+      <name>Alex Bewley</name>
+    </author>
+    <author>
+      <name>Jeff Bingham</name>
+    </author>
+    <author>
+      <name>Michael Bloesch</name>
+    </author>
+    <author>
+      <name>Konstantinos Bousmalis</name>
+    </author>
+    <author>
+      <name>Philemon Brakel</name>
+    </author>
+    <author>
+      <name>Anthony Brohan</name>
+    </author>
+    <author>
+      <name>Thomas Buschmann</name>
+    </author>
+    <author>
+      <name>Arunkumar Byravan</name>
+    </author>
+    <author>
+      <name>Serkan Cabi</name>
+    </author>
+    <author>
+      <name>Ken Caluwaerts</name>
+    </author>
+    <author>
+      <name>Federico Casarini</name>
+    </author>
+    <author>
+      <name>Christine Chan</name>
+    </author>
+    <author>
+      <name>Oscar Chang</name>
+    </author>
+    <author>
+      <name>London Chappellet-Volpini</name>
+    </author>
+    <author>
+      <name>Jose Enrique Chen</name>
+    </author>
+    <author>
+      <name>Xi Chen</name>
+    </author>
+    <author>
+      <name>Hao-Tien Lewis Chiang</name>
+    </author>
+    <author>
+      <name>Krzysztof Choromanski</name>
+    </author>
+    <author>
+      <name>Adrian Collister</name>
+    </author>
+    <author>
+      <name>David B. D'Ambrosio</name>
+    </author>
+    <author>
+      <name>Sudeep Dasari</name>
+    </author>
+    <author>
+      <name>Todor Davchev</name>
+    </author>
+    <author>
+      <name>Meet Kirankumar Dave</name>
+    </author>
+    <author>
+      <name>Coline Devin</name>
+    </author>
+    <author>
+      <name>Norman Di Palo</name>
+    </author>
+    <author>
+      <name>Tianli Ding</name>
+    </author>
+    <author>
+      <name>Carl Doersch</name>
+    </author>
+    <author>
+      <name>Adil Dostmohamed</name>
+    </author>
+    <author>
+      <name>Yilun Du</name>
+    </author>
+    <author>
+      <name>Debidatta Dwibedi</name>
+    </author>
+    <author>
+      <name>Sathish Thoppay Egambaram</name>
+    </author>
+    <author>
+      <name>Michael Elabd</name>
+    </author>
+    <author>
+      <name>Tom Erez</name>
+    </author>
+    <author>
+      <name>Xiaolin Fang</name>
+    </author>
+    <author>
+      <name>Claudio Fantacci</name>
+    </author>
+    <author>
+      <name>Cody Fong</name>
+    </author>
+    <author>
+      <name>Erik Frey</name>
+    </author>
+    <author>
+      <name>Chuyuan Fu</name>
+    </author>
+    <author>
+      <name>Ruiqi Gao</name>
+    </author>
+    <author>
+      <name>Marissa Giustina</name>
+    </author>
+    <author>
+      <name>Keerthana Gopalakrishnan</name>
+    </author>
+    <author>
+      <name>Laura Graesser</name>
+    </author>
+    <author>
+      <name>Oliver Groth</name>
+    </author>
+    <author>
+      <name>Agrim Gupta</name>
+    </author>
+    <author>
+      <name>Roland Hafner</name>
+    </author>
+    <author>
+      <name>Steven Hansen</name>
+    </author>
+    <author>
+      <name>Leonard Hasenclever</name>
+    </author>
+    <author>
+      <name>Sam Haves</name>
+    </author>
+    <author>
+      <name>Nicolas Heess</name>
+    </author>
+    <author>
+      <name>Brandon Hernaez</name>
+    </author>
+    <author>
+      <name>Alex Hofer</name>
+    </author>
+    <author>
+      <name>Jasmine Hsu</name>
+    </author>
+    <author>
+      <name>Lu Huang</name>
+    </author>
+    <author>
+      <name>Sandy H. Huang</name>
+    </author>
+    <author>
+      <name>Atil Iscen</name>
+    </author>
+    <author>
+      <name>Mithun George Jacob</name>
+    </author>
+    <author>
+      <name>Deepali Jain</name>
+    </author>
+    <author>
+      <name>Sally Jesmonth</name>
+    </author>
+    <author>
+      <name>Abhishek Jindal</name>
+    </author>
+    <author>
+      <name>Ryan Julian</name>
+    </author>
+    <author>
+      <name>Dmitry Kalashnikov</name>
+    </author>
+    <author>
+      <name>M. Emre Karagozler</name>
+    </author>
+    <author>
+      <name>Stefani Karp</name>
+    </author>
+    <author>
+      <name>Matija Kecman</name>
+    </author>
+    <author>
+      <name>J. Chase Kew</name>
+    </author>
+    <author>
+      <name>Donnie Kim</name>
+    </author>
+    <author>
+      <name>Frank Kim</name>
+    </author>
+    <author>
+      <name>Junkyung Kim</name>
+    </author>
+    <author>
+      <name>Thomas Kipf</name>
+    </author>
+    <author>
+      <name>Sean Kirmani</name>
+    </author>
+    <author>
+      <name>Ksenia Konyushkova</name>
+    </author>
+    <author>
+      <name>Li Yang Ku</name>
+    </author>
+    <author>
+      <name>Yuheng Kuang</name>
+    </author>
+    <author>
+      <name>Thomas Lampe</name>
+    </author>
+    <author>
+      <name>Antoine Laurens</name>
+    </author>
+    <author>
+      <name>Tuan Anh Le</name>
+    </author>
+    <author>
+      <name>Isabel Leal</name>
+    </author>
+    <author>
+      <name>Alex X. Lee</name>
+    </author>
+    <author>
+      <name>Tsang-Wei Edward Lee</name>
+    </author>
+    <author>
+      <name>Guy Lever</name>
+    </author>
+    <author>
+      <name>Jacky Liang</name>
+    </author>
+    <author>
+      <name>Li-Heng Lin</name>
+    </author>
+    <author>
+      <name>Fangchen Liu</name>
+    </author>
+    <author>
+      <name>Shangbang Long</name>
+    </author>
+    <author>
+      <name>Caden Lu</name>
+    </author>
+    <author>
+      <name>Sharath Maddineni</name>
+    </author>
+    <author>
+      <name>Anirudha Majumdar</name>
+    </author>
+    <author>
+      <name>Kevis-Kokitsi Maninis</name>
+    </author>
+    <author>
+      <name>Andrew Marmon</name>
+    </author>
+    <author>
+      <name>Sergio Martinez</name>
+    </author>
+    <author>
+      <name>Assaf Hurwitz Michaely</name>
+    </author>
+    <author>
+      <name>Niko Milonopoulos</name>
+    </author>
+    <author>
+      <name>Joss Moore</name>
+    </author>
+    <author>
+      <name>Robert Moreno</name>
+    </author>
+    <author>
+      <name>Michael Neunert</name>
+    </author>
+    <author>
+      <name>Francesco Nori</name>
+    </author>
+    <author>
+      <name>Joy Ortiz</name>
+    </author>
+    <author>
+      <name>Kenneth Oslund</name>
+    </author>
+    <author>
+      <name>Carolina Parada</name>
+    </author>
+    <author>
+      <name>Emilio Parisotto</name>
+    </author>
+    <author>
+      <name>Amaris Paryag</name>
+    </author>
+    <author>
+      <name>Acorn Pooley</name>
+    </author>
+    <author>
+      <name>Thomas Power</name>
+    </author>
+    <author>
+      <name>Alessio Quaglino</name>
+    </author>
+    <author>
+      <name>Haroon Qureshi</name>
+    </author>
+    <author>
+      <name>Rajkumar Vasudeva Raju</name>
+    </author>
+    <author>
+      <name>Helen Ran</name>
+    </author>
+    <author>
+      <name>Dushyant Rao</name>
+    </author>
+    <author>
+      <name>Kanishka Rao</name>
+    </author>
+    <author>
+      <name>Isaac Reid</name>
+    </author>
+    <author>
+      <name>David Rendleman</name>
+    </author>
+    <author>
+      <name>Krista Reymann</name>
+    </author>
+    <author>
+      <name>Miguel Rivas</name>
+    </author>
+    <author>
+      <name>Francesco Romano</name>
+    </author>
+    <author>
+      <name>Yulia Rubanova</name>
+    </author>
+    <author>
+      <name>Peter Pastor Sampedro</name>
+    </author>
+    <author>
+      <name>Pannag R Sanketi</name>
+    </author>
+    <author>
+      <name>Dhruv Shah</name>
+    </author>
+    <author>
+      <name>Mohit Sharma</name>
+    </author>
+    <author>
+      <name>Kathryn Shea</name>
+    </author>
+    <author>
+      <name>Mohit Shridhar</name>
+    </author>
+    <author>
+      <name>Charles Shu</name>
+    </author>
+    <author>
+      <name>Vikas Sindhwani</name>
+    </author>
+    <author>
+      <name>Sumeet Singh</name>
+    </author>
+    <author>
+      <name>Radu Soricut</name>
+    </author>
+    <author>
+      <name>Rachel Sterneck</name>
+    </author>
+    <author>
+      <name>Ian Storz</name>
+    </author>
+    <author>
+      <name>Razvan Surdulescu</name>
+    </author>
+    <author>
+      <name>Jie Tan</name>
+    </author>
+    <author>
+      <name>Jonathan Tompson</name>
+    </author>
+    <author>
+      <name>Saran Tunyasuvunakool</name>
+    </author>
+    <author>
+      <name>Jake Varley</name>
+    </author>
+    <author>
+      <name>Grace Vesom</name>
+    </author>
+    <author>
+      <name>Giulia Vezzani</name>
+    </author>
+    <author>
+      <name>Maria Bauza Villalonga</name>
+    </author>
+    <author>
+      <name>Oriol Vinyals</name>
+    </author>
+    <author>
+      <name>René Wagner</name>
+    </author>
+    <author>
+      <name>Ayzaan Wahid</name>
+    </author>
+    <author>
+      <name>Stefan Welker</name>
+    </author>
+    <author>
+      <name>Paul Wohlhart</name>
+    </author>
+    <author>
+      <name>Chengda Wu</name>
+    </author>
+    <author>
+      <name>Markus Wulfmeier</name>
+    </author>
+    <author>
+      <name>Fei Xia</name>
+    </author>
+    <author>
+      <name>Ted Xiao</name>
+    </author>
+    <author>
+      <name>Annie Xie</name>
+    </author>
+    <author>
+      <name>Jinyu Xie</name>
+    </author>
+    <author>
+      <name>Peng Xu</name>
+    </author>
+    <author>
+      <name>Sichun Xu</name>
+    </author>
+    <author>
+      <name>Ying Xu</name>
+    </author>
+    <author>
+      <name>Zhuo Xu</name>
+    </author>
+    <author>
+      <name>Jimmy Yan</name>
+    </author>
+    <author>
+      <name>Sherry Yang</name>
+    </author>
+    <author>
+      <name>Skye Yang</name>
+    </author>
+    <author>
+      <name>Yuxiang Yang</name>
+    </author>
+    <author>
+      <name>Hiu Hong Yu</name>
+    </author>
+    <author>
+      <name>Wenhao Yu</name>
+    </author>
+    <author>
+      <name>Wentao Yuan</name>
+    </author>
+    <author>
+      <name>Yuan Yuan</name>
+    </author>
+    <author>
+      <name>Jingwei Zhang</name>
+    </author>
+    <author>
+      <name>Tingnan Zhang</name>
+    </author>
+    <author>
+      <name>Zhiyuan Zhang</name>
+    </author>
+    <author>
+      <name>Allan Zhou</name>
+    </author>
+    <author>
+      <name>Guangyao Zhou</name>
+    </author>
+    <author>
+      <name>Yuxiang Zhou</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2502.19645v2</id>
+    <title>Fine-Tuning Vision-Language-Action Models: Optimizing Speed and Success</title>
+    <updated>2025-04-28T07:49:39Z</updated>
+    <link href="https://arxiv.org/abs/2502.19645v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2502.19645v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Recent vision-language-action models (VLAs) build upon pretrained vision-language models and leverage diverse robot datasets to demonstrate strong task execution, language following ability, and semantic generalization. Despite these successes, VLAs struggle with novel robot setups and require fine-tuning to achieve good performance, yet how to most effectively fine-tune them is unclear given many possible strategies. In this work, we study key VLA adaptation design choices such as different action decoding schemes, action representations, and learning objectives for fine-tuning, using OpenVLA as our representative base model. Our empirical analysis informs an Optimized Fine-Tuning (OFT) recipe that integrates parallel decoding, action chunking, a continuous action representation, and a simple L1 regression-based learning objective to altogether improve inference efficiency, policy performance, and flexibility in the model's input-output specifications. We propose OpenVLA-OFT, an instantiation of this recipe, which sets a new state of the art on the LIBERO simulation benchmark, significantly boosting OpenVLA's average success rate across four task suites from 76.5% to 97.1% while increasing action generation throughput by 26$\times$. In real-world evaluations, our fine-tuning recipe enables OpenVLA to successfully execute dexterous, high-frequency control tasks on a bimanual ALOHA robot and outperform other VLAs ($π_0$ and RDT-1B) fine-tuned using their default recipes, as well as strong imitation learning policies trained from scratch (Diffusion Policy and ACT) by up to 15% (absolute) in average success rate. We release code for OFT and pretrained model checkpoints at https://openvla-oft.github.io/.</summary>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-02-27T00:30:29Z</published>
+    <arxiv:comment>Accepted to Robotics: Science and Systems (RSS) 2025. Project website: https://openvla-oft.github.io/</arxiv:comment>
+    <arxiv:primary_category term="cs.RO"/>
+    <author>
+      <name>Moo Jin Kim</name>
+    </author>
+    <author>
+      <name>Chelsea Finn</name>
+    </author>
+    <author>
+      <name>Percy Liang</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2506.01844v1</id>
+    <title>SmolVLA: A Vision-Language-Action Model for Affordable and Efficient Robotics</title>
+    <updated>2025-06-02T16:30:19Z</updated>
+    <link href="https://arxiv.org/abs/2506.01844v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2506.01844v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Vision-language models (VLMs) pretrained on large-scale multimodal datasets encode rich visual and linguistic knowledge, making them a strong foundation for robotics. Rather than training robotic policies from scratch, recent approaches adapt VLMs into vision-language-action (VLA) models that enable natural language-driven perception and control. However, existing VLAs are typically massive--often with billions of parameters--leading to high training costs and limited real-world deployability. Moreover, they rely on academic and industrial datasets, overlooking the growing availability of community-collected data from affordable robotic platforms. In this work, we present SmolVLA, a small, efficient, and community-driven VLA that drastically reduces both training and inference costs, while retaining competitive performance. SmolVLA is designed to be trained on a single GPU and deployed on consumer-grade GPUs or even CPUs. To further improve responsiveness, we introduce an asynchronous inference stack decoupling perception and action prediction from action execution, allowing higher control rates with chunked action generation. Despite its compact size, SmolVLA achieves performance comparable to VLAs that are 10x larger. We evaluate SmolVLA on a range of both simulated as well as real-world robotic benchmarks and release all code, pretrained models, and training data.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-06-02T16:30:19Z</published>
+    <arxiv:comment>24 pages. Code and assets: https://github.com/huggingface/lerobot</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Mustafa Shukor</name>
+    </author>
+    <author>
+      <name>Dana Aubakirova</name>
+    </author>
+    <author>
+      <name>Francesco Capuano</name>
+    </author>
+    <author>
+      <name>Pepijn Kooijmans</name>
+    </author>
+    <author>
+      <name>Steven Palma</name>
+    </author>
+    <author>
+      <name>Adil Zouitine</name>
+    </author>
+    <author>
+      <name>Michel Aractingi</name>
+    </author>
+    <author>
+      <name>Caroline Pascal</name>
+    </author>
+    <author>
+      <name>Martino Russi</name>
+    </author>
+    <author>
+      <name>Andres Marafioti</name>
+    </author>
+    <author>
+      <name>Simon Alibert</name>
+    </author>
+    <author>
+      <name>Matthieu Cord</name>
+    </author>
+    <author>
+      <name>Thomas Wolf</name>
+    </author>
+    <author>
+      <name>Remi Cadene</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2611.05155v1</id>
+    <title>Asynchronous Robot Policies</title>
+    <updated>2026-11-03T16:30:27Z</updated>
+    <link href="https://arxiv.org/abs/2611.05155v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2611.05155v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Scaling vision-language foundation models has significantly advanced generalist robot manipulation, but the increased model scale introduces computational latency that degrades real-time physical reactivity. Existing Vision-Language-Action (VLA) architectures execute high-level semantic reasoning and action ex- ecution sequentially within the primary control loop, creating a fundamental tension between semantic-reasoning capability and robot agility. To address this, we propose Asynchronous Robot Policy (ARP), an architectural framework that decouples semantic reasoning from low-level action generation using asynchronous processes operating at independent frequencies. In ARP, a high-capacity Vision-Language Model (VLM) asynchronously updates a semantic memory at low fre- quency, while a lightweight Vision-Action Expert, conditioned on this semantic memory, generates robot actions at a much higher control frequency. Such a formulation, enables having a fast perception-action loop without compromising on the semantic capability. To overcome asynchronous memory staleness, ARP trains the vision-action expert on the semantic staleness and execution delay, with temporally mismatched observation across processes. On Franka manipulation tasks, ARP achieves an 18% higher success rate and 20% less time need for execution in quasi-static setups, while 3-5 times baseline performance in dynamic simulation environments. Furthermore, ARP enables operating the VLM at 10 times lower than its nominal frequency with no significant performance loss making it much more efficient than the baseline. These results highlight the architectural advantages of modeling robot policies as asynchronous processes, enabling real-world reactive deployment without sacrificing the scale of foundation models.</summary>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-11-03T16:30:27Z</published>
+    <arxiv:comment>For code, checkpoints and more results, check out https://arp.insait.ai</arxiv:comment>
+    <arxiv:primary_category term="cs.RO"/>
+    <author>
+      <name>Sombit Dey</name>
+    </author>
+    <author>
+      <name>Luc Van Gool</name>
+    </author>
+    <author>
+      <name>Danda Pani Paudel</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2303.11366v4</id>
+    <title>Reflexion: Language Agents with Verbal Reinforcement Learning</title>
+    <updated>2023-10-10T05:21:45Z</updated>
+    <link href="https://arxiv.org/abs/2303.11366v4" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2303.11366v4" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Large language models (LLMs) have been increasingly used to interact with external environments (e.g., games, compilers, APIs) as goal-driven agents. However, it remains challenging for these language agents to quickly and efficiently learn from trial-and-error as traditional reinforcement learning methods require extensive training samples and expensive model fine-tuning. We propose Reflexion, a novel framework to reinforce language agents not by updating weights, but instead through linguistic feedback. Concretely, Reflexion agents verbally reflect on task feedback signals, then maintain their own reflective text in an episodic memory buffer to induce better decision-making in subsequent trials. Reflexion is flexible enough to incorporate various types (scalar values or free-form language) and sources (external or internally simulated) of feedback signals, and obtains significant improvements over a baseline agent across diverse tasks (sequential decision-making, coding, language reasoning). For example, Reflexion achieves a 91% pass@1 accuracy on the HumanEval coding benchmark, surpassing the previous state-of-the-art GPT-4 that achieves 80%. We also conduct ablation and analysis studies using different feedback signals, feedback incorporation methods, and agent types, and provide insights into how they affect performance.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-03-20T18:08:50Z</published>
+    <arxiv:comment>v4 contains a few additional experiments</arxiv:comment>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Noah Shinn</name>
+    </author>
+    <author>
+      <name>Federico Cassano</name>
+    </author>
+    <author>
+      <name>Edward Berman</name>
+    </author>
+    <author>
+      <name>Ashwin Gopinath</name>
+    </author>
+    <author>
+      <name>Karthik Narasimhan</name>
+    </author>
+    <author>
+      <name>Shunyu Yao</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2303.04137v5</id>
+    <title>Diffusion Policy: Visuomotor Policy Learning via Action Diffusion</title>
+    <updated>2024-03-14T04:36:31Z</updated>
+    <link href="https://arxiv.org/abs/2303.04137v5" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2303.04137v5" rel="related" type="application/pdf" title="pdf"/>
+    <summary>This paper introduces Diffusion Policy, a new way of generating robot behavior by representing a robot's visuomotor policy as a conditional denoising diffusion process. We benchmark Diffusion Policy across 12 different tasks from 4 different robot manipulation benchmarks and find that it consistently outperforms existing state-of-the-art robot learning methods with an average improvement of 46.9%. Diffusion Policy learns the gradient of the action-distribution score function and iteratively optimizes with respect to this gradient field during inference via a series of stochastic Langevin dynamics steps. We find that the diffusion formulation yields powerful advantages when used for robot policies, including gracefully handling multimodal action distributions, being suitable for high-dimensional action spaces, and exhibiting impressive training stability. To fully unlock the potential of diffusion models for visuomotor policy learning on physical robots, this paper presents a set of key technical contributions including the incorporation of receding horizon control, visual conditioning, and the time-series diffusion transformer. We hope this work will help motivate a new generation of policy learning techniques that are able to leverage the powerful generative modeling capabilities of diffusion models. Code, data, and training details is publicly available diffusion-policy.cs.columbia.edu</summary>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-03-07T18:50:03Z</published>
+    <arxiv:comment>An extended journal version of the original RSS2023 paper</arxiv:comment>
+    <arxiv:primary_category term="cs.RO"/>
+    <author>
+      <name>Cheng Chi</name>
+    </author>
+    <author>
+      <name>Zhenjia Xu</name>
+    </author>
+    <author>
+      <name>Siyuan Feng</name>
+    </author>
+    <author>
+      <name>Eric Cousineau</name>
+    </author>
+    <author>
+      <name>Yilun Du</name>
+    </author>
+    <author>
+      <name>Benjamin Burchfiel</name>
+    </author>
+    <author>
+      <name>Russ Tedrake</name>
+    </author>
+    <author>
+      <name>Shuran Song</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2504.16054v1</id>
+    <title>$π_{0.5}$: a Vision-Language-Action Model with Open-World Generalization</title>
+    <updated>2025-04-22T17:31:29Z</updated>
+    <link href="https://arxiv.org/abs/2504.16054v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2504.16054v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>In order for robots to be useful, they must perform practically relevant tasks in the real world, outside of the lab. While vision-language-action (VLA) models have demonstrated impressive results for end-to-end robot control, it remains an open question how far such models can generalize in the wild. We describe $π_{0.5}$, a new model based on $π_{0}$ that uses co-training on heterogeneous tasks to enable broad generalization. $π_{0.5}$\ uses data from multiple robots, high-level semantic prediction, web data, and other sources to enable broadly generalizable real-world robotic manipulation. Our system uses a combination of co-training and hybrid multi-modal examples that combine image observations, language commands, object detections, semantic subtask prediction, and low-level actions. Our experiments show that this kind of knowledge transfer is essential for effective generalization, and we demonstrate for the first time that an end-to-end learning-enabled robotic system can perform long-horizon and dexterous manipulation skills, such as cleaning a kitchen or bedroom, in entirely new homes.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-04-22T17:31:29Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Physical Intelligence</name>
+    </author>
+    <author>
+      <name>Kevin Black</name>
+    </author>
+    <author>
+      <name>Noah Brown</name>
+    </author>
+    <author>
+      <name>James Darpinian</name>
+    </author>
+    <author>
+      <name>Karan Dhabalia</name>
+    </author>
+    <author>
+      <name>Danny Driess</name>
+    </author>
+    <author>
+      <name>Adnan Esmail</name>
+    </author>
+    <author>
+      <name>Michael Equi</name>
+    </author>
+    <author>
+      <name>Chelsea Finn</name>
+    </author>
+    <author>
+      <name>Niccolo Fusai</name>
+    </author>
+    <author>
+      <name>Manuel Y. Galliker</name>
+    </author>
+    <author>
+      <name>Dibya Ghosh</name>
+    </author>
+    <author>
+      <name>Lachy Groom</name>
+    </author>
+    <author>
+      <name>Karol Hausman</name>
+    </author>
+    <author>
+      <name>Brian Ichter</name>
+    </author>
+    <author>
+      <name>Szymon Jakubczak</name>
+    </author>
+    <author>
+      <name>Tim Jones</name>
+    </author>
+    <author>
+      <name>Liyiming Ke</name>
+    </author>
+    <author>
+      <name>Devin LeBlanc</name>
+    </author>
+    <author>
+      <name>Sergey Levine</name>
+    </author>
+    <author>
+      <name>Adrian Li-Bell</name>
+    </author>
+    <author>
+      <name>Mohith Mothukuri</name>
+    </author>
+    <author>
+      <name>Suraj Nair</name>
+    </author>
+    <author>
+      <name>Karl Pertsch</name>
+    </author>
+    <author>
+      <name>Allen Z. Ren</name>
+    </author>
+    <author>
+      <name>Lucy Xiaoyang Shi</name>
+    </author>
+    <author>
+      <name>Laura Smith</name>
+    </author>
+    <author>
+      <name>Jost Tobias Springenberg</name>
+    </author>
+    <author>
+      <name>Kyle Stachowicz</name>
+    </author>
+    <author>
+      <name>James Tanner</name>
+    </author>
+    <author>
+      <name>Quan Vuong</name>
+    </author>
+    <author>
+      <name>Homer Walke</name>
+    </author>
+    <author>
+      <name>Anna Walling</name>
+    </author>
+    <author>
+      <name>Haohuan Wang</name>
+    </author>
+    <author>
+      <name>Lili Yu</name>
+    </author>
+    <author>
+      <name>Ury Zhilinsky</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2307.15818v1</id>
+    <title>RT-2: Vision-Language-Action Models Transfer Web Knowledge to Robotic Control</title>
+    <updated>2023-07-28T21:18:02Z</updated>
+    <link href="https://arxiv.org/abs/2307.15818v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2307.15818v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>We study how vision-language models trained on Internet-scale data can be incorporated directly into end-to-end robotic control to boost generalization and enable emergent semantic reasoning. Our goal is to enable a single end-to-end trained model to both learn to map robot observations to actions and enjoy the benefits of large-scale pretraining on language and vision-language data from the web. To this end, we propose to co-fine-tune state-of-the-art vision-language models on both robotic trajectory data and Internet-scale vision-language tasks, such as visual question answering. In contrast to other approaches, we propose a simple, general recipe to achieve this goal: in order to fit both natural language responses and robotic actions into the same format, we express the actions as text tokens and incorporate them directly into the training set of the model in the same way as natural language tokens. We refer to such category of models as vision-language-action models (VLA) and instantiate an example of such a model, which we call RT-2. Our extensive evaluation (6k evaluation trials) shows that our approach leads to performant robotic policies and enables RT-2 to obtain a range of emergent capabilities from Internet-scale training. This includes significantly improved generalization to novel objects, the ability to interpret commands not present in the robot training data (such as placing an object onto a particular number or icon), and the ability to perform rudimentary reasoning in response to user commands (such as picking up the smallest or largest object, or the one closest to another object). We further show that incorporating chain of thought reasoning allows RT-2 to perform multi-stage semantic reasoning, for example figuring out which object to pick up for use as an improvised hammer (a rock), or which type of drink is best suited for someone who is tired (an energy drink).</summary>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-07-28T21:18:02Z</published>
+    <arxiv:comment>Website: https://robotics-transformer.github.io/</arxiv:comment>
+    <arxiv:primary_category term="cs.RO"/>
+    <author>
+      <name>Anthony Brohan</name>
+    </author>
+    <author>
+      <name>Noah Brown</name>
+    </author>
+    <author>
+      <name>Justice Carbajal</name>
+    </author>
+    <author>
+      <name>Yevgen Chebotar</name>
+    </author>
+    <author>
+      <name>Xi Chen</name>
+    </author>
+    <author>
+      <name>Krzysztof Choromanski</name>
+    </author>
+    <author>
+      <name>Tianli Ding</name>
+    </author>
+    <author>
+      <name>Danny Driess</name>
+    </author>
+    <author>
+      <name>Avinava Dubey</name>
+    </author>
+    <author>
+      <name>Chelsea Finn</name>
+    </author>
+    <author>
+      <name>Pete Florence</name>
+    </author>
+    <author>
+      <name>Chuyuan Fu</name>
+    </author>
+    <author>
+      <name>Montse Gonzalez Arenas</name>
+    </author>
+    <author>
+      <name>Keerthana Gopalakrishnan</name>
+    </author>
+    <author>
+      <name>Kehang Han</name>
+    </author>
+    <author>
+      <name>Karol Hausman</name>
+    </author>
+    <author>
+      <name>Alexander Herzog</name>
+    </author>
+    <author>
+      <name>Jasmine Hsu</name>
+    </author>
+    <author>
+      <name>Brian Ichter</name>
+    </author>
+    <author>
+      <name>Alex Irpan</name>
+    </author>
+    <author>
+      <name>Nikhil Joshi</name>
+    </author>
+    <author>
+      <name>Ryan Julian</name>
+    </author>
+    <author>
+      <name>Dmitry Kalashnikov</name>
+    </author>
+    <author>
+      <name>Yuheng Kuang</name>
+    </author>
+    <author>
+      <name>Isabel Leal</name>
+    </author>
+    <author>
+      <name>Lisa Lee</name>
+    </author>
+    <author>
+      <name>Tsang-Wei Edward Lee</name>
+    </author>
+    <author>
+      <name>Sergey Levine</name>
+    </author>
+    <author>
+      <name>Yao Lu</name>
+    </author>
+    <author>
+      <name>Henryk Michalewski</name>
+    </author>
+    <author>
+      <name>Igor Mordatch</name>
+    </author>
+    <author>
+      <name>Karl Pertsch</name>
+    </author>
+    <author>
+      <name>Kanishka Rao</name>
+    </author>
+    <author>
+      <name>Krista Reymann</name>
+    </author>
+    <author>
+      <name>Michael Ryoo</name>
+    </author>
+    <author>
+      <name>Grecia Salazar</name>
+    </author>
+    <author>
+      <name>Pannag Sanketi</name>
+    </author>
+    <author>
+      <name>Pierre Sermanet</name>
+    </author>
+    <author>
+      <name>Jaspiar Singh</name>
+    </author>
+    <author>
+      <name>Anikait Singh</name>
+    </author>
+    <author>
+      <name>Radu Soricut</name>
+    </author>
+    <author>
+      <name>Huong Tran</name>
+    </author>
+    <author>
+      <name>Vincent Vanhoucke</name>
+    </author>
+    <author>
+      <name>Quan Vuong</name>
+    </author>
+    <author>
+      <name>Ayzaan Wahid</name>
+    </author>
+    <author>
+      <name>Stefan Welker</name>
+    </author>
+    <author>
+      <name>Paul Wohlhart</name>
+    </author>
+    <author>
+      <name>Jialin Wu</name>
+    </author>
+    <author>
+      <name>Fei Xia</name>
+    </author>
+    <author>
+      <name>Ted Xiao</name>
+    </author>
+    <author>
+      <name>Peng Xu</name>
+    </author>
+    <author>
+      <name>Sichun Xu</name>
+    </author>
+    <author>
+      <name>Tianhe Yu</name>
+    </author>
+    <author>
+      <name>Brianna Zitkovich</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2506.09985v1</id>
+    <title>V-JEPA 2: Self-Supervised Video Models Enable Understanding, Prediction and Planning</title>
+    <updated>2025-06-11T17:57:09Z</updated>
+    <link href="https://arxiv.org/abs/2506.09985v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2506.09985v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>A major challenge for modern AI is to learn to understand the world and learn to act largely by observation. This paper explores a self-supervised approach that combines internet-scale video data with a small amount of interaction data (robot trajectories), to develop models capable of understanding, predicting, and planning in the physical world. We first pre-train an action-free joint-embedding-predictive architecture, V-JEPA 2, on a video and image dataset comprising over 1 million hours of internet video. V-JEPA 2 achieves strong performance on motion understanding (77.3 top-1 accuracy on Something-Something v2) and state-of-the-art performance on human action anticipation (39.7 recall-at-5 on Epic-Kitchens-100) surpassing previous task-specific models. Additionally, after aligning V-JEPA 2 with a large language model, we demonstrate state-of-the-art performance on multiple video question-answering tasks at the 8 billion parameter scale (e.g., 84.0 on PerceptionTest, 76.9 on TempCompass). Finally, we show how self-supervised learning can be applied to robotic planning tasks by post-training a latent action-conditioned world model, V-JEPA 2-AC, using less than 62 hours of unlabeled robot videos from the Droid dataset. We deploy V-JEPA 2-AC zero-shot on Franka arms in two different labs and enable picking and placing of objects using planning with image goals. Notably, this is achieved without collecting any data from the robots in these environments, and without any task-specific training or reward. This work demonstrates how self-supervised learning from web-scale data and a small amount of robot interaction data can yield a world model capable of planning in the physical world.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-06-11T17:57:09Z</published>
+    <arxiv:comment>48 pages, 19 figures</arxiv:comment>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Mido Assran</name>
+    </author>
+    <author>
+      <name>Adrien Bardes</name>
+    </author>
+    <author>
+      <name>David Fan</name>
+    </author>
+    <author>
+      <name>Quentin Garrido</name>
+    </author>
+    <author>
+      <name>Russell Howes</name>
+    </author>
+    <author>
+      <name> Mojtaba</name>
+    </author>
+    <author>
+      <name> Komeili</name>
+    </author>
+    <author>
+      <name>Matthew Muckley</name>
+    </author>
+    <author>
+      <name>Ammar Rizvi</name>
+    </author>
+    <author>
+      <name>Claire Roberts</name>
+    </author>
+    <author>
+      <name>Koustuv Sinha</name>
+    </author>
+    <author>
+      <name>Artem Zholus</name>
+    </author>
+    <author>
+      <name>Sergio Arnaud</name>
+    </author>
+    <author>
+      <name>Abha Gejji</name>
+    </author>
+    <author>
+      <name>Ada Martin</name>
+    </author>
+    <author>
+      <name>Francois Robert Hogan</name>
+    </author>
+    <author>
+      <name>Daniel Dugas</name>
+    </author>
+    <author>
+      <name>Piotr Bojanowski</name>
+    </author>
+    <author>
+      <name>Vasil Khalidov</name>
+    </author>
+    <author>
+      <name>Patrick Labatut</name>
+    </author>
+    <author>
+      <name>Francisco Massa</name>
+    </author>
+    <author>
+      <name>Marc Szafraniec</name>
+    </author>
+    <author>
+      <name>Kapil Krishnakumar</name>
+    </author>
+    <author>
+      <name>Yong Li</name>
+    </author>
+    <author>
+      <name>Xiaodong Ma</name>
+    </author>
+    <author>
+      <name>Sarath Chandar</name>
+    </author>
+    <author>
+      <name>Franziska Meier</name>
+    </author>
+    <author>
+      <name>Yann LeCun</name>
+    </author>
+    <author>
+      <name>Michael Rabbat</name>
+    </author>
+    <author>
+      <name>Nicolas Ballas</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.25537v1</id>
+    <title>Action-Prior Denoising for Smooth Real-Time Chunking</title>
+    <updated>2026-05-25T07:49:25Z</updated>
+    <link href="https://arxiv.org/abs/2605.25537v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.25537v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Real-time chunking (RTC) lets chunked action policies operate under inference delay by conditioning a newly generated action chunk on actions already committed by the previous chunk. Training-time RTC simulates this delay during learning and avoids expensive guidance at deployment, but its binary prefix mask treats all non-prefix tokens as fully unconstrained. This under-models asynchronous execution: early overlap actions are fixed, while later overlap actions remain editable but should still stay close to the previous plan. We propose Soft RTC, a training-time RTC generalization based on action-prior denoising. Soft RTC constructs corrupted overlap tokens from partially denoised states instead of pure noise and injects the aligned previous chunk as the same prior during inference through a lightweight token-wise blending rule. On the 12 released large Kinetix levels, a short soft window nearly matches hard training-time RTC in overall solve rate (0.809 vs. 0.815), while a medium window reduces high-delay action delta and jerk by 9.1% and 9.6% relative to hard RTC. Both variants keep near-naive runtime, unlike inference-time RTC baselines. A small preliminary real-robot sorting study provides additional evidence that training-time RTC can improve completion and that Soft RTC gives the lowest commanded-action finite-difference metrics among the tested policies.</summary>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-25T07:49:25Z</published>
+    <arxiv:comment>7 pages, 5 figures, 1 table</arxiv:comment>
+    <arxiv:primary_category term="cs.RO"/>
+    <author>
+      <name>Dongyang Liu</name>
+    </author>
+    <author>
+      <name>Zhaowen Zheng</name>
+    </author>
+    <author>
+      <name>Yu Sun</name>
+    </author>
+    <author>
+      <name>Longxu Zhang</name>
+    </author>
+    <author>
+      <name>Yixuan Liu</name>
+    </author>
+    <author>
+      <name>Hao Wan</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2611.03103v1</id>
+    <title>VLALagBench: Understanding When and Why VLA Inference Latency Matters</title>
+    <updated>2026-11-02T13:18:36Z</updated>
+    <link href="https://arxiv.org/abs/2611.03103v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2611.03103v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Vision-language-action (VLA) models offer a promising path toward general-purpose robot manipulation. While inference latency can affect task success in a constantly evolving physical world, the relationship between latency and task success rate remains poorly understood. In this paper, we introduce VLALagBench, a comprehensive benchmark for studying VLA inference latency sensitivity across task types, object speeds, execution modes (synchronous and asynchronous), and VLA policies. Using VLALagBench, we find that even a modest inference latency of 100 ms can nearly halve task success on moving targets, with sensitivity varying substantially across tasks and policies. These differences reflect task-specific requirements for precision and continuous motion. By overlapping inference with action execution, asynchronous execution can recover some of the lost success at the cost of more frequent inference requests. Building on these findings, we develop an empirical model that predicts task success from limited calibration data, achieving root-mean-square prediction errors of only 5.7-7.8% across various VLA policies. Given an inference system's latency and per-robot throughput, these predictions guide the selection of system-specific VLA algorithm configurations to maximize task success. We believe VLALagBench and these findings provide a solid foundation for future robotics algorithm-system co-design.</summary>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-11-02T13:18:36Z</published>
+    <arxiv:comment>Code will be released at https://github.com/codestrongestx/VLALagBench</arxiv:comment>
+    <arxiv:primary_category term="cs.RO"/>
+    <author>
+      <name>Qi Wen</name>
+    </author>
+    <author>
+      <name>Borui Xu</name>
+    </author>
+    <author>
+      <name>Hussein Amro</name>
+    </author>
+    <author>
+      <name>Hongshi Tan</name>
+    </author>
+    <author>
+      <name>Hanmin Lin</name>
+    </author>
+    <author>
+      <name>Chaoyi Ruan</name>
+    </author>
+    <author>
+      <name>Shanghao Liu</name>
+    </author>
+    <author>
+      <name>Gang Yang</name>
+    </author>
+    <author>
+      <name>Yuejiang Liu</name>
+    </author>
+    <author>
+      <name>Jiafei Duan</name>
+    </author>
+    <author>
+      <name>Bingsheng He</name>
+    </author>
+    <author>
+      <name>Jason Clemons</name>
+    </author>
+    <author>
+      <name>Christos Kozyrakis</name>
+    </author>
+    <author>
+      <name>Wenqi Jiang</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2606.00537v4</id>
+    <title>PACE: Phase-Aware Chunk Execution for Robot Policies with Action Chunking</title>
+    <updated>2026-11-03T16:23:54Z</updated>
+    <link href="https://arxiv.org/abs/2606.00537v4" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2606.00537v4" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Action-chunking robot policies predict sequences of future actions, but deployment requires choosing how many actions to execute before replanning. The execution horizon trades off feedback frequency against motion continuity. However, success varies non-monotonically with the execution horizon, and the best-performing horizon differs across tasks. These effects make a single fixed horizon unreliable as a default execution strategy across tasks. We propose PACE (Phase-Aware Chunk Execution), a training-free method that selects execution horizons online from predicted action chunks. PACE uses prominent low-speed valleys in the predicted speed profile as candidate replanning boundaries, exploiting the phase-dependent kinematics of manipulation trajectories. By default, PACE calibrates the valley threshold from each task's existing training demonstrations, without task-specific fixed-horizon tuning. On the 50-task RoboTwin2.0 benchmark, PACE improves average success from 57.8% to 64.2% over the strongest fixed-horizon baseline and outperforms the adaptive execution baselines AAC and AutoHorizon. With GR00T N1.7 on LIBERO, PACE achieves the highest overall success rate among the evaluated strategies, supporting its applicability across base policies, benchmarks, and action representations. On real robots, PACE improves the average task score from 60.7 to 77.7 and success rate from 50.7% to 70.4% over full-chunk execution. Code is available at https://niejunnan25.github.io/pace-project/.</summary>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-30T05:11:06Z</published>
+    <arxiv:comment>Accepted at NeurIPS 2026. 33 pages including appendices and the paper checklist. Updated experiments, discussion, references, and author list</arxiv:comment>
+    <arxiv:primary_category term="cs.RO"/>
+    <author>
+      <name>Junnan Nie</name>
+    </author>
+    <author>
+      <name>Jiayi Li</name>
+    </author>
+    <author>
+      <name>Chenghao Liu</name>
+    </author>
+    <author>
+      <name>Junyi Lao</name>
+    </author>
+    <author>
+      <name>Jiachen Zhang</name>
+    </author>
+    <author>
+      <name>Tianle Zhang</name>
+    </author>
+    <author>
+      <name>Songfang Huang</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2607.14695v1</id>
+    <title>Reflex: Real-Time VLA Control through Streaming Inference</title>
+    <updated>2026-07-16T07:56:43Z</updated>
+    <link href="https://arxiv.org/abs/2607.14695v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2607.14695v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Flow matching Vision-Language-Action (VLA) models promise precise continuous control, but their iterative denoising nature introduces fundamental incompatibilities with real-time robotics: global timestep injection invalidates KV-caching, forcing a choice between slow $O(N^2)$ re-computation or mathematically incorrect cache reuse. We present \textbf{Reflex}, a framework that enables \textit{real-time streaming inference} for flow matching policies by exploiting the \textit{Timestep-Invariance Property} -- that perception encoders are functionally independent of the denoising loop. Reflex partitions the attention context into static, sliding, and dynamic regions, enabling $O(1)$ incremental cache updates while preserving full-batch-equivalent attention outputs for fixed inputs. To ensure stability under continuous high-frequency inference, we introduce \textit{AdaRMSNorm}, an adaptive normalization layer that prevents BFloat16 numerical collapse by gating on flow phase. We further maximize throughput through an \textit{async pipeline} that decouples visual encoding from action generation, combined with \textit{operator fusion} that reduces kernel overhead. On LIBERO and Kinetix benchmarks, Reflex achieves a 2.58$\times$ inference speedup and 50Hz stable streaming, reducing reaction latency by up to 54\% and enabling efficient deployment without performance degradation.</summary>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-07-16T07:56:43Z</published>
+    <arxiv:comment>Accepted by ICML2026</arxiv:comment>
+    <arxiv:primary_category term="cs.RO"/>
+    <author>
+      <name>Yuanchun Guo</name>
+    </author>
+    <author>
+      <name>Bingyan Liu</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2609.00065v2</id>
+    <title>Scientific Agent Skills: A Library of Procedural Knowledge for Research Agents</title>
+    <updated>2026-09-02T21:50:40Z</updated>
+    <link href="https://arxiv.org/abs/2609.00065v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2609.00065v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>A language-model agent asked to analyse an experiment will usually return working code. Whether the analysis is defensible is a different question. A defensible analysis depends on procedural choices: which test the field accepts, which identifier namespace is authoritative, and which caveats must accompany a result. We present Scientific Agent Skills, an open library of 163 such procedures in 16 areas of practice, including genomics, cheminformatics, medical imaging, study design and scientific communication. Each skill is a directory built around a versioned, human-readable instruction file. An agent loads the file only when a task calls for it; the directory often also contains reference material and runnable scripts. We report no task-level evaluation and no host selection rate. We measure two properties of the documentation corpus: the always-resident descriptions of all 163 skills cost 7.1% of a 200,000-token window, and the median documented workflow fits within 23.9% of it, although 29 of 46 would overflow if every reference file were loaded. Openly licensed and available at https://github.com/K-Dense-AI/scientific-agent-skills.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-08-30T15:40:35Z</published>
+    <arxiv:comment>31 pages, 16 figures, 2 tables, 1 listing. v2: adds a figure of how the documented workflows compose skills, quotes the skill clauses behind the introduction's examples, replaces the appendix listing with a procedural skill, names supported hosts and the pinned install path, and reports the two corpus findings in the abstract</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Timothy Kassis</name>
+    </author>
+    <author>
+      <name>Vinayak Agarwal</name>
+    </author>
+    <author>
+      <name>Yuhuan He</name>
+    </author>
+    <author>
+      <name>Darshil Patel</name>
+    </author>
+    <author>
+      <name>Aubrey M. Brueckner</name>
+    </author>
+  </entry>
+</feed>

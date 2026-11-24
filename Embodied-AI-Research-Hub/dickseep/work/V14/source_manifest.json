@@ -1,0 +1,43 @@
+{
+  "repository": "moojink/openvla-oft",
+  "branch_resolved": "main",
+  "commit": "e4287e94541f459edc4feabc4e181f537cd569a8",
+  "retrieved_utc": "2026-11-01T05:27:42.218656+00:00",
+  "files": [
+    {
+      "path": "prismatic/vla/constants.py",
+      "url": "https://raw.githubusercontent.com/moojink/openvla-oft/e4287e94541f459edc4feabc4e181f537cd569a8/prismatic/vla/constants.py",
+      "sha256": "5b53c3a07cf1ed27bf94a88da9929e82818792d6fdc32343d133afea1a0acf3d"
+    },
+    {
+      "path": "experiments/robot/libero/run_libero_eval.py",
+      "url": "https://raw.githubusercontent.com/moojink/openvla-oft/e4287e94541f459edc4feabc4e181f537cd569a8/experiments/robot/libero/run_libero_eval.py",
+      "sha256": "701a20b6ca2942aa36e0e7d567b25647268b936a23af79c5893534f10bec7802"
+    },
+    {
+      "path": "experiments/robot/robot_utils.py",
+      "url": "https://raw.githubusercontent.com/moojink/openvla-oft/e4287e94541f459edc4feabc4e181f537cd569a8/experiments/robot/robot_utils.py",
+      "sha256": "93541b01edd4de49fcc9a1d9249e11fea008b9502fd755096503aaec93773da0"
+    },
+    {
+      "path": "experiments/robot/openvla_utils.py",
+      "url": "https://raw.githubusercontent.com/moojink/openvla-oft/e4287e94541f459edc4feabc4e181f537cd569a8/experiments/robot/openvla_utils.py",
+      "sha256": "eed754d7c5f9821aae2fe0531dbe01df8c11df0d5c79b4aeeb9bb4452124bdf5"
+    },
+    {
+      "path": "prismatic/extern/hf/modeling_prismatic.py",
+      "url": "https://raw.githubusercontent.com/moojink/openvla-oft/e4287e94541f459edc4feabc4e181f537cd569a8/prismatic/extern/hf/modeling_prismatic.py",
+      "sha256": "b5431a074c0025a12e46dc954a5e18d1d73477babb5ae42e3a12ab4b907f33a6"
+    },
+    {
+      "path": "prismatic/models/action_heads.py",
+      "url": "https://raw.githubusercontent.com/moojink/openvla-oft/e4287e94541f459edc4feabc4e181f537cd569a8/prismatic/models/action_heads.py",
+      "sha256": "8e42df65d6407d64d47457286d9be05466d25d8a0f094aa9dfb90de84a9aa7cc"
+    },
+    {
+      "path": "experiments/robot/libero/libero_utils.py",
+      "url": "https://raw.githubusercontent.com/moojink/openvla-oft/e4287e94541f459edc4feabc4e181f537cd569a8/experiments/robot/libero/libero_utils.py",
+      "sha256": "489c16dc8220845b2936ddb81aafd7469061d2009b0edddb2f85703bc51a204f"
+    }
+  ]
+}

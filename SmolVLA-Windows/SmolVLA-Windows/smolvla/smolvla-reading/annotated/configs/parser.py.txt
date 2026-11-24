@@ -1,0 +1,397 @@
+# 原文件 lerobot/src/lerobot/configs/parser.py
+# 原行范围 75–132, 218–235, 298–367, 414–473
+# L 后是官方源码或本机文件的原行号。每条中文注释对应紧随其后的原文。
+# 这是静态阅读副本。请在编辑器中阅读。空行保留，节选之间标出跳过的范围。
+
+# …… 跳过原文第 1–74 行 ……
+# L0075 定义函数 _flatten_to_cli_args。
+def _flatten_to_cli_args(d: dict, prefix: str = "") -> list[str]:
+    # L0076 原文档中的说明或续行。
+    """Recursively flatten a nested dict to CLI-style args (e.g. {"lr": 1e-4} -> ["--lr=0.0001"])."""
+    # L0077 创建列表，按给定顺序保留元素给 “args”（位置参数序列） 赋值。
+    args = []
+    # L0078 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+    for key, value in d.items():
+        # L0079 条件 key in (PATH_KEY, draccus.CHOICE_TYPE_KEY) 成立时进入下方分支。
+        if key in (PATH_KEY, draccus.CHOICE_TYPE_KEY):
+            # L0080 跳过这一轮剩余操作，进入下一轮循环。
+            continue
+        # L0081 用条件表达式在 if 前与 else 后的两个值之间选择给 “full_key” 赋值。
+        full_key = f"{prefix}.{key}" if prefix else key
+        # L0082 条件 isinstance(value, bool) 成立时进入下方分支。
+        if isinstance(value, bool):
+            # L0083 调用 lower，用它的结果给 “value” 赋值。
+            value = str(value).lower()
+        # L0084 条件 isinstance(value, dict) 成立时进入下方分支。
+        if isinstance(value, dict):
+            # L0085 调用 args.extend，将可迭代对象展开后追加到末尾。
+            args.extend(_flatten_to_cli_args(value, full_key))
+        # L0086 前面的分支均未命中时，再判断 isinstance(value, list)。
+        elif isinstance(value, list):
+            # L0087 调用 args.append，在列表末尾追加一个元素。
+            args.append(f"--{full_key}={json.dumps(value)}")
+        # L0088 前面的分支均未命中时，再判断 value is not None。
+        elif value is not None:
+            # L0089 调用 args.append，在列表末尾追加一个元素。
+            args.append(f"--{full_key}={value}")
+    # L0090 引用已有的值 args作为当前调用的返回值。
+    return args
+
+
+# L0093 定义函数 get_cli_overrides。作用是从命令行提取指定配置分组的覆盖设置。
+def get_cli_overrides(field_name: str, args: Sequence[str] | None = None) -> list[str] | None:
+    # L0094 原文档概述本段功能，从命令行提取指定配置分组的覆盖设置。
+    """Parses arguments from cli at a given nested attribute level.
+
+    # L0096 原文档中的说明或续行。此段讲从命令行提取指定配置分组的覆盖设置。
+    For example, supposing the main script was called with:
+    # L0097 原文档中的说明或续行。此段讲从命令行提取指定配置分组的覆盖设置。
+    python myscript.py --arg1=1 --arg2.subarg1=abc --arg2.subarg2=some/path
+
+    # L0099 原文档中的说明或续行。此段讲从命令行提取指定配置分组的覆盖设置。
+    If called during execution of myscript.py, get_cli_overrides("arg2") will return:
+    # L0100 原文档中的说明或续行。此段讲从命令行提取指定配置分组的覆盖设置。
+    ["--subarg1=abc" "--subarg2=some/path"]
+    # L0101 文档字符串的边界。
+    """
+    # L0102 条件 args is None 成立时进入下方分支。
+    if args is None:
+        # L0103 对 sys.argv 做切片，右端索引不包含在结果中给 “args”（位置参数序列） 赋值。
+        args = sys.argv[1:]
+    # L0104 创建列表，按给定顺序保留元素给 “attr_level_args” 赋值。
+    attr_level_args = []
+    # L0105 计算此行的右侧表达式给 “detect_string” 赋值。
+    detect_string = f"--{field_name}."
+    # L0106 打包成元组，元素顺序由逗号分隔的位置决定给 “excluded_names” 赋值。
+    excluded_names = (draccus.CHOICE_TYPE_KEY, PATH_KEY)
+    # L0107 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+    for index, arg in enumerate(args):
+        # L0108 条件 not arg.startswith(detect_string) 成立时进入下方分支。
+        if not arg.startswith(detect_string):
+            # L0109 跳过这一轮剩余操作，进入下一轮循环。
+            continue
+
+        # L0111 调用 arg.removeprefix，用它的结果给 “denested_arg” 赋值。
+        denested_arg = arg.removeprefix(detect_string)
+        # L0112 条件 denested_arg.split("=", maxsplit=1)[0] in excluded_names 成立时进入下方分支。
+        if denested_arg.split("=", maxsplit=1)[0] in excluded_names:
+            # L0113 跳过这一轮剩余操作，进入下一轮循环。
+            continue
+
+        # L0115 调用 attr_level_args.append，在列表末尾追加一个元素。
+        attr_level_args.append(f"--{denested_arg}")
+        # L0116 条件 "=" not in arg and index + 1 < len(args) and not args[index + 1].startswith("--") 成立时进入下方分支。
+        if "=" not in arg and index + 1 < len(args) and not args[index + 1].startswith("--"):
+            # L0117 调用 attr_level_args.append，在列表末尾追加一个元素。
+            attr_level_args.append(args[index + 1])
+
+    # L0119 引用已有的值 attr_level_args作为当前调用的返回值。
+    return attr_level_args
+
+
+# L0122 定义函数 parse_arg。
+def parse_arg(arg_name: str, args: Sequence[str] | None = None) -> str | None:
+    # L0123 条件 args is None 成立时进入下方分支。
+    if args is None:
+        # L0124 对 sys.argv 做切片，右端索引不包含在结果中给 “args”（位置参数序列） 赋值。
+        args = sys.argv[1:]
+    # L0125 计算此行的右侧表达式给 “option” 赋值。
+    option = f"--{arg_name}"
+    # L0126 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+    for index, arg in enumerate(args):
+        # L0127 条件 arg.startswith(f"{option}=") 成立时进入下方分支。
+        if arg.startswith(f"{option}="):
+            # L0128 调用 arg.removeprefix，用它的结果作为当前调用的返回值。
+            return arg.removeprefix(f"{option}=")
+        # L0129 条件 arg == option and index + 1 < len(args) and not args[index + 1].startswith("--") 成立时进入下方分支。
+        if arg == option and index + 1 < len(args) and not args[index + 1].startswith("--"):
+            # L0130 用方括号按键或索引读取 args作为当前调用的返回值。
+            return args[index + 1]
+    # L0131 设为空值 None作为当前调用的返回值。
+    return None
+
+
+# …… 跳过原文第 133–217 行 ……
+# L0218 定义函数 get_path_arg。
+def get_path_arg(field_name: str, args: Sequence[str] | None = None) -> str | None:
+    # L0219 调用 parse_arg，用它的结果给 “result” 赋值。
+    result = parse_arg(f"{field_name}.{PATH_KEY}", args)
+    # L0220 条件 result is None 成立时进入下方分支。
+    if result is None:
+        # L0221 调用 _config_path_args.get，用它的结果给 “result” 赋值。
+        result = _config_path_args.get(field_name)
+    # L0222 引用已有的值 result作为当前调用的返回值。
+    return result
+
+
+# L0225 定义函数 get_yaml_overrides。
+def get_yaml_overrides(field_name: str) -> list[str]:
+    # L0226 调用 _config_yaml_overrides.get，用它的结果作为当前调用的返回值。
+    return _config_yaml_overrides.get(field_name, [])
+
+
+# L0229 定义函数 get_pretrained_revision。
+def get_pretrained_revision(field_name: str) -> str | None:
+    # L0230 原文档中的说明或续行。
+    """Return `--<field_name>.pretrained_revision` from the CLI, else from the `--config_path` file."""
+    # L0231 调用 parse_arg，用它的结果给 “revision”（固定的 checkpoint 版本） 赋值。
+    revision = parse_arg("pretrained_revision", get_cli_overrides(field_name) or [])
+    # L0232 条件 revision is None 成立时进入下方分支。
+    if revision is None:
+        # L0233 调用 parse_arg，用它的结果给 “revision”（固定的 checkpoint 版本） 赋值。
+        revision = parse_arg("pretrained_revision", get_yaml_overrides(field_name))
+    # L0234 引用已有的值 revision作为当前调用的返回值。
+    return revision
+
+
+# …… 跳过原文第 236–297 行 ……
+# L0298 定义函数 filter_arg。
+def filter_arg(field_to_filter: str, args: Sequence[str] | None = None) -> list[str]:
+    # L0299 条件 args is None 成立时进入下方分支。
+    if args is None:
+        # L0300 创建列表，按给定顺序保留元素作为当前调用的返回值。
+        return []
+    # L0301 计算此行的右侧表达式给 “option” 赋值。
+    option = f"--{field_to_filter}"
+    # L0302 创建列表，按给定顺序保留元素给 “filtered_args” 赋值。
+    filtered_args = []
+    # L0303 使用字面值 0给 “index” 赋值。
+    index = 0
+    # L0304 持续执行下面的循环体，每轮开始都重新检查条件。
+    while index < len(args):
+        # L0305 用方括号按键或索引读取 args给 “arg” 赋值。
+        arg = args[index]
+        # L0306 条件 arg == option 成立时进入下方分支。
+        if arg == option:
+            # L0307 用增量赋值更新 index，运算逻辑见左侧运算符。
+            index += 1
+            # L0308 条件 index < len(args) and not args[index].startswith("--") 成立时进入下方分支。
+            if index < len(args) and not args[index].startswith("--"):
+                # L0309 用增量赋值更新 index，运算逻辑见左侧运算符。
+                index += 1
+            # L0310 跳过这一轮剩余操作，进入下一轮循环。
+            continue
+        # L0311 条件 arg.startswith(f"{option}=") 成立时进入下方分支。
+        if arg.startswith(f"{option}="):
+            # L0312 用增量赋值更新 index，运算逻辑见左侧运算符。
+            index += 1
+            # L0313 跳过这一轮剩余操作，进入下一轮循环。
+            continue
+        # L0314 调用 filtered_args.append，在列表末尾追加一个元素。
+        filtered_args.append(arg)
+        # L0315 用增量赋值更新 index，运算逻辑见左侧运算符。
+        index += 1
+    # L0316 引用已有的值 filtered_args作为当前调用的返回值。
+    return filtered_args
+
+
+# L0319 定义函数 filter_path_args。
+def filter_path_args(fields_to_filter: str | list[str], args: Sequence[str] | None = None) -> list[str]:
+    # L0320 文档字符串的边界。
+    """
+    # L0321 原文档中的说明或续行。
+    Filters command-line arguments related to fields with specific path arguments.
+
+    # L0323 以下列出调用参数及其含义。
+    Args:
+        # L0324 原文档对“fields_to_filter”的说明。
+        fields_to_filter (str | list[str]): A single str or a list of str whose arguments need to be filtered.
+        # L0325 原文档对“args”（位置参数序列）的说明。
+        args (Sequence[str] | None): The sequence of command-line arguments to be filtered.
+            # L0326 原文档中的说明或续行。
+            Defaults to None.
+
+    # L0328 以下说明调用者接收到的结果。
+    Returns:
+        # L0329 原文档中的说明或续行。
+        list[str]: A filtered list of arguments, with arguments related to the specified
+        # L0330 原文档中的说明或续行。
+        fields removed.
+
+    # L0332 以下说明异常条件。
+    Raises:
+        # L0333 原文档对“ArgumentError”的说明。
+        ArgumentError: If both a path argument (e.g., `--field_name.path`) and a type
+            # L0334 原文档中的说明或续行。
+            argument (e.g., `--field_name.type`) are specified for the same field.
+    # L0335 文档字符串的边界。
+    """
+    # L0336 条件 isinstance(fields_to_filter, str) 成立时进入下方分支。
+    if isinstance(fields_to_filter, str):
+        # L0337 创建列表，按给定顺序保留元素给 “fields_to_filter” 赋值。
+        fields_to_filter = [fields_to_filter]
+
+    # L0339 用条件表达式在 if 前与 else 后的两个值之间选择给 “filtered_args” 赋值。
+    filtered_args = [] if args is None else list(args)
+
+    # L0341 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+    for field in fields_to_filter:
+        # L0342 条件 get_path_arg(field, args) 成立时进入下方分支。
+        if get_path_arg(field, args):
+            # L0343 条件 get_type_arg(field, args) 成立时进入下方分支。
+            if get_type_arg(field, args):
+                # L0344 抛出 ArgumentError，中断当前路径并交给上层的异常处理。
+                raise ArgumentError(
+                    # L0345 为“argument”提供这一项的值，注意它所在的参数表或外层表达式。
+                    argument=None,
+                    # L0346 为“message”提供这一项的值，注意它所在的参数表或外层表达式。
+                    message=f"Cannot specify both --{field}.{PATH_KEY} and --{field}.{draccus.CHOICE_TYPE_KEY}",
+                # L0347 闭合上方尚未结束的括号。
+                )
+            # L0348 计算此行的右侧表达式给 “option_prefix” 赋值。
+            option_prefix = f"--{field}."
+            # L0349 创建列表，按给定顺序保留元素给 “retained_args” 赋值。
+            retained_args = []
+            # L0350 使用字面值 0给 “index” 赋值。
+            index = 0
+            # L0351 持续执行下面的循环体，每轮开始都重新检查条件。
+            while index < len(filtered_args):
+                # L0352 用方括号按键或索引读取 filtered_args给 “arg” 赋值。
+                arg = filtered_args[index]
+                # L0353 条件 arg.startswith(option_prefix) 成立时进入下方分支。
+                if arg.startswith(option_prefix):
+                    # L0354 用增量赋值更新 index，运算逻辑见左侧运算符。
+                    index += 1
+                    # L0355 条件 ( 成立时进入下方分支。
+                    if (
+                        # L0356 字符串字面量，供上方的调用、容器或错误消息使用。
+                        "=" not in arg
+                        # L0357 续写上一行的布尔表达式，按 and / or 的短路规则判断。
+                        and index < len(filtered_args)
+                        # L0358 续写上一行的布尔表达式，按 and / or 的短路规则判断。
+                        and not filtered_args[index].startswith("--")
+                    # L0359 闭合上方尚未结束的括号。
+                    ):
+                        # L0360 用增量赋值更新 index，运算逻辑见左侧运算符。
+                        index += 1
+                    # L0361 跳过这一轮剩余操作，进入下一轮循环。
+                    continue
+                # L0362 调用 retained_args.append，在列表末尾追加一个元素。
+                retained_args.append(arg)
+                # L0363 用增量赋值更新 index，运算逻辑见左侧运算符。
+                index += 1
+            # L0364 引用已有的值 retained_args给 “filtered_args” 赋值。
+            filtered_args = retained_args
+
+    # L0366 引用已有的值 filtered_args作为当前调用的返回值。
+    return filtered_args
+
+
+# …… 跳过原文第 368–413 行 ……
+# L0414 wrap 是装饰器工厂，调用 wrap() 得到一个接收目标函数的装饰器。
+def wrap(config_path: Path | None = None) -> Callable[[F], F]:
+    # L0415 文档字符串的边界。
+    """
+    # L0416 原文档对“HACK”的说明。此段讲包装函数并决定配置来自传参还是命令行。
+    HACK: Similar to draccus.wrap but does three additional things:
+        # L0417 原文档中的说明或续行。此段讲包装函数并决定配置来自传参还是命令行。
+        - Will remove '.path' arguments from CLI in order to process them later on.
+        # L0418 原文档中的说明或续行。此段讲包装函数并决定配置来自传参还是命令行。
+        - If a 'config_path' is passed and the main config class has a 'from_pretrained' method, will
+          # L0419 原文档中的说明或续行。此段讲包装函数并决定配置来自传参还是命令行。
+          initialize it from there to allow to fetch configs from the hub directly
+        # L0420 原文档中的说明或续行。此段讲包装函数并决定配置来自传参还是命令行。
+        - Will load plugins specified in the CLI arguments. These plugins will typically register
+            # L0421 原文档中的说明或续行。此段讲包装函数并决定配置来自传参还是命令行。
+            their own subclasses of config classes, so that draccus can find the right class to instantiate
+            # L0422 原文档中的说明或续行。此段讲包装函数并决定配置来自传参还是命令行。
+            from the CLI '.type' arguments
+    # L0423 文档字符串的边界。
+    """
+
+    # L0425 接收需要包装的真实函数，例如 eval_main。
+    def wrapper_outer(fn: F) -> F:
+        # L0426 应用装饰器 wraps(fn)，它会处理紧接着的函数或类。
+        @wraps(fn)
+        # L0427 定义最终被调用的外层函数，先准备 cfg 再执行真实函数体。
+        def wrapper_inner(*args: Any, **kwargs: Any) -> Any:
+            # L0428 调用 inspect.getfullargspec，用它的结果给 “argspec” 赋值。
+            argspec = inspect.getfullargspec(fn)
+            # L0429 用方括号按键或索引读取 argspec.annotations给 “argtype” 赋值。
+            argtype = argspec.annotations[argspec.args[0]]
+            # L0430 条件 len(args) > 0 and type(args[0]) is argtype 成立时进入下方分支。
+            if len(args) > 0 and type(args[0]) is argtype:
+                # L0431 用方括号按键或索引读取 args给 “cfg”（配置对象） 赋值。
+                cfg = args[0]
+                # L0432 对 args 做切片，右端索引不包含在结果中给 “args”（位置参数序列） 赋值。
+                args = args[1:]
+            # L0433 进入对应的另一条分支，注意用缩进找到配对的判断或异常块。
+            else:
+                # L0434 直接读取终端参数，sys.argv 的第一项是程序名，切片从后面的参数开始。
+                cli_args = sys.argv[1:]
+                # L0435 调用 parse_plugin_args，用它的结果给 “plugin_args” 赋值。
+                plugin_args = parse_plugin_args(PLUGIN_DISCOVERY_SUFFIX, cli_args)
+                # L0436 逐项迭代右侧的可迭代对象，并把每项绑定给 in 左侧的名字。
+                for plugin_cli_arg, plugin_path in plugin_args.items():
+                    # L0437 开始执行可能抛出异常的代码，后续 except 或 finally 提供处理。
+                    try:
+                        # L0438 调用 load_plugin 执行操作。
+                        load_plugin(plugin_path)
+                    # L0439 捕获这里列出的异常类型，然后执行下方的处理逻辑。
+                    except PluginLoadError as e:
+                        # L0440 原作者对相邻代码的说明。
+                        # add the relevant CLI arg to the error message
+                        # L0441 抛出 PluginLoadError，中断当前路径并交给上层的异常处理。
+                        raise PluginLoadError(f"{e}\nFailed plugin CLI Arg: {plugin_cli_arg}") from e
+                    # L0442 调用 filter_arg，用它的结果给 “cli_args” 赋值。
+                    cli_args = filter_arg(plugin_cli_arg, cli_args)
+                # L0443 条件 "--help" in cli_args or "-h" in cli_args 成立时进入下方分支。
+                if "--help" in cli_args or "-h" in cli_args:
+                    # L0444 调用 print_scoped_help 执行操作。
+                    print_scoped_help(argtype, cli_args)
+                    # L0445 调用 sys.exit 执行操作。
+                    sys.exit(0)
+                # L0446 调用 parse_arg，用它的结果给 “config_path_cli” 赋值。
+                config_path_cli = parse_arg("config_path", cli_args)
+                # L0447 条件 has_method(argtype, "__get_path_fields__") 成立时进入下方分支。
+                if has_method(argtype, "__get_path_fields__"):
+                    # L0448 调用 argtype.__get_path_fields__，用它的结果给 “path_fields” 赋值。
+                    path_fields = argtype.__get_path_fields__()
+                    # L0449 按路径字段规则过滤交给通用配置解析器的参数。
+                    cli_args = filter_path_args(path_fields, cli_args)
+                    # L0450 原作者对相邻代码的说明。
+                    # Also extract path fields from the YAML/JSON config file
+                    # L0451 条件 config_path_cli 成立时进入下方分支。
+                    if config_path_cli:
+                        # L0452 调用 extract_path_fields_from_config，用它的结果给 “config_path_cli” 赋值。
+                        config_path_cli = extract_path_fields_from_config(config_path_cli, path_fields)
+                # L0453 开始执行可能抛出异常的代码，后续 except 或 finally 提供处理。
+                try:
+                    # L0454 条件 has_method(argtype, "from_pretrained") and config_path_cli 成立时进入下方分支。
+                    if has_method(argtype, "from_pretrained") and config_path_cli:
+                        # L0455 调用 filter_arg，用它的结果给 “cli_args” 赋值。
+                        cli_args = filter_arg("config_path", cli_args)
+                        # L0456 调用 argtype.from_pretrained，用它的结果给 “cfg”（配置对象） 赋值。
+                        cfg = argtype.from_pretrained(config_path_cli, cli_args=cli_args)
+                    # L0457 进入对应的另一条分支，注意用缩进找到配对的判断或异常块。
+                    else:
+                        # L0458 条件 config_path_cli 成立时进入下方分支。
+                        if config_path_cli:
+                            # L0459 调用 filter_arg，用它的结果给 “cli_args” 赋值。
+                            cli_args = filter_arg("config_path", cli_args)
+                        # L0460 用 draccus 根据数据类类型和终端参数生成 EvalPipelineConfig 实例。
+                        cfg = draccus.parse(
+                            # L0461 为“config_class”提供这一项的值，注意它所在的参数表或外层表达式。
+                            config_class=argtype,
+                            # L0462 为“config_path”提供这一项的值，注意它所在的参数表或外层表达式。
+                            config_path=config_path_cli or config_path,
+                            # L0463 为“args”（位置参数序列）提供这一项的值，注意它所在的参数表或外层表达式。
+                            args=cli_args,
+                        # L0464 闭合上方尚未结束的括号。
+                        )
+                # L0465 捕获这里列出的异常类型，然后执行下方的处理逻辑。
+                except DecodingError as e:
+                    # L0466 调用 print 执行操作。
+                    print(f"error: {e}", file=sys.stderr)
+                    # L0467 调用 sys.exit 执行操作。
+                    sys.exit(1)
+            # L0468 把解析得到的 cfg 传给真实函数，并保留其他显式传入的参数。
+            response = fn(cfg, *args, **kwargs)
+            # L0469 引用已有的值 response作为当前调用的返回值。
+            return response
+
+        # L0471 调用 cast，用它的结果作为当前调用的返回值。
+        return cast(F, wrapper_inner)
+
+    # L0473 调用 cast，用它的结果作为当前调用的返回值。
+    return cast(Callable[[F], F], wrapper_outer)

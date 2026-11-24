@@ -1,0 +1,32 @@
+{
+  "本科毕业设计任务书_机械工程适配版_导师讨论稿.docx": {
+    "zip_crc": null,
+    "python_docx_reopened": true,
+    "changed_package_parts": [
+      "word/document.xml"
+    ],
+    "all_original_body_outside_task_table_unchanged": true,
+    "other_three_tables_xml_identical": true,
+    "references": 10,
+    "stages_unchanged": 11,
+    "tasks": 4,
+    "source_unchanged": "6a0cc6bcc053c0a94c248850229a543dd42bd1379633ebbbc6b271001cf259aa",
+    "visual_review": "NOT_COMPLETED",
+    "word_open_test": "NOT_COMPLETED"
+  },
+  "本科毕业设计任务书_保留原模板_待学院确认版.docx": {
+    "zip_crc": null,
+    "python_docx_reopened": true,
+    "changed_package_parts": [
+      "word/document.xml"
+    ],
+    "all_original_body_outside_task_table_unchanged": true,
+    "other_three_tables_xml_identical": true,
+    "references": 10,
+    "stages_unchanged": 11,
+    "tasks": 4,
+    "source_unchanged": "6a0cc6bcc053c0a94c248850229a543dd42bd1379633ebbbc6b271001cf259aa",
+    "visual_review": "NOT_COMPLETED",
+    "word_open_test": "NOT_COMPLETED"
+  }
+}

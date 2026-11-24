@@ -1,0 +1,182 @@
+[
+  {
+    "arxiv_id": "2303.04137",
+    "arxiv_id_versioned": "2303.04137v5",
+    "version": "5",
+    "title": "Diffusion Policy: Visuomotor Policy Learning via Action Diffusion",
+    "abstract": "This paper introduces Diffusion Policy, a new way of generating robot behavior by representing a robot's visuomotor policy as a conditional denoising diffusion process. We benchmark Diffusion Policy across 12 different tasks from 4 different robot manipulation benchmarks and find that it consistently outperforms existing state-of-the-art robot learning methods with an average improvement of 46.9%. Diffusion Policy learns the gradient of the action-distribution score function and iteratively optimizes with respect to this gradient field during inference via a series of stochastic Langevin dynamics steps. We find that the diffusion formulation yields powerful advantages when used for robot policies, including gracefully handling multimodal action distributions, being suitable for high-dimensional action spaces, and exhibiting impressive training stability. To fully unlock the potential of diffusion models for visuomotor policy learning on physical robots, this paper presents a set of key technical contributions including the incorporation of receding horizon control, visual conditioning, and the time-series diffusion transformer. We hope this work will help motivate a new generation of policy learning techniques that are able to leverage the powerful generative modeling capabilities of diffusion models. Code, data, and training details is publicly available diffusion-policy.cs.columbia.edu",
+    "authors": [
+      "Cheng Chi",
+      "Zhenjia Xu",
+      "Siyuan Feng",
+      "Eric Cousineau",
+      "Yilun Du",
+      "Benjamin Burchfiel",
+      "Russ Tedrake",
+      "Shuran Song"
+    ],
+    "published": "2023-03-07T18:50:03Z",
+    "updated": "2024-03-14T04:36:31Z",
+    "primary_category": "cs.RO",
+    "categories": [
+      "cs.RO"
+    ],
+    "doi": null,
+    "journal_ref": null,
+    "comment": "An extended journal version of the original RSS2023 paper",
+    "abstract_url": "https://arxiv.org/abs/2303.04137v5",
+    "pdf_url": "https://arxiv.org/pdf/2303.04137v5"
+  },
+  {
+    "arxiv_id": "2502.19645",
+    "arxiv_id_versioned": "2502.19645v2",
+    "version": "2",
+    "title": "Fine-Tuning Vision-Language-Action Models: Optimizing Speed and Success",
+    "abstract": "Recent vision-language-action models (VLAs) build upon pretrained vision-language models and leverage diverse robot datasets to demonstrate strong task execution, language following ability, and semantic generalization. Despite these successes, VLAs struggle with novel robot setups and require fine-tuning to achieve good performance, yet how to most effectively fine-tune them is unclear given many possible strategies. In this work, we study key VLA adaptation design choices such as different action decoding schemes, action representations, and learning objectives for fine-tuning, using OpenVLA as our representative base model. Our empirical analysis informs an Optimized Fine-Tuning (OFT) recipe that integrates parallel decoding, action chunking, a continuous action representation, and a simple L1 regression-based learning objective to altogether improve inference efficiency, policy performance, and flexibility in the model's input-output specifications. We propose OpenVLA-OFT, an instantiation of this recipe, which sets a new state of the art on the LIBERO simulation benchmark, significantly boosting OpenVLA's average success rate across four task suites from 76.5% to 97.1% while increasing action generation throughput by 26$\\times$. In real-world evaluations, our fine-tuning recipe enables OpenVLA to successfully execute dexterous, high-frequency control tasks on a bimanual ALOHA robot and outperform other VLAs ($π_0$ and RDT-1B) fine-tuned using their default recipes, as well as strong imitation learning policies trained from scratch (Diffusion Policy and ACT) by up to 15% (absolute) in average success rate. We release code for OFT and pretrained model checkpoints at https://openvla-oft.github.io/.",
+    "authors": [
+      "Moo Jin Kim",
+      "Chelsea Finn",
+      "Percy Liang"
+    ],
+    "published": "2025-02-27T00:30:29Z",
+    "updated": "2025-04-28T07:49:39Z",
+    "primary_category": "cs.RO",
+    "categories": [
+      "cs.RO",
+      "cs.AI",
+      "cs.CV",
+      "cs.LG"
+    ],
+    "doi": null,
+    "journal_ref": null,
+    "comment": "Accepted to Robotics: Science and Systems (RSS) 2025. Project website: https://openvla-oft.github.io/",
+    "abstract_url": "https://arxiv.org/abs/2502.19645v2",
+    "pdf_url": "https://arxiv.org/pdf/2502.19645v2"
+  },
+  {
+    "arxiv_id": "2506.01844",
+    "arxiv_id_versioned": "2506.01844v1",
+    "version": "1",
+    "title": "SmolVLA: A Vision-Language-Action Model for Affordable and Efficient Robotics",
+    "abstract": "Vision-language models (VLMs) pretrained on large-scale multimodal datasets encode rich visual and linguistic knowledge, making them a strong foundation for robotics. Rather than training robotic policies from scratch, recent approaches adapt VLMs into vision-language-action (VLA) models that enable natural language-driven perception and control. However, existing VLAs are typically massive--often with billions of parameters--leading to high training costs and limited real-world deployability. Moreover, they rely on academic and industrial datasets, overlooking the growing availability of community-collected data from affordable robotic platforms. In this work, we present SmolVLA, a small, efficient, and community-driven VLA that drastically reduces both training and inference costs, while retaining competitive performance. SmolVLA is designed to be trained on a single GPU and deployed on consumer-grade GPUs or even CPUs. To further improve responsiveness, we introduce an asynchronous inference stack decoupling perception and action prediction from action execution, allowing higher control rates with chunked action generation. Despite its compact size, SmolVLA achieves performance comparable to VLAs that are 10x larger. We evaluate SmolVLA on a range of both simulated as well as real-world robotic benchmarks and release all code, pretrained models, and training data.",
+    "authors": [
+      "Mustafa Shukor",
+      "Dana Aubakirova",
+      "Francesco Capuano",
+      "Pepijn Kooijmans",
+      "Steven Palma",
+      "Adil Zouitine",
+      "Michel Aractingi",
+      "Caroline Pascal",
+      "Martino Russi",
+      "Andres Marafioti",
+      "Simon Alibert",
+      "Matthieu Cord",
+      "Thomas Wolf",
+      "Remi Cadene"
+    ],
+    "published": "2025-06-02T16:30:19Z",
+    "updated": "2025-06-02T16:30:19Z",
+    "primary_category": "cs.LG",
+    "categories": [
+      "cs.LG",
+      "cs.RO"
+    ],
+    "doi": null,
+    "journal_ref": null,
+    "comment": "24 pages. Code and assets: https://github.com/huggingface/lerobot",
+    "abstract_url": "https://arxiv.org/abs/2506.01844v1",
+    "pdf_url": "https://arxiv.org/pdf/2506.01844v1"
+  },
+  {
+    "arxiv_id": "2506.07339",
+    "arxiv_id_versioned": "2506.07339v2",
+    "version": "2",
+    "title": "Real-Time Execution of Action Chunking Flow Policies",
+    "abstract": "Modern AI systems, especially those interacting with the physical world, increasingly require real-time performance. However, the high latency of state-of-the-art generalist models, including recent vision-language action models (VLAs), poses a significant challenge. While action chunking has enabled temporal consistency in high-frequency control tasks, it does not fully address the latency problem, leading to pauses or out-of-distribution jerky movements at chunk boundaries. This paper presents a novel inference-time algorithm that enables smooth asynchronous execution of action chunking policies. Our method, real-time chunking (RTC), is applicable to any diffusion- or flow-based VLA out of the box with no re-training. It generates the next action chunk while executing the current one, \"freezing\" actions guaranteed to execute and \"inpainting\" the rest. To test RTC, we introduce a new benchmark of 12 highly dynamic tasks in the Kinetix simulator, as well as evaluate 6 challenging real-world bimanual manipulation tasks. Results demonstrate that RTC is fast, performant, and uniquely robust to inference delay, significantly improving task throughput and enabling high success rates in precise tasks $\\unicode{x2013}$ such as lighting a match $\\unicode{x2013}$ even in the presence of significant latency. See https://pi.website/research/real_time_chunking for videos.",
+    "authors": [
+      "Kevin Black",
+      "Manuel Y. Galliker",
+      "Sergey Levine"
+    ],
+    "published": "2025-06-09T01:01:59Z",
+    "updated": "2025-12-05T07:35:35Z",
+    "primary_category": "cs.RO",
+    "categories": [
+      "cs.RO",
+      "cs.AI",
+      "cs.LG"
+    ],
+    "doi": null,
+    "journal_ref": null,
+    "comment": "published in NeurIPS 2025",
+    "abstract_url": "https://arxiv.org/abs/2506.07339v2",
+    "pdf_url": "https://arxiv.org/pdf/2506.07339v2"
+  },
+  {
+    "arxiv_id": "2512.01031",
+    "arxiv_id_versioned": "2512.01031v2",
+    "version": "2",
+    "title": "VLASH: Real-Time VLAs via Future-State-Aware Asynchronous Inference",
+    "abstract": "Vision-Language-Action models (VLAs) are becoming increasingly capable across diverse robotic tasks. However, these models are typically deployed under synchronous inference, where the robot waits for model inference to complete before acting, and cannot perceive or respond to environmental changes during action execution. This not only introduces noticeable action stalls, but also significantly increases reaction latency, fundamentally limiting the applicability of VLAs to dynamic, real-time tasks. Asynchronous inference offers a promising solution to achieve continuous and low-latency control by enabling robots to execute actions and perform inference simultaneously. However, because the robot and environment continue to evolve during inference, a temporal misalignment arises between the prediction and execution intervals. This leads to significant action instability, while existing asynchronous methods either degrade accuracy or introduce runtime overhead to mitigate it. We propose VLASH, a simple yet effective method for asynchronous VLA inference that delivers smooth, accurate, and fast reaction control without architectural changes or additional runtime overhead. VLASH leverages the future execution-time state by rolling the robot state forward with the previous action chunk, thereby bridging the gap between prediction and execution. Experiments show that VLASH reduces reaction latency by up to 11.8x compared to synchronous inference and consistently outperforms all asynchronous baselines in accuracy. With action quantization, it further achieves 1.5-2.0x task completion speedup with minimal accuracy loss. Moreover, it empowers state-of-the-art VLAs such as $π_{0.5}$ to handle fast-reaction, high-precision tasks including playing ping-pong and playing whack-a-mole, where traditional synchronous inference fails. Code is available at https://github.com/mit-han-lab/vlash",
+    "authors": [
+      "Jiaming Tang",
+      "Yufei Sun",
+      "Yilong Zhao",
+      "Shang Yang",
+      "Yujun Lin",
+      "Zhuoyang Zhang",
+      "James Hou",
+      "Yao Lu",
+      "Zhijian Liu",
+      "Song Han"
+    ],
+    "published": "2025-11-30T18:59:24Z",
+    "updated": "2026-07-26T23:00:24Z",
+    "primary_category": "cs.RO",
+    "categories": [
+      "cs.RO",
+      "cs.AI",
+      "cs.LG"
+    ],
+    "doi": null,
+    "journal_ref": null,
+    "comment": null,
+    "abstract_url": "https://arxiv.org/abs/2512.01031v2",
+    "pdf_url": "https://arxiv.org/pdf/2512.01031v2"
+  },
+  {
+    "arxiv_id": "2611.03103",
+    "arxiv_id_versioned": "2611.03103v1",
+    "version": "1",
+    "title": "VLALagBench: Understanding When and Why VLA Inference Latency Matters",
+    "abstract": "Vision-language-action (VLA) models offer a promising path toward general-purpose robot manipulation. While inference latency can affect task success in a constantly evolving physical world, the relationship between latency and task success rate remains poorly understood. In this paper, we introduce VLALagBench, a comprehensive benchmark for studying VLA inference latency sensitivity across task types, object speeds, execution modes (synchronous and asynchronous), and VLA policies. Using VLALagBench, we find that even a modest inference latency of 100 ms can nearly halve task success on moving targets, with sensitivity varying substantially across tasks and policies. These differences reflect task-specific requirements for precision and continuous motion. By overlapping inference with action execution, asynchronous execution can recover some of the lost success at the cost of more frequent inference requests. Building on these findings, we develop an empirical model that predicts task success from limited calibration data, achieving root-mean-square prediction errors of only 5.7-7.8% across various VLA policies. Given an inference system's latency and per-robot throughput, these predictions guide the selection of system-specific VLA algorithm configurations to maximize task success. We believe VLALagBench and these findings provide a solid foundation for future robotics algorithm-system co-design.",
+    "authors": [
+      "Qi Wen",
+      "Borui Xu",
+      "Hussein Amro",
+      "Hongshi Tan",
+      "Hanmin Lin",
+      "Chaoyi Ruan",
+      "Shanghao Liu",
+      "Gang Yang",
+      "Yuejiang Liu",
+      "Jiafei Duan",
+      "Bingsheng He",
+      "Jason Clemons",
+      "Christos Kozyrakis",
+      "Wenqi Jiang"
+    ],
+    "published": "2026-11-02T13:18:36Z",
+    "updated": "2026-11-02T13:18:36Z",
+    "primary_category": "cs.RO",
+    "categories": [
+      "cs.RO"
+    ],
+    "doi": null,
+    "journal_ref": null,
+    "comment": "Code will be released at https://github.com/codestrongestx/VLALagBench",
+    "abstract_url": "https://arxiv.org/abs/2611.03103v1",
+    "pdf_url": "https://arxiv.org/pdf/2611.03103v1"
+  }
+]

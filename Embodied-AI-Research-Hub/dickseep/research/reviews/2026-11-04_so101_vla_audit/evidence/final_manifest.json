@@ -1,0 +1,65 @@
+[
+  {
+    "name": "final_src_lerobot_annotations_steerable_pipeline_writer.py",
+    "url": "https://raw.githubusercontent.com/huggingface/lerobot/ba83e4cf43737e2665be0aafcb5f513b83c7d0f3/src/lerobot/annotations/steerable_pipeline/writer.py",
+    "final_url": "https://raw.githubusercontent.com/huggingface/lerobot/ba83e4cf43737e2665be0aafcb5f513b83c7d0f3/src/lerobot/annotations/steerable_pipeline/writer.py",
+    "status": 200,
+    "bytes": 13904,
+    "sha256": "855dabe6b1697c8e8f551d33efc8159089ea2b639601d6cb87ca73ded243350d",
+    "metadata": {}
+  },
+  {
+    "name": "final_src_lerobot_robots_so_follower___init__.py",
+    "url": "https://raw.githubusercontent.com/huggingface/lerobot/ba83e4cf43737e2665be0aafcb5f513b83c7d0f3/src/lerobot/robots/so_follower/__init__.py",
+    "final_url": "https://raw.githubusercontent.com/huggingface/lerobot/ba83e4cf43737e2665be0aafcb5f513b83c7d0f3/src/lerobot/robots/so_follower/__init__.py",
+    "status": 200,
+    "bytes": 1018,
+    "sha256": "9ab5f3cec0ba50ce2ac48650563f9e75c6b9019f43313beba35d5772131d3774",
+    "metadata": {}
+  },
+  {
+    "name": "final_src_lerobot_robots_so_follower_config_so_follower.py",
+    "url": "https://raw.githubusercontent.com/huggingface/lerobot/ba83e4cf43737e2665be0aafcb5f513b83c7d0f3/src/lerobot/robots/so_follower/config_so_follower.py",
+    "final_url": "https://raw.githubusercontent.com/huggingface/lerobot/ba83e4cf43737e2665be0aafcb5f513b83c7d0f3/src/lerobot/robots/so_follower/config_so_follower.py",
+    "status": 200,
+    "bytes": 2344,
+    "sha256": "65eecfc4eed9239abf65015e6b89cf0a1cb7d3bc34e5971eb83a034ac166d4f4",
+    "metadata": {}
+  },
+  {
+    "name": "final_src_lerobot_robots_so_follower_robot_kinematic_processor.py",
+    "url": "https://raw.githubusercontent.com/huggingface/lerobot/ba83e4cf43737e2665be0aafcb5f513b83c7d0f3/src/lerobot/robots/so_follower/robot_kinematic_processor.py",
+    "final_url": "https://raw.githubusercontent.com/huggingface/lerobot/ba83e4cf43737e2665be0aafcb5f513b83c7d0f3/src/lerobot/robots/so_follower/robot_kinematic_processor.py",
+    "status": 200,
+    "bytes": 26705,
+    "sha256": "eea0222e69a2ab8e3401585e38d1aa13b302f87e568549896be34033e0dd05a7",
+    "metadata": {}
+  },
+  {
+    "name": "final_src_lerobot_robots_so_follower_so_follower.py",
+    "url": "https://raw.githubusercontent.com/huggingface/lerobot/ba83e4cf43737e2665be0aafcb5f513b83c7d0f3/src/lerobot/robots/so_follower/so_follower.py",
+    "final_url": "https://raw.githubusercontent.com/huggingface/lerobot/ba83e4cf43737e2665be0aafcb5f513b83c7d0f3/src/lerobot/robots/so_follower/so_follower.py",
+    "status": 200,
+    "bytes": 9384,
+    "sha256": "56cd915ab5d180dc858bbbcf10eb13e4669252d4109b868036a352a41e4aa2ea",
+    "metadata": {}
+  },
+  {
+    "name": "full_2610.14603v2",
+    "url": "https://arxiv.org/html/2610.14603v2",
+    "final_url": "https://arxiv.org/html/2610.14603v2",
+    "status": 200,
+    "bytes": 496315,
+    "sha256": "9503e447e9b1c12fb9efedf5a2df8aae0e0ccb3ea69e6312439d794936b64f83",
+    "metadata": {}
+  },
+  {
+    "name": "full_2603.19131v1",
+    "url": "https://arxiv.org/html/2603.19131v1",
+    "final_url": "https://arxiv.org/html/2603.19131v1",
+    "status": 200,
+    "bytes": 239242,
+    "sha256": "ad7ce10a41a7dbce45d5c36a557616950f7cb8285dbb8240a83932db01c79359",
+    "metadata": {}
+  }
+]

@@ -1,0 +1,97 @@
+# 原文件 lerobot/pyproject.toml
+# 原行范围 26–40, 403–425, 439–443
+# L 后是官方源码或本机文件的原行号。每条中文注释对应紧随其后的原文。
+# 这是静态阅读副本。请在编辑器中阅读。空行保留，节选之间标出跳过的范围。
+
+# …… 跳过原文第 1–25 行 ……
+# L0026 项目元数据表。安装工具从这里读取包名、版本和其他发行信息。
+[project]
+# L0027 发行包叫 lerobot。这份项目导入时也用 lerobot 作为顶层名字。
+name = "lerobot"
+# L0028 当前检出源码声明的发行版本是 0.7.1。精确的实现还要对照 Git 提交。
+version = "0.7.1"
+# L0029 为 TOML 配置项 description 设置右侧的值。
+description = "🤗 LeRobot: State-of-the-art Machine Learning for Real-World Robotics in Pytorch"
+# L0030 为 TOML 配置项 dynamic 设置右侧的值。
+dynamic = ["readme"]
+# L0031 为 TOML 配置项 license 设置右侧的值。
+license = { text = "Apache-2.0" }
+# L0032 为 TOML 配置项 requires-python 设置右侧的值。
+requires-python = ">=3.12"
+# L0033 为 TOML 配置项 authors 设置右侧的值。
+authors = [
+    # L0034 对象或列表的结构边界。缩进可帮助识别元素归属。
+    { name = "Rémi Cadène", email = "re.cadene@gmail.com" },
+    # L0035 对象或列表的结构边界。缩进可帮助识别元素归属。
+    { name = "Simon Alibert", email = "alibert.sim@gmail.com" },
+    # L0036 对象或列表的结构边界。缩进可帮助识别元素归属。
+    { name = "Alexander Soare", email = "alexander.soare159@gmail.com" },
+    # L0037 对象或列表的结构边界。缩进可帮助识别元素归属。
+    { name = "Quentin Gallouédec", email = "quentin.gallouedec@ec-lyon.fr" },
+    # L0038 对象或列表的结构边界。缩进可帮助识别元素归属。
+    { name = "Steven Palma", email = "imstevenpmwork@ieee.org" },
+    # L0039 对象或列表的结构边界。缩进可帮助识别元素归属。
+    { name = "Pepijn Kooijmans", email = "pepijnkooijmans@outlook.com"},
+    # L0040 对象或列表的结构边界。缩进可帮助识别元素归属。
+    { name = "Michel Aractingi", email = "michel.aractingi@gmail.com"},
+
+# …… 跳过原文第 41–402 行 ……
+# L0403 安装时需要生成的命令行入口，每个名字映射到一个 Python 对象。
+[project.scripts]
+# L0404 为 TOML 配置项 lerobot-build-mp4-sidecar 设置右侧的值。
+lerobot-build-mp4-sidecar="lerobot.scripts.lerobot_build_mp4_sidecar:main"
+# L0405 为 TOML 配置项 lerobot-calibrate 设置右侧的值。
+lerobot-calibrate="lerobot.scripts.lerobot_calibrate:main"
+# L0406 为 TOML 配置项 lerobot-find-cameras 设置右侧的值。
+lerobot-find-cameras="lerobot.scripts.lerobot_find_cameras:main"
+# L0407 为 TOML 配置项 lerobot-find-port 设置右侧的值。
+lerobot-find-port="lerobot.scripts.lerobot_find_port:main"
+# L0408 为 TOML 配置项 lerobot-record 设置右侧的值。
+lerobot-record="lerobot.scripts.lerobot_record:main"
+# L0409 为 TOML 配置项 lerobot-replay 设置右侧的值。
+lerobot-replay="lerobot.scripts.lerobot_replay:main"
+# L0410 为 TOML 配置项 lerobot-setup-motors 设置右侧的值。
+lerobot-setup-motors="lerobot.scripts.lerobot_setup_motors:main"
+# L0411 为 TOML 配置项 lerobot-teleoperate 设置右侧的值。
+lerobot-teleoperate="lerobot.scripts.lerobot_teleoperate:main"
+# L0412 为 TOML 配置项 lerobot-convert-dcp 设置右侧的值。
+lerobot-convert-dcp="lerobot.scripts.lerobot_convert_dcp:main"
+# L0413 为 TOML 配置项 lerobot-env-server 设置右侧的值。
+lerobot-env-server="lerobot.scripts.lerobot_env_server:main"
+# L0414 左侧是终端命令。右侧冒号之前是模块路径 lerobot.scripts.lerobot_eval，之后是导入的函数 main。
+lerobot-eval="lerobot.scripts.lerobot_eval:main"
+# L0415 为 TOML 配置项 lerobot-train 设置右侧的值。
+lerobot-train="lerobot.scripts.lerobot_train:main"
+# L0416 为 TOML 配置项 lerobot-train-tokenizer 设置右侧的值。
+lerobot-train-tokenizer="lerobot.scripts.lerobot_train_tokenizer:main"
+# L0417 为 TOML 配置项 lerobot-dataset-viz 设置右侧的值。
+lerobot-dataset-viz="lerobot.scripts.lerobot_dataset_viz:main"
+# L0418 为 TOML 配置项 lerobot-info 设置右侧的值。
+lerobot-info="lerobot.scripts.lerobot_info:main"
+# L0419 为 TOML 配置项 lerobot-find-joint-limits 设置右侧的值。
+lerobot-find-joint-limits="lerobot.scripts.lerobot_find_joint_limits:main"
+# L0420 为 TOML 配置项 lerobot-imgtransform-viz 设置右侧的值。
+lerobot-imgtransform-viz="lerobot.scripts.lerobot_imgtransform_viz:main"
+# L0421 为 TOML 配置项 lerobot-edit-dataset 设置右侧的值。
+lerobot-edit-dataset="lerobot.scripts.lerobot_edit_dataset:main"
+# L0422 为 TOML 配置项 lerobot-setup-can 设置右侧的值。
+lerobot-setup-can="lerobot.scripts.lerobot_setup_can:main"
+# L0423 为 TOML 配置项 lerobot-annotate 设置右侧的值。
+lerobot-annotate="lerobot.scripts.lerobot_annotate:main"
+# L0424 为 TOML 配置项 lerobot-rollout 设置右侧的值。
+lerobot-rollout="lerobot.scripts.lerobot_rollout:main"
+# L0425 为 TOML 配置项 lerobot-policy-server 设置右侧的值。
+lerobot-policy-server="lerobot.scripts.lerobot_policy_server:main"
+
+# …… 跳过原文第 426–438 行 ……
+# L0439 开始配置表 [tool.setuptools.package-data]。
+[tool.setuptools.package-data]
+# L0440 为 TOML 配置项 lerobot 设置右侧的值。
+lerobot = ["sim/integrations/*.json", "annotations/steerable_pipeline/prompts/*.txt", "configs/recipes/*.yaml"]
+
+# L0442 setuptools 的包查找设置。
+[tool.setuptools.packages.find]
+# L0443 在 src 下查找 Python 包。顶层导入名 lerobot 因而对应 src/lerobot。
+where = ["src"]
+
+# …… 跳过原文第 444–638 行 ……

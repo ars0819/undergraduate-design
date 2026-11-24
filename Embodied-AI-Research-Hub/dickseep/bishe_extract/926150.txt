@@ -1,0 +1,446 @@
+9.26.2026
+（20min）
+L1 Rate of Change	变化率、导数直觉	理解梯度到底是什么
+Derivative 导数
+几何
+Tangent line（limit of secant line pq ->p）   slope is derivative（通过导数的定义求)
+梯度我的积累是导数下降最快的方向，但这节只讲了导数几何含义是切线然后求了一些导数
+梯度方向：梯度指向局部增长最快的方向；在通常的欧氏距离度量下，负梯度才是下降最快的方向。一元导数首先是变化率。
+（18min）
+L2 Limits	极限、连续	导数/积分基础
+rate of change 瞬时变化率
+连续：左右极限存在且相等等于函数值
+Jump discontinuity 左右不相等
+Removable discontinuity 左右极限相等，函数值不同
+Infinite discontinuity
+Odd奇函数 even 偶函数
+Other discontinuity 震荡（sin（1/x））
+可导一定连续，连续不一定可导
+10.6.2026
+(20min)
+L3 Derivatives	求导基本规则	反向传播基础
+X-> 0   (Cosx-1)/x  -> 0  sinx/x -> 1   0处导数的定义
+单位圆证明
+（20min）
+L4 Chain Rule	链式法则	⭐ Backprop 核心
+Chain Rule
+（50）
+L6 Exponential and Log	exp、log	Softmax、cross entropy、概率模型
+指数求导引入e然后换底
+隐函数求导用log求e
+Lnx导数定义证明e
+(30)
+L9 Linear and Quadratic Approximations	一阶/二阶近似	梯度、Hessian、Newton
+泰勒展开。。
+（40）
+L11 Max-Min	极值	优化问题
+画图：
+间断点
+正负无穷
+特殊点
+导数
+二阶导
+L13 Newton’s Method	Newton 法	二阶优化
+Python
+反转引用或者用“\”
+msg ="It's a sunny day"
+msg ='It\'s a sunny day'
+in 操作符，它返回一个布尔值，指定该字符或字符是否存在于字串中。
+获取字串的长度并处理字串中的单个字符，这个过程称为索引 len()
+My_str[0]
+不允许直接修改字串：
+greeting = 'hi'
+greeting[0] = 'H' # TypeError: 'str' object does not support item assignment
+使用加号（+）操作符将多个字串串接在一起。这个过程称为字串串接
+用 * 操作符将字串乘以一个整数来重复它。
+将变量和表达式插入到字串中的过程称为字符串插值
+name = 'John Doe'
+age = 26
+name_and_age = f'My name is {name} and I am {age} years old'print(name_and_age) # My name is John Doe and I am 26 years old
+字串切片 让你提取字串的一部分或仅处理其中的特定部分。
+my_str = 'Hello world'
+print(my_str[1:4]) # ell
+反转字串：
+my_str = 'Hello world'
+print(my_str[::-1]) # dlrow olleH
+upper()：返回一个所有字符都转换为大写的新建字串。
+uppercase_my_str = my_str.upper()
+lower()：返回一个所有字符都转换为小写的新建字串。
+strip()：返回一个新建字串，移除指定的前导和尾随字符。如果未传入参数，则移除前导和尾随空白字符。
+my_str = '  hello world  '
+trimmed_my_str = my_str.strip()
+print(trimmed_my_str)  # hello world
+replace(old, new)：返回一个新建字串，其中所有的 old 都被替换为 new。
+my_str.replace('hello', 'hi')
+split(separator)：根据指定的分隔符将字串拆分成一个字串列表。列表是用方括弧括起来的值的集合。如果未指定分隔符，split() 会根据空白字符拆分。
+my_str = 'hello world'
+split_words = my_str.split()
+print(split_words)  # ['hello', 'world']
+join()：将集合中的字串用分隔符连接成一个单一的字串。
+my_list = ['hello', 'world']
+joined_my_str = ' '.join(my_list)
+print(joined_my_str)  # hello world
+startswith(prefix)：返回一个布尔值，指示字串是否以指定的前缀开头。
+endswith(suffix)：返回一个布尔值，指示字串是否以指定的后缀结尾。
+find(substring)：返回 substring 第一次出现的索引，如果未找到则返回 -1。
+count(substring)：返回字串中不重叠的子串出现次数。
+capitalize()：返回一个新字串，首个字符大写，其余字符小写
+isupper()：如果字串至少包含一个有大小写的字符且所有有大小写的字符都是大写，返回 True。否则返回 False。
+islower()：如果字串至少包含一个有大小写的字符且所有有大小写的字符都是小写，返回 True。否则返回 False。
+title()：返回一个新字串，其中每个单词的首字母大写，其余字母小写。
+地板除法将两个数字相除并返回小于或相等于结果的最大整数。此操作使用双转发斜线操作符（//）：
+取模操作符（%）返回左侧值除以右侧值时的余数：
+指数运算将一个数字提升到另一个数字的幂，使用双星号操作符（**）完成：
+round()：将数字四舍五入到指定的小数位数。默认情况下，此函数将数字四舍五入到最接近的整数，并返回没有小数位的整数：恰好居中时通常取偶数，例如 round(2.5) 是2，round(3.5) 是4；浮点表示还会影响小数结果。
+abs(): 返回一个数字的绝对值：
+pow()：将一个数字提升到另一个数字的幂，或执行模幂运算。
+result_2 = pow(2, 3, 5)  # (2 ** 3) % 5
+print(result_2)  # 3
+if 语句以 if 关键字开始。
+condition 是一个求值为 True 或 False 的表达式，后跟冒号（:）。
+if condition:
+pass # Code to execute if condition is True
+and 操作符接受两个操作对象，如果第一个操作对象是 falsy，则返回第一个操作对象；否则返回第二个操作对象。两个操作对象都必须是 truthy，表达式才会得到 truthy 值。
+or 操作符。该操作符如果第一个操作对象是 truthy，则返回第一个操作对象；否则返回第二个操作对象。只要有一个操作对象是 truthy，or 表达式就会得到 truthy 值。
+not 操作符，它接受一个操作对象并反转其布尔值。它将真值转换为 False，将假值转换为 True
+input()，它允许你提示用户输入：
+name = input('What is your name?') # User types "Kolade" and presses Enter  print('Hello', name) # Output: Hello Kolade
+你使用 def 关键字，后跟你想给函数命名的名称、一对括号和冒号。然后在新的一行，编写你的函数应运行的代码。函数运行的代码也称为函数的体。
+def calculate_sum(a, b):
+print(a + b)
+在函数外创建的变量具有全局作用域。你可以在函数内外都使用它。
+在函数内创建的变量具有局部作用域。你只能在该函数内部使用它。函数参数也是局部变量。
+str.maketrans() 方法接受两个长度相等的字串，并返回一个翻译表，将第一个字串的每个字符映射到第二个字串对应的字符。翻译表中的每个字符都以 Unicode 序号保存，这是唯一标识该字符的数字。
+translate() 方法接受由 str.maketrans() 生成的翻译表作为参数。它在一个字串上调用，并返回原始字串的拷贝，其中的字符已根据翻译表被替换：
+t = str.maketrans('lk', 'br')
+sentence = 'The tent gave in to the leaks.'
+print(sentence.translate(t))# Output: The tent gave in to the bears.
+Python 解释器遵循被称为读取、求值、打印、循环的周期，简称 REPL。每当你输入命令时，解释器会读取输入，求值，打印结果，然后循环回显示 >>>，以便你输入更多命令。
+列表数据类型是由字串、数字甚至其他列表组成的有序元素序列。列表是可变的，使用零基索引，这意味着列表的第一个元素位于索引零。
+cities = ['Los Angeles', 'London', 'Tokyo']
+list() 构造函数
+另一种创建列表的方法是使用 list() 构造函数。list() 构造函数用于将可迭代对象转换为列表，如下所示：
+developer = 'Jessica'list(developer) # ['J', 'e', 's', 's', 'i', 'c', 'a']
+由于列表是可变的，只要你传入有效的索引数字，就可以更新列表中的任何元素。
+programming_languages[0] = 'JavaScript'
+从列表中删除元素
+如果你想从列表中删除一个元素，可以像这样使用 del 关键字：
+developer = ['Jane Doe', 23, 'Python Developer']
+del developer[1]
+print(developer) # ['Jane Doe', 'Python Developer']
+检查元素是否在列表中
+有时查看一个元素是否在列表中是很有帮助的。为此，你可以像这样使用 in 关键字：
+developer = ['Alice', 25, ['Python', 'Rust', 'C++']]
+developer[2][1] # 'Rust'
+从列表中解包值
+developer = ['Alice', 34, 'Rust Developer']
+name, age, job = developer
+print(name) # 'Alice'
+print(age) # 34
+print(job) # 'Rust Developer'
+developer = ['Alice', 34, 'Rust Developer']
+name, *rest = developer
+print(name) # 'Alice'
+print(rest) # [34, 'Rust Developer']
+切片列表
+numbers = [1, 2, 3, 4, 5, 6]
+numbers[1::2] # [2, 4, 6]
+append() 方法
+numbers = [1, 2, 3, 4, 5]
+numbers.append(6)
+print(numbers) # [1, 2, 3, 4, 5, 6]
+numbers = [1, 2, 3, 4, 5]
+even_numbers = [6, 8, 10]
+numbers.append(even_numbers)
+print(numbers) # [1, 2, 3, 4, 5, [6, 8, 10]]
+extend() 方法。
+numbers = [1, 2, 3, 4, 5]
+even_numbers = [6, 8, 10]
+numbers.extend(even_numbers)
+print(numbers) # [1, 2, 3, 4, 5, 6, 8, 10]
+insert() 方法
+numbers = [1, 2, 3, 4, 5]
+numbers.insert(2, 2.5)
+print(numbers) # [1, 2, 2.5, 3, 4, 5]
+remove() 方法将要移除的元素值作为参数：
+numbers = [10, 20, 30, 40, 50, 50]
+numbers.remove(50)
+print(numbers) # [10, 20, 30, 40, 50]
+重要的是要注意，此方法只会移除第一处出现的项，而不是全部。
+pop() 方法：
+numbers = [1, 2, 3, 4, 5]
+numbers.pop(1) # The number 2 is returned
+如果你没有为 pop 方法指定元素，则会移除最后一个元素。
+清空列表 clear() 方法：
+numbers = [1, 2, 3, 4, 5]
+numbers.clear()
+print(numbers) # []
+sort() 方法。此方法用于就地排序元素。以下是就地排序一个随机数字列表的示例：
+numbers = [19, 2, 35, 1, 67, 41]
+numbers.sort()
+print(numbers) # [1, 2, 19, 35, 41, 67]
+sorted() 函数适用于任何可迭代对象，并返回一个新的排序列表，而不是修改原始列表。
+numbers = [19, 2, 35, 1, 67, 41]
+sorted_numbers = sorted(numbers)
+print(numbers) # [19, 2, 35, 1, 67, 41]
+print(sorted_numbers) # [1, 2, 19, 35, 41, 67]
+reverse() 方法
+numbers = [6, 5, 4, 3, 2, 1]
+numbers.reverse()
+print(numbers) # [1, 2, 3, 4, 5, 6]
+index 方法
+programming_languages = ['Rust', 'Java', 'Python', 'C++']
+programming_languages.index('Java') # 1
+元组是 Python 的一种数据类型，用于创建有序的值序列。元组中的元素在创建后不能被更改。
+tuple() 构造函数，如下所示：
+developer = 'Jessica'
+tuple(developer) # ('J', 'e', 's', 's', 'i', 'c', 'a')
+in 关键字
+解包项,需要收集元组中剩余的元素，可以像这样使用星号（*）操作符
+name, *rest = developer
+切片操作符
+desserts = ('cake', 'pie', 'cookies', 'ice cream')
+desserts[1:3] # ('pie', 'cookies')
+需要从一个元组中移除一项，这是不可能的，因为元组是不可变的。
+count()。此方法用于确定一项在元组中出现了多少次。
+index() 方法。此方法用于查找元组中某个特定项所在的索引
+找不到指定的项，则 Python 会引起 ValueError：
+你还可以使用 index() 方法传入可选的起始和结束索引参数。以下是传入可选起始索引的示例：
+programming_languages = ('Rust', 'Java', 'Python', 'C++', 'Rust', 'Python')
+programming_languages.index('Python', 3) # 5
+programming_languages.index('Python', 2, 5) # 2
+下面是使用 sorted() 函数创建数字新建列表的示例：
+numbers = (13, 2, 78, 3, 45, 67, 18, 7)
+sorted(numbers) # [2, 3, 7, 13, 18, 45, 67, 78]
+sorted() 函数总是创建一个排序值的新列表。
+使用 key 参数按长度对元组中的项进行排序的示例：
+programming_languages = ('Rust', 'Java', 'Python', 'C++', 'Rust', 'Python')sorted(programming_languages, key=len)
+# Result# ['C++', 'Rust', 'Java', 'Rust', 'Python', 'Python']
+按相反顺序排列的新值列表，那么你可以像这样使用 reverse 参数：
+programming_languages = ('Rust', 'Java', 'Python', 'C++', 'Rust', 'Python')
+print(sorted(programming_languages, reverse=True))
+# Result# ['Rust', 'Rust', 'Python', 'Python', 'Java', 'C++']
+字母顺序
+使用 for 循环
+programming_languages = ['Rust', 'Java', 'Python', 'C++']
+for language in programming_languages:
+print(language)
+categories = ['Fruit', 'Vegetable']
+foods = ['Apple', 'Carrot', 'Banana']
+for category in categories:
+for food in foods:
+print(category, food)
+Fruit Apple
+Fruit Carrot
+Fruit Banana
+Vegetable Apple
+Vegetable Carrot
+Vegetable Banana
+使用 while 循环
+secret_number = 3
+guess = 0
+while guess != secret_number:
+guess = int(input('Guess the number (1-5): '))
+if guess != secret_number:
+print('Wrong! Try again.')
+print('You got it!')
+break 语句用于停止循环的执行。
+continue 语句用于跳过循环的当前迭代并进入下一次迭代。让我们修改之前的示例，使用 continue 语句代替 break：
+range() 函数用于生成一个整数序列。以下是 range() 函数的基本语法：
+range(start, stop, step)
+如果你想生成一个递减顺序的整数序列，那么你可以为 step 参数使用负整数，像这样：
+for num in range(40, 0, -10):
+print(num)
+enumerate() 函数。enumerate() 函数跟踪可迭代对象的索引并返回一个枚举对象。
+languages = ['Spanish', 'English', 'Russian', 'Chinese']
+list(enumerate(languages))# [(0, 'Spanish'), (1, 'English'), (2, 'Russian'), (3, 'Chinese')]
+枚举对象（现在是一个列表）中的每个条目都是一个元组，包含一个计数，后跟传递给 enumerate() 函数的可迭代对象中的一个值。
+languages = ['Spanish', 'English', 'Russian', 'Chinese']
+for index, language in enumerate(languages):
+print(f'Index {index} and language {language}')
+enumerate() 函数还接受一个可选的 start 参数，用于指定计数的起始值。如果省略此参数，则计数将从 0 开始。
+for index, language in enumerate(languages, 1):
+zip() 函数，它将列表组合成元素的点对并返回元组的迭代器。
+developers = ['Naomi', 'Dario', 'Jessica', 'Tom']
+ids = [1, 2, 3, 4]
+list(zip(developers, ids))# [('Naomi', 1), ('Dario', 2), ('Jessica', 3), ('Tom', 4)]
+developers = ['Naomi', 'Dario', 'Jessica', 'Tom']
+ids = [1, 2, 3, 4]
+for name, dev_id in zip(developers, ids):
+print(f'Name: {name}')
+print(f'ID: {dev_id}')
+列表推导式允许你通过将循环和条件直接组合在方括弧内，在一行内创建一个新列表。这使代码更短且通常更易读。
+这是之前使用方括弧重构的示例：
+even_numbers = [num for num in range(21) if num % 2 == 0]print(even_numbers)
+numbers = [1, 2, 3, 4, 5]
+result = [(num, 'Even') if num % 2 == 0 else (num, 'Odd') for num in numbers]print(result)
+[(1, 'Odd'), (2, 'Even'), (3, 'Odd'), (4, 'Even'), (5, 'Odd')]
+从现有可迭代对象创建列表的方法是使用 filter() 函数。下面是一个只创建长度超过四个字符单词的新列表的示例：
+words = ['tree', 'sky', 'mountain', 'river', 'cloud', 'sun']
+def is_long_word(word):
+return len(word) > 4
+long_words = list(filter(is_long_word, words))print(long_words) # ['mountain', 'river', 'cloud']
+map() 函数，它接受一个可迭代对象并对其每个元素应用一个函数。下面是使用 map() 函数将摄氏温度列表转换为华氏温度的示例：
+celsius = [0, 10, 20, 30, 40]
+def to_fahrenheit(temp):
+return (temp * 9/5) + 32
+fahrenheit = list(map(to_fahrenheit, celsius))print(fahrenheit) # [32.0, 50.0, 68.0, 86.0, 104.0]
+sum() 函数。这个函数用于从可迭代对象（如列表或元组）中获取总和。以下是使用 sum() 函数的示例：
+numbers = [5, 10, 15, 20]
+total = sum(numbers)
+print(total) # Result: 50
+total = sum(numbers, 10) # positional argument
+print(total) # 60
+使用匿名内联函数。这就是 lambda 函数的用武之地。
+lambda num: num ** 2
+字典是内置的数据结构，用于保存密钥-值点对的集合。它们的工作方式非常类似于真实的字典，你通过查找一个单词来找到其对应的含义。
+pizza = {
+'name': 'Margherita Pizza',
+'price': 8.9,
+'calories_per_slice': 250,
+'toppings': ['mozzarella', 'basil']
+}
+pizza = dict([('name', 'Margherita Pizza'), ('price', 8.9), ('calories_per_slice', 250), ('toppings', ['mozzarella', 'basil'])])
+pizza['name']#'Margherita Pizza'
+pizza.get('toppings', []) # ['mozzarella', 'basil']
+pizza.keys()# dict_keys(['name', 'price', 'calories_per_slice'])
+pizza.values()# dict_values(['Margherita Pizza', 8.9, 250])
+pizza.items()# dict_items([('name', 'Margherita Pizza'), ('price', 8.9), ('calories_per_slice', 250)])
+.clear() 方法会从字典中移除所有的键值对：
+pizza.clear()
+.pop() 方法移除你作为第一个参数指定的密钥对应的点对，并返回其值。如果密钥不存在，则返回你作为第二个参数指定的默认值。如果密钥不存在且你未传入默认值，则引起 KeyError：
+pizza.pop('price', 10)
+pizza.pop('total_price') # KeyError
+.popitem() 方法会移除最后插入的项：
+.update() 方法使用另一个字典的密钥-值点对来更新密钥-值点对。
+pizza.update({ 'price': 15, 'total_time': 25 })
+** 操作符可用于解包字典中的元素，并将它们作为关键字参数传递到函数调用中：
+示例代码
+def sum(a, b, c):
+return a + b + c
+nums = {'a': 2, 'b': 4, 'c': 1}
+print(sum(**nums)) # 7
+在上面的示例中，sum(**nums) 等同于 sum(a=2, b=4, c=1)。
+集合是 Python 的内置数据结构之一。集合的核心特性之一是它们不保存重复的值。如果你尝试将重复的值添加到集合中，只有其中一个会被保存。
+集合是可变的且无序的，这意味着它们的元素不会以任何特定顺序保存，因此你不能使用索引或密钥来访问它们。它们只能包含不可变的数据类型的值，如数字、字串和元组。并且它们支持数学集合操作，包括并集、交集、差集和对称差集。
+my_set = {1, 2, 3, 4, 5}
+如果你需要定义一个空集合，必须使用 set() 函数。如果你只是写空的括弧状的花括弧，比如 {}，Python 会自动创建一个字典。
+set() # Set{}    # Dictionary
+.add() 方法为集合添加一个元素
+.remove() 方法或 .discard() 方法，并将你想要移除的元素作为参数传入。
+.clear() 方法从集合中移除所有元素：
+.issubset() 和 .issuperset() 方法分别查看一个集合是否是另一个集合的子集或超集。
+.isdisjoint() 方法查看两个集合是否不相交，这意味着它们没有任何共同的元素。
+并集操作符 | 返回一个包含两个集合中所有元素的新建集合：
+交集操作符 & 返回一个只包含集合共有元素的新建集合：
+差集操作符 - 返回一个新建集合，该集合包含第一个集合中不在其他集合中的元素。
+对称差操作符 ^ 返回一个新建集合，其中包含只存在于第一个集合或第二个集合中的元素，但不同时存在于两个集合中。
+你使用 import 语句。这些语句允许你将模块导入到你的 Python 脚本中。导入语句通常写在文件的顶部。此外，你可以根据你的需求自定义它们。首先，你使用 import 语句，后跟模块的名称：
+import module_name
+然后，如果你需要在你的 Python 脚本中调用该模块中的函数，你可以使用点表示法，模块名称后跟函数名称：
+module_name.function_name()
+果你需要以不同的名称（也称为“别名”）导入模块，可以使用这种语法，在导入语句末尾使用 as 后跟别名：
+import module_name as module_alias
+也许你只需要一两个特定的函数或类。Python 在这种情况下正好满足你的需求。
+现在 import 语句以 from 开头，后跟模块名称，然后是 import 关键字，后面跟着你想要导入的元素名称：
+from module_name import name1, name2
+from math import radians, sin, cos
+angle_degrees = 40
+angle_radians = radians(angle_degrees)
+sine_value = sin(angle_radians)
+cos_value = cos(angle_radians)
+print(sine_value) # 0.6427876096865393print(cos_value)  # 0.766044443118978
+我们查找这个以星号结尾的导入语句。星号告诉 Python 你想导入该模块中的所有内容，但你想导入它，以便不需要使用模块名称作为前缀：
+from module_name import *
+from math import *
+print(sqrt(36))  # 6.0
+print(pow(5, 2)) # 25.0
+print(exp(1))    # 2.718281828459045
+if __name__ == '__main__':
+# Code
+正则是一套用来描述字符串规则的 “迷你语言”，专门用来查找、匹配、筛选、替换文本。
+正则表达式，或称 regex，是用于匹配文本中字符序列的模式。re 模块中的 search 函数以正则表达式模式和字串作为它的参数。
+如果模式产生匹配，则返回相应的匹配对象。否则返回 None。
+import re
+greeting = "Hello there!"print(re.search('Hi', greeting)) # Noneprint(re.search('Hello', greeting)) # <re.Match object; span=(0, 5), match='Hello'>
+\d 匹配一个十进制数字。
+在 Python 中，在字面字串前加上 r 或 R 会创建一个未经处理的字串。未经处理的字串将斜线视为字面字符，而不是转义序列，这使它们非常适合用于正则表达式。
+import re
+book = "Fahrenheit 451"print(re.search(r'\d', book))# <re.Match object; span=(11, 12), match='4'>
++ 字符匹配前一个字符一次或多次：
+为此你可以使用 re 模块中的另一个函数。fullmatch 函数在正则表达式模式匹配整个字串时返回一个匹配对象，否则返回 None。
+import re
+book = "Fahrenheit 451"print(re.fullmatch(r'\d+', book)) #None
+print(re.fullmatch(r'Fahrenheit \d+', book))# <re.Match object; span=(0, 14), match='Fahrenheit 451'>
+is 和 is not 操作符用于检查两个值是否引用同一个对象。这称为同一性比较。你可以使用 is None 来检查一个值是否是 None 对象，使用 is not None 来检查它是否不是 None 对象。
+当传入的可迭代对象中的所有元素都为真值时，all 函数返回 True，否则返回 False：
+truthy = [1, 2, 3]print(all(truthy)) # True
+falsy = [0, 1, 2, 3]print(all(falsy)) # False
+__name__ 是 Python 中一个特殊的内置变量。
+当一个 Python 文件被直接执行时，Python 会将这个变量的值设置为字串 "__main__"。
+但是如果 Python 文件作为模块被导入到另一个 Python 脚本中，__name__ 变量的值将被设置为该模块的名称（通常是没有 .py 扩展名的文件名）。
+这就是为什么你经常会在 Python 脚本中看到这个条件式。它包含你只想在 Python 脚本作为主程序运行时才运行的代码：
+if __name__ == '__main__':
+# Code
+但是如果脚本作为模块被导入，那个块内的代码不会运行。
+Machine learning
+监督学习：从大量例子中学习x->y的映射，预测新的x
+回归算法：无限多数字预测一个数字（连续）
+分类算法：有限的类别（离散）
+无监督学习：没有给定标签，找出数据之间的模式或者结构
+聚类：把数据分类
+异常检测：
+降维技术：减少丢失，降低数据集
+Jupyter Notebook
+[[TABLE 0]]
+操作 | 快捷键/方法
+运行单元格并跳到下一个 | Shift + Enter
+运行单元格但不跳转 | Ctrl + Enter
+运行并在下方新增单元格 | Alt + Enter
+新建代码或文字单元格 | 顶部 + 代码 / + Markdown
+保存 Notebook | Ctrl + S
+[[/TABLE 0]]
+Training set训练集
+X 输入变量 、（输入）特征
+y输出变量，目标变量
+m训练示例数
+（x**i，y**i）单个训练例子，i是特定行
+Y-hat 估计y、预测值
+f=wx+b是函数，模型
+W,b是参数parameter
+“implement” 最常见的意思是实施、执行；在计算机 / 学术语境中表示编写代码、实现（模型、算法等）。
+Cost function
+平方误差成本函数
+Batch 每次梯度下降使用的所有训练例子
+Loss function 计算单个样本预测与真实值之间的误差；Cost function 是一个 batch 或者全部数据集上所有样本 loss 的平均值，我们通过最小化 cost function 来更新模型参数。目标函数还会额外加入正则项防止过拟合。
+Gradient descent
+Local minima
+Simultaneously update w and b
+dangp
+Numpy￥￥￥matplotlab
+NumPy 数组拥有 .shape 属性。x_train.shape 会返回一个 Python 元组，元组中的每一项对应一个维度。
+x_train.shape 返回元组 (2,)
+x_train 是一维 numpy 数组，只有 1 个维度；
+元组里第一个数字 2：代表这个数组有2 个元素；
+可以用m = len(x_train)
+print(f"Number of training examples is: {m}")
+或者m = x_train.shape[0]
+print(f"Number of training examples is: {m}")
+使用matplotlib库中的scatter()函数绘制这两个点，如下代码单元格所示。
+函数参数marker和c将点显示为红色叉号（默认样式为蓝色圆点）。
+plt.plot()：画折线 / 直线，默认会把点按 x 顺序用线连起来
+plt.scatter()：画散点，只画孤立的数据点，不会自动连线
+# Plot the data points
+plt.scatter(x_train, y_train, marker='x', c='r')
+# Set the title
+plt.title("Housing Prices")
+# Set the y-axis label
+plt.ylabel('Price (in 1000s of dollars)')
+# Set the x-axis label
+plt.xlabel('Size (1000 sqft)')
+plt.show()
+parameter（形参）：函数定义时写在括号里的变量名
+def func(x, w, b): # x,w,b 是 parameters（形参）
+argument（实参）：调用函数时传入的具体数值 / 变量
+# x_train,100,100 是
+np.zeros() 是 NumPy 的函数，用来创建一个全部元素都是 0 的数组。

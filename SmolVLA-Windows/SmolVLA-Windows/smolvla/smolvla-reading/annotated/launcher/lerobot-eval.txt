@@ -1,0 +1,16 @@
+# 原文件 <CONDA_PREFIX>/bin/lerobot-eval
+# 原行范围 1–6
+# L 后是官方源码或本机文件的原行号。每条中文注释对应紧随其后的原文。
+# 这是静态阅读副本。请在编辑器中阅读。空行保留，节选之间标出跳过的范围。
+# L0001 文件头指定启动脚本使用该项目 Conda 环境里的 Python 解释器。
+#!<CONDA_PREFIX>/bin/python
+# L0002 导入 Python 标准库 sys 来访问参数和退出状态。
+import sys
+# L0003 从已安装的 lerobot 包导入评测入口 main。该环境以可编辑方式安装本地仓库。
+from lerobot.scripts.lerobot_eval import main
+# L0004 只有脚本作为程序执行时才进入下面两行。
+if __name__ == '__main__':
+    # L0005 清理由平台包装器引入的 .exe 后缀，保留命令参数中的其余内容。
+    sys.argv[0] = sys.argv[0].removesuffix('.exe')
+    # L0006 先调用 main，再把它的返回值交给 sys.exit。
+    sys.exit(main())

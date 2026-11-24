@@ -1,0 +1,30 @@
+# Python 环境与缓存
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Node 依赖
+node_modules/
+
+# Obsidian 本地状态（每个库各自生成，不值得入库）
+**/.obsidian/workspace.json
+**/.obsidian/workspace-mobile.json
+**/.obsidian/cache/
+
+# 临时目录
+.work/
+.tmp/
+
+# 压缩包
+*.zip
+*.7z
+*.tar
+*.gz
+
+# 大体积文献 PDF（想让它们入库就删掉下面这行）
+*.pdf
+
+# Windows 缩略图缓存
+Thumbs.db
+desktop.ini

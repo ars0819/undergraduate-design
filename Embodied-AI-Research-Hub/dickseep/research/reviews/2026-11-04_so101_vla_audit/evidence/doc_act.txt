@@ -1,0 +1,132 @@
+ACT (Action Chunking with Transformers) · Hugging Face
+Hugging Face
+Models
+Datasets
+Spaces
+Buckets
+Docs
+Enterprise
+Pricing
+Website
+Tasks
+HuggingChat
+Collections
+Languages
+Organizations
+Community
+Blog
+Posts
+Daily Papers
+Hardware
+Learn
+Discord
+Forum
+GitHub
+Solutions
+Team & Enterprise
+Hugging Face PRO
+Enterprise Support
+Inference Providers
+Inference Endpoints
+Storage Buckets
+Log In
+Sign Up
+LeRobot documentation
+ACT (Action Chunking with Transformers)
+LeRobot
+🏡 View all docsAWS Trainium & InferentiaAccelerateBitsandbytesCLIChat UIDataset viewerDatasetsDeploying on AWSDiffusersGoogle CloudGoogle TPUsGradioHubHub Python LibraryHuggingface.jsInference Endpoints (dedicated)Inference ProvidersKernelsLeRobotLeaderboardsLightevalMicrosoft AzureOpenEnvOptimumPEFTReachy MiniSafetensorsSentence TransformersTRLTasksText Embeddings InferenceTokenizersTrackioTransformersTransformers.jsXetsmolagentstimm
+Search documentation
+mainv0.6.1v0.5.1v0.4.4 EN
+Get started
+LeRobotInstallationCheat sheet
+Tutorials
+Imitation Learning for RobotsLeLab - Lerobot GUIAdding a PolicyBring Your Own HardwareTrain a Robot with RLTrain RL in SimulationMulti GPU trainingHuman In the Loop Data CollectionTraining with PEFT (e.g., LoRA)Using Rename Map and Empty Cameras
+Compute & Hardware
+Compute Hardware GuidePyTorch accelerators
+Datasets
+Using LeRobotDatasetPorting Large DatasetsUsing the Dataset ToolsLanguage Columns and RecipesToolsAnnotation PipelineVideo encoding parametersStreaming Video Encoding
+Policies
+ACTSmolVLAπ₀ (Pi0)π₀-FAST (Pi0Fast)π₀.₅ (Pi05)MolmoAct2VLA-JEPAEO-1LingBot-VAFastWAMEVO1NVIDIA GR00TX-VLAMultitask DiT PolicyWALL-OSS
+Reward Models
+SARMROBOMETERTOPReward
+Inference
+Policy Deployment (lerobot-rollout)Use Async InferenceReal-Time Chunking (RTC)
+Simulation
+Environments from the HubControl & Train Robots in Sim (LeIsaac)
+Benchmarks
+Adding a New BenchmarkLIBEROLIBERO-plusMeta-WorldRoboTwin 2.0RoboCasa365RoboCerebraRoboMMENVIDIA IsaacLab Arena EnvironmentsVLABench
+Robot Processors
+Introduction to Robot ProcessorsDebug your processor pipelineImplement your own processorProcessors for Robots and TeleoperatorsEnvironment ProcessorsAction Representations
+Robots
+SO-101SO-100Koch v1.1LeKiwiHope JrReachy 2Unitree G1Earth Rover MiniOMXOpenArmreBot B601-DMThird-Party Robots & Teleoperators
+Teleoperators
+PhoneIsaac Teleop
+Sensors
+CamerasThird-Party Cameras & Sensors
+Resources
+NotebooksUpdating Feetech FirmwareDamiao Motors and CAN Bus
+About
+Contribute to LeRobotBackward compatibility
+Join the Hugging Face community
+and get access to the augmented documentation experience
+Collaborate on models, datasets and Spaces
+Faster examples with accelerated inference
+Switch between documentation themes
+Sign Up
+to get started
+Copy page
+ACT (Action Chunking with Transformers)
+ACT is a lightweight and efficient policy for imitation learning, especially well-suited for fine-grained manipulation tasks. It’s the first model we recommend when you’re starting out with LeRobot due to its fast training time, low computational requirements, and strong performance.
+Watch this tutorial from the LeRobot team to learn how ACT works: LeRobot ACT Tutorial
+Model Overview
+Action Chunking with Transformers (ACT) was introduced in the paper Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware by Zhao et al. The policy was designed to enable precise, contact-rich manipulation tasks using affordable hardware and minimal demonstration data.
+Why ACT is Great for Beginners
+ACT stands out as an excellent starting point for several reasons:
+Fast Training: Trains in a few hours on a single GPU
+Lightweight: Only ~80M parameters, making it efficient and easy to work with
+Data Efficient: Often achieves high success rates with just 50 demonstrations
+Architecture
+ACT uses a transformer-based architecture with three main components:
+Vision Backbone: ResNet-18 processes images from multiple camera viewpoints
+Transformer Encoder: Synthesizes information from camera features, joint positions, and a learned latent variable
+Transformer Decoder: Generates coherent action sequences using cross-attention
+The policy takes as input:
+Multiple RGB images (e.g., from wrist cameras, front/top cameras)
+Current robot joint positions
+A latent style variable z (learned during training, set to zero during inference)
+And outputs a chunk of k future action sequences.
+Installation Requirements
+Install LeRobot by following our Installation Guide.
+ACT is included in the base LeRobot installation, so no additional dependencies are needed!
+Training ACT
+ACT works seamlessly with the standard LeRobot training pipeline. Here’s a complete example for training ACT on your dataset:
+Copied
+lerobot-train \
+--dataset.repo_id=${HF_USER}/your_dataset \
+--policy.type=act \
+--output_dir=outputs/train/act_your_dataset \
+--job_name=act_your_dataset \
+--policy.device=cuda \
+--wandb.enable=true \
+--policy.repo_id=${HF_USER}/act_policy
+Training Tips
+Start with defaults: ACT’s default hyperparameters work well for most tasks
+Training duration: Expect a few hours for 100k training steps on a single GPU
+Batch size: Start with batch size 8 and adjust based on your GPU memory
+Train using Google Colab
+If your local computer doesn’t have a powerful GPU, you can utilize Google Colab to train your model by following the ACT training notebook.
+Evaluating ACT
+Once training is complete, you can evaluate your ACT policy using the lerobot-record command with your trained policy. This will run inference and record evaluation episodes:
+Copied
+lerobot-rollout \
+--strategy.type=base \
+--policy.path=${HF_USER}/act_policy \
+--robot.type=so101_follower \
+--robot.port=/dev/ttyACM0 \
+--robot.cameras="{ front: {type: opencv, index_or_path: 0, width: 640, height: 480, fps: 30}}" \
+--display_data=true \
+--task="Your task description" \ # can be skipped for ACT
+--duration=60
+Update on GitHub
+←Streaming Video Encoding SmolVLA→
+ACT (Action Chunking with Transformers)Model OverviewWhy ACT is Great for BeginnersArchitectureInstallation RequirementsTraining ACTTraining TipsTrain using Google ColabEvaluating ACT
